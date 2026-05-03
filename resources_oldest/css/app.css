@@ -1,0 +1,68 @@
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+/* ── PESO Connect Global Theme ───────────────────────────── */
+:root {
+    --peso-dark:   #1F4E79;
+    --peso-medium: #2E74B5;
+    --peso-light:  #DEEAF1;
+    --peso-accent: #FFC000;
+    --peso-green:  #70AD47;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 0.92rem;
+}
+
+/* Navbar */
+.navbar-brand { letter-spacing: 0.5px; font-size: 1.1rem; }
+.navbar-nav .nav-link.active { font-weight: 600; border-bottom: 2px solid #FFC000; }
+
+/* Cards */
+.card { border-radius: 8px; }
+
+/* Progress bar color override */
+.progress-bar.bg-warning { background-color: #FFC000 !important; }
+
+/* Reference ID code styling */
+code {
+    background: #f0f6fb;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 1rem;
+    color: #1F4E79;
+}
+
+/* Table improvements */
+.table th { font-size: 0.80rem; letter-spacing: 0.3px; }
+.table td { vertical-align: middle; }
+
+/* Sticky table header */
+.table thead th { position: sticky; top: 0; z-index: 1; }
+
+/* Badge adjustments */
+.badge { font-weight: 500; font-size: 0.75rem; }
+
+/* Modal backdrop z-fix for Livewire */
+.modal { z-index: 1055; }
+
+/* Loading indicator for Livewire actions */
+[wire\:loading] { opacity: 0.7; cursor: wait; }
+
+/* Form improvements */
+.form-label { font-size: 0.85rem; margin-bottom: 0.25rem; }
+.form-control:focus, .form-select:focus {
+    border-color: var(--peso-medium);
+    box-shadow: 0 0 0 0.2rem rgba(46,116,181,0.15);
+}
+
+/* Dashboard stat cards hover */
+.card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.10) !important; transition: box-shadow 0.2s; }
+
+/* Skills gap progress bars */
+.progress { border-radius: 4px; }
+
+/* Pagination styling */
+.pagination { margin-bottom: 0; }
+.page-link { color: var(--peso-dark); }
+.page-item.active .page-link { background-color: var(--peso-dark); border-color: var(--peso-dark); }

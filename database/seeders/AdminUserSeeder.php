@@ -2,8 +2,12 @@
 
 namespace Database\Seeders;
 
+use App\Models\Role;
+use App\Models\User;
+
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class AdminUserSeeder extends Seeder
 {
@@ -12,6 +16,16 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+               $adminRole = Role::where('slug', 'admin')->firstOrFail();
+ 
+        User::create([
+            'name'      => 'PESO Administrator',
+            'email'     => 'admin@peso-catanduanes.gov.ph',
+            'password'  => Hash::make('PESoAdmin@2025!'), // CHANGE IN PRODUCTION
+            'role_id'   => $adminRole->id,
+            'is_active' => true,
+        ]);
     }
+
+    
 }

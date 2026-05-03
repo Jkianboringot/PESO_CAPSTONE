@@ -2,7 +2,11 @@
 
 namespace App\Livewire;
 
+use App\Models\Applicant;
+use App\Models\Barangay;
+use App\Models\SkillCategory;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class ApplicantManagement extends Component
 {
@@ -38,7 +42,7 @@ class ApplicantManagement extends Component
         $this->showModal = true;
     }
  
-    public function saveEdit(AuditLogService $audit) {
+    public function saveEdit( $audit) {
         $this->validate([
             'editData.last_name'      => 'required|string|max:100',
             'editData.first_name'     => 'required|string|max:100',
@@ -60,7 +64,7 @@ class ApplicantManagement extends Component
         session()->flash('success', 'Record updated successfully.');
     }
  
-    public function deactivate(int $id, AuditLogService $audit) {
+    public function deactivate(int $id,  $audit) {
         $a = Applicant::findOrFail($id);
         $a->update(['is_active' => false, 'status' => 'Inactive']);
         $audit->log('APPLICANT_DEACTIVATED', $a);
