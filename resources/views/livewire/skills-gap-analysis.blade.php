@@ -1,100 +1,146 @@
 <div>
-<h5 class="fw-bold mb-4" style="color:#1F4E79">&#128269; Skills Gap Analysis</h5>
+    <x-slot name="title">Skills Gap Analysis</x-slot>
 
-<div class="card border-0 shadow-sm mb-4 p-3">
-    <div class="row align-items-center">
-        <div class="col-md-4">
-            <label class="form-label fw-semibold small">Gap Threshold (applicants below this = skill gap)</label>
-            <div class="d-flex align-items-center gap-2">
-                <input type="number" wire:model.live="threshold" class="form-control form-control-sm" style="width:90px" min="1">
-                <span class="text-muted small">applicants</span>
-            </div>
-        </div>
-        <div class="col-md-8 text-md-end mt-2 mt-md-0">
-            <span class="badge bg-danger me-2">&#9660; {{ $gapSkills->count() }} Gap Skills</span>
-            <span class="badge bg-success">&#9650; {{ $surplusSkills->count() }} Adequate Skills</span>
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-xl font-bold" style="color: #1e293b;">
+                <i class="fas fa-search mr-2" style="color: #00796b;"></i>
+                Skills Gap Analysis
+            </h1>
+            <p class="text-xs mt-0.5" style="color: #64748b;">Identify underrepresented PQF skill clusters in Catanduanes</p>
         </div>
     </div>
-</div>
 
-<div class="row g-4">
-    {{-- Skills Gap Table --}}
-    <div class="col-md-6">
-        <div class="card border-danger border-0 shadow-sm">
-            <div class="card-header fw-bold text-white" style="background:#C00000">
-                &#9660; Skills Gap (Below {{ $threshold }} Registrants)
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive" style="max-height:400px; overflow-y:auto">
-                    <table class="table table-sm mb-0 small">
-                        <thead class="table-light sticky-top">
-                            <tr><th>Skill</th><th>Category</th><th>Registrants</th></tr>
-                        </thead>
-                        <tbody>
-                            @forelse($gapSkills as $row)
-                            <tr>
-                                <td>{{ $row->skill }}</td>
-                                <td><span class="badge bg-light text-dark border">{{ $row->category }}</span></td>
-                                <td><span class="badge bg-danger">{{ $row->applicant_count }}</span></td>
-                            </tr>
-                            @empty
-                            <tr><td colspan="3" class="text-center text-muted py-3">No gap skills found.</td></tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+    {{-- Threshold Control --}}
+    <div class="bg-white rounded-xl border mb-5 p-4" style="border-color: #e2e8f0;">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div>
+                    <label class="block text-xs font-bold mb-1.5 uppercase tracking-wide" style="color: #374151;">
+                        Gap Threshold
+                    </label>
+                    <p class="text-xs mb-2" style="color: #64748b;">Applicants below this = skill gap</p>
+                    <div class="flex items-center gap-2">
+                        <input type="number" wire:model.live="threshold"
+                               class="text-sm px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                               style="border-color: #d1d5db; width: 90px;"
+                               min="1">
+                        <span class="text-xs" style="color: #64748b;">applicants</span>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    {{-- Surplus Skills --}}
-    <div class="col-md-6">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header fw-bold text-white" style="background:#70AD47">
-                &#9650; Adequate Skills ({{ $threshold }}+ Registrants)
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive" style="max-height:400px; overflow-y:auto">
-                    <table class="table table-sm mb-0 small">
-                        <thead class="table-light sticky-top">
-                            <tr><th>Skill</th><th>Category</th><th>Registrants</th></tr>
-                        </thead>
-                        <tbody>
-                            @forelse($surplusSkills as $row)
-                            <tr>
-                                <td>{{ $row->skill }}</td>
-                                <td><span class="badge bg-light text-dark border">{{ $row->category }}</span></td>
-                                <td><span class="badge bg-success">{{ $row->applicant_count }}</span></td>
-                            </tr>
-                            @empty
-                            <tr><td colspan="3" class="text-center text-muted py-3">No data yet.</td></tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold"
+                      style="background: #fee2e2; color: #dc2626;">
+                    <i class="fas fa-arrow-down mr-1.5"></i>
+                    {{ $gapSkills->count() }} Gap Skills
+                </span>
+                <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold"
+                      style="background: #dcfce7; color: #15803d;">
+                    <i class="fas fa-arrow-up mr-1.5"></i>
+                    {{ $surplusSkills->count() }} Adequate Skills
+                </span>
             </div>
         </div>
     </div>
-</div>
 
-{{-- Category Totals --}}
-<div class="card border-0 shadow-sm mt-4">
-    <div class="card-header fw-bold py-2" style="background:#f8f9fa">Skills by Category (Total Registrations)</div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-sm mb-0 small">
-                <thead class="table-light">
-                    <tr><th class="ps-3">Category</th><th>Total Skill Registrations</th><th>Bar</th></tr>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+
+        {{-- Gap Skills --}}
+        <div class="bg-white rounded-xl border overflow-hidden" style="border-color: #e2e8f0;">
+            <div class="px-4 py-3 text-sm font-bold text-white" style="background: #C00000;">
+                <i class="fas fa-arrow-down mr-1.5"></i>
+                Skills Gap (Below {{ $threshold }} Registrants)
+            </div>
+            <div class="overflow-y-auto" style="max-height: 400px;">
+                <table class="w-full text-xs">
+                    <thead class="sticky top-0" style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                        <tr>
+                            <th class="px-4 py-2.5 text-left font-semibold uppercase tracking-wide" style="color: #64748b; font-size: 10px;">Skill</th>
+                            <th class="px-4 py-2.5 text-left font-semibold uppercase tracking-wide" style="color: #64748b; font-size: 10px;">Category</th>
+                            <th class="px-4 py-2.5 text-left font-semibold uppercase tracking-wide" style="color: #64748b; font-size: 10px;">Registrants</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y" style="border-color: #f1f5f9;">
+                        @forelse($gapSkills as $row)
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-4 py-2.5 font-medium" style="color: #1e293b;">{{ $row->skill }}</td>
+                            <td class="px-4 py-2.5">
+                                <span class="px-2 py-0.5 rounded text-xs" style="background: #f1f5f9; color: #374151; border: 1px solid #e2e8f0;">{{ $row->category }}</span>
+                            </td>
+                            <td class="px-4 py-2.5">
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold" style="background: #fee2e2; color: #dc2626;">{{ $row->applicant_count }}</span>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="3" class="px-4 py-8 text-center text-xs" style="color: #94a3b8;">No gap skills found.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {{-- Adequate Skills --}}
+        <div class="bg-white rounded-xl border overflow-hidden" style="border-color: #e2e8f0;">
+            <div class="px-4 py-3 text-sm font-bold text-white" style="background: #2e7d32;">
+                <i class="fas fa-arrow-up mr-1.5"></i>
+                Adequate Skills ({{ $threshold }}+ Registrants)
+            </div>
+            <div class="overflow-y-auto" style="max-height: 400px;">
+                <table class="w-full text-xs">
+                    <thead class="sticky top-0" style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                        <tr>
+                            <th class="px-4 py-2.5 text-left font-semibold uppercase tracking-wide" style="color: #64748b; font-size: 10px;">Skill</th>
+                            <th class="px-4 py-2.5 text-left font-semibold uppercase tracking-wide" style="color: #64748b; font-size: 10px;">Category</th>
+                            <th class="px-4 py-2.5 text-left font-semibold uppercase tracking-wide" style="color: #64748b; font-size: 10px;">Registrants</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y" style="border-color: #f1f5f9;">
+                        @forelse($surplusSkills as $row)
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-4 py-2.5 font-medium" style="color: #1e293b;">{{ $row->skill }}</td>
+                            <td class="px-4 py-2.5">
+                                <span class="px-2 py-0.5 rounded text-xs" style="background: #f1f5f9; color: #374151; border: 1px solid #e2e8f0;">{{ $row->category }}</span>
+                            </td>
+                            <td class="px-4 py-2.5">
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold" style="background: #dcfce7; color: #15803d;">{{ $row->applicant_count }}</span>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="3" class="px-4 py-8 text-center text-xs" style="color: #94a3b8;">No data yet.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {{-- Category Totals --}}
+    <div class="bg-white rounded-xl border overflow-hidden" style="border-color: #e2e8f0;">
+        <div class="px-5 py-3 border-b" style="background: #f8fafc; border-color: #e2e8f0;">
+            <span class="text-sm font-bold" style="color: #1e293b;">Skills by Category (Total Registrations)</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+                <thead>
+                    <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                        <th class="px-5 py-3 text-left font-semibold uppercase tracking-wide" style="color: #64748b; font-size: 10px;">Category</th>
+                        <th class="px-5 py-3 text-left font-semibold uppercase tracking-wide" style="color: #64748b; font-size: 10px;">Total Registrations</th>
+                        <th class="px-5 py-3 text-left font-semibold uppercase tracking-wide w-1/2" style="color: #64748b; font-size: 10px;">Distribution</th>
+                    </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y" style="border-color: #f1f5f9;">
                     @php $max = $categoryTotals->max('total') ?: 1; @endphp
                     @foreach($categoryTotals as $cat)
-                    <tr>
-                        <td class="ps-3">{{ $cat->name }}</td>
-                        <td><strong>{{ $cat->total }}</strong></td>
-                        <td style="width:50%">
-                            <div class="progress" style="height:12px">
-                                <div class="progress-bar" style="width:{{ ($cat->total / $max) * 100 }}%; background:#1F4E79"></div>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-5 py-3 font-medium" style="color: #1e293b;">{{ $cat->name }}</td>
+                        <td class="px-5 py-3 font-bold" style="color: #1F4E79;">{{ $cat->total }}</td>
+                        <td class="px-5 py-3">
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 rounded-full overflow-hidden" style="background: #f1f5f9; height: 8px;">
+                                    <div class="h-full rounded-full" style="width: {{ ($cat->total / $max) * 100 }}%; background: #1F4E79;"></div>
+                                </div>
+                                <span class="text-xs" style="color: #94a3b8; min-width: 40px;">{{ round(($cat->total / $max) * 100) }}%</span>
                             </div>
                         </td>
                     </tr>
@@ -103,5 +149,8 @@
             </table>
         </div>
     </div>
-</div>
+
+    <div class="text-center mt-6">
+        <p class="text-xs italic" style="color: #94a3b8;">Design Pattern: Shneiderman's Information-Seeking Mantra</p>
+    </div>
 </div>

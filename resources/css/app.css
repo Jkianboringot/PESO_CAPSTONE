@@ -1,3 +1,106 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * dashboard.css — Custom rules that Tailwind alone cannot achieve.
+ * All other styling uses Tailwind utility classes directly in blade files.
+ */
+
+/* ─── SIDEBAR CUSTOM SCROLLBAR ───────────────────────────────────────────────
+ * Tailwind has no scrollbar styling utilities by default.
+ * Requires the ::-webkit-scrollbar pseudo-element API.
+ */
+#sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+#sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+#sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+#sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* ─── SIDEBAR ACTIVE NAV ITEM ────────────────────────────────────────────────
+ * The left-border + gradient combination cannot be expressed cleanly with
+ * Tailwind classes because `border-l` applies uniform borders and
+ * `bg-gradient-to-r` requires composing multiple stops at custom opacities.
+ */
+.nav-link-active {
+    background: linear-gradient(90deg, rgba(37, 99, 235, 0.25) 0%, rgba(37, 99, 235, 0.04) 100%);
+    border-left: 3px solid #3b82f6;
+    padding-left: calc(0.75rem - 3px); /* compensate for the 3px border */
+}
+
+/* ─── SIDEBAR NAV HOVER ──────────────────────────────────────────────────────
+ * Tailwind's hover:bg-white/10 produces a slightly different result than
+ * the rgba(255,255,255,0.06) value needed to match the subtle sidebar hover.
+ */
+.nav-link-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+/* ─── SIDEBAR SUBMENU COLLAPSE TRANSITION ────────────────────────────────────
+ * Tailwind has no transition for max-height out of the box.
+ * Alpine.js x-show uses display:none by default; max-height animation
+ * requires custom CSS for smooth accordion behavior.
+ */
+.sidebar-submenu {
+    overflow: hidden;
+    transition: max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── CHART CARD HOVER LIFT ──────────────────────────────────────────────────
+ * Tailwind hover:shadow-lg exists, but the combined translateY + shadow
+ * transition at a specific curve is cleaner in CSS.
+ */
+.chart-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.chart-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* ─── PAGINATION LINK OVERRIDES ──────────────────────────────────────────────
+ * Laravel's default Tailwind pagination component uses its own classes.
+ * These rules normalise the pagination links to match the system's palette
+ * without modifying the vendor pagination view file.
+ */
+nav[role="navigation"] span[aria-current="page"] > span,
+nav[role="navigation"] span[aria-current="page"] > em {
+    background-color: #1a2035 !important;
+    border-color: #1a2035 !important;
+    color: #ffffff !important;
+    border-radius: 0.375rem;
+}
+nav[role="navigation"] a:hover {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+}
+
+/* ─── STICKY TABLE HEADERS ───────────────────────────────────────────────────
+ * The `sticky top-0` Tailwind class works, but needs a z-index context
+ * when used inside an overflow-y:auto container.
+ */
+.overflow-y-auto thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+/* ─── MODAL BACKDROP ─────────────────────────────────────────────────────────
+ * Tailwind bg-black/50 works for backdrop color but animating the fade-in
+ * requires a CSS transition that Livewire's conditional @if block triggers.
+ */
+.modal-backdrop-enter {
+    animation: fadeInBackdrop 0.15s ease forwards;
+}
+@keyframes fadeInBackdrop {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
