@@ -2,9 +2,12 @@
 
 namespace App\Livewire;
 
+use App\Models\Applicant;
 use App\Models\Barangay;
+use App\Models\Education;
 use App\Models\Municipality;
 use App\Models\SkillCategory;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class RegistrationForm extends Component
@@ -99,20 +102,24 @@ class RegistrationForm extends Component
         };
     }
  
-    public function nextStep() {
+   public function nextStep() {
+    try {
         $this->validate($this->rulesForStep());
-        if ($this->step < $this->totalSteps) $this->step++;
+        $this->step++;
+    } catch (\Exception $e) {
+        dd($e->getMessage());
     }
+}
  
     public function prevStep() {
         if ($this->step > 1) $this->step--;
     }
  
     // ── Final submission ─────────────────────────────────
-    public function submit(DuplicateDetectionService $detector, AuditLogService $audit) {
+    public function submit() {
         $this->validate($this->rulesForStep()); // Validate consent step
- 
-        DB::transaction(function () use ($detector, $audit) {
+        
+        DB::transaction(function (){
             // 1. Create applicant record
             $applicant = Applicant::create([
                 'last_name'        => $this->last_name,
@@ -149,10 +156,10 @@ class RegistrationForm extends Component
             $applicant->skills()->attach($skillData);
  
             // 4. Run composite duplicate detection
-            $detector->detect($applicant);
+            // $detector->detect($applicant);
  
             // 5. Audit log
-            $audit->logApplicantCreated($applicant);
+            // $audit->logApplicantCreated($applicant);
  
             $this->reference_id = $applicant->reference_id;
         });
@@ -165,7 +172,7 @@ class RegistrationForm extends Component
             'municipalities'  => Municipality::orderBy('name')->pluck('name', 'id'),
             'skillCategories' => SkillCategory::with('skills')->orderBy('name')->get(),
             'proficiencyLevels' => ['Beginner','Intermediate','Advanced','Expert'],
-        ])->layout('layouts.guest');
+        ])->layout('layouts.registration');
     }
 
     

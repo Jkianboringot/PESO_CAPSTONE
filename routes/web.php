@@ -4,15 +4,12 @@ use App\Http\Controllers\ProfileController;
 use App\Livewire\Dashboard;
 use Illuminate\Support\Facades\Route;
 
+
+
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('dashboard');
 });
-
-Route::get('/dashboard', function () {
-    return view('livewire.dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-Route::get('/register', \App\Livewire\RegistrationForm::class)->name('register');
+Route::get('/job-portal', \App\Livewire\RegistrationForm::class)->name('register');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
