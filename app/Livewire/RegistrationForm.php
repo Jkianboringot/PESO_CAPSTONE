@@ -72,8 +72,8 @@ class RegistrationForm extends Component
     private function rulesForStep(): array {
         return match($this->step) {
             1 => [
-                'last_name'      => 'required|string|max:100',
-                'first_name'     => 'required|string|max:100',
+                'last_name'      => 'required|string|max:100|alpha',
+                'first_name'     => 'required|string|max:100|alpha',
                 'birthdate'      => 'required|date|before:today',
                 'sex'            => 'required|in:Male,Female,Prefer not to say',
                 'civil_status'   => 'required|in:Single,Married,Widowed,Separated',
@@ -81,14 +81,14 @@ class RegistrationForm extends Component
                 'email'          => 'nullable|email|max:150',
             ],
             2 => [
-                'address'        => 'required|string|max:255',
+                'address'        => 'required|string|max:255|alpha_dash',
                 'municipality_id'=> 'required|exists:municipalities,id',
                 'barangay_id'    => 'required|exists:barangays,id',
             ],
             3 => [
-                'highest_level'  => 'required|string',
-                'course_program' => 'nullable|string|max:200',
-                'school_name'    => 'nullable|string|max:200',
+                'highest_level'  => 'required|string|alpha_num',
+                'course_program' => 'nullable|string|max:200|alpha_dash',
+                'school_name'    => 'nullable|string|max:200|alpha_dash',
                 'year_graduated' => 'nullable|integer|min:1950|max:'.(date('Y')+1),
             ],
             4 => [
