@@ -479,7 +479,7 @@
                     @else
           <form wire:submit.prevent="submit" class="bg-white rounded-2xl shadow-sm border border-slate-100">
 
-                    <button wire:click="submit"
+                    <button 
                             class="flex items-center gap-2 text-sm font-bold px-6 py-2.5 rounded-lg text-white transition-all hover:opacity-90 active:scale-95"
                             style="background:#2e7d32;">
                         <span wire:loading wire:target="submit">

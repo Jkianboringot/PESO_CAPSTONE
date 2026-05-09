@@ -97,9 +97,17 @@ class RegistrationForm extends Component {
         if ($this->step > 1) $this->step--;
     }
 
+//     private function allRules(): array
+// {
+//     return array_merge(
+//         ...collect(range(1, 5))
+//             ->map(fn($step) => $this->rulesForStep($step))
+//             ->toArray()
+//     );
+// }
     public function submit(DuplicateDetectionService $detector, AuditLogService $audit) {
         
-        $this->validate($this->rulesForStep());
+        $this->validate($this->rulesForStep()); //FIXME wrong use allRules - that current validate only validate the 5 one and you can skip prev step
 
         DB::transaction(function () use ($detector, $audit) {
             $applicant = Applicant::create([
