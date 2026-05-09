@@ -98,7 +98,6 @@ class RegistrationForm extends Component {
     }
 
     public function submit(DuplicateDetectionService $detector, AuditLogService $audit) {
-        
         $this->validate($this->rulesForStep());
 
         DB::transaction(function () use ($detector, $audit) {
@@ -113,8 +112,8 @@ class RegistrationForm extends Component {
                 'email'            => $this->email ?: null,
                 'address'          => $this->address,
                 'barangay_id'      => $this->barangay_id,
-                'consent_given'    => true, //CRITICAL they can skip process and go directly to submit so this is bad this need to be properly validated
-                'consent_given_at' => now(), //should only be now() if consent is true, the proper way
+                'consent_given'    => true,
+                'consent_given_at' => now(),
                 'status'           => 'Pending',
             ]);
 
@@ -125,23 +124,21 @@ class RegistrationForm extends Component {
                 'school_name'   => $this->school_name ?: null,
                 'year_graduated'=> $this->year_graduated ?: null,
             ]);
+
             $skillData = [];
-            foreach ($this->selected_skills as $skillId) { //REVIEW skill category is not store since skill holds that as FK
-                //skillId is the id of skill
-                $skillData[$skillId] = [ // REVIEW how skill proficiencies is encoded i dont get it, its like a double attach of skill id
+            foreach ($this->selected_skills as $skillId) {
+                $skillData[$skillId] = [
                     'proficiency_level' => $this->skill_proficiencies[$skillId] ?? 'Beginner',
                 ];
             }
-            // dd( $skillData);
-
             $applicant->skills()->attach($skillData);
 
-            $detector->detect($applicant); // QUEUE this but not sure
+            $detector->detect($applicant);
             $audit->logApplicantCreated($applicant);
             $this->reference_id = $applicant->reference_id;
         });
 
-        $this->submitted = true;//CRITICAL they can skip process and go directly to submit so this is bad this need to be properly validated
+        $this->submitted = true;
     }
 
     public function render() {
@@ -149,27 +146,6 @@ class RegistrationForm extends Component {
             'municipalities'   => Municipality::orderBy('name')->pluck('name', 'id'),
             'skillCategories'  => SkillCategory::with('skills')->orderBy('name')->get(),
             'proficiencyLevels'=> ['Beginner','Intermediate','Advanced','Expert'],
-        ])->layout('layouts.registration');
+        ])->layout('layouts.guest');
     }
 }
-
-            // dd( $ $this->skill_proficiencies);
-// array:3 [▼ // app\Livewire\RegistrationForm.php:127
-//   9 => "Advanced"
-//   10 => "Intermediate"
-//   20 => "Advanced"
-// ]
-
-
-            // dd( $skillData);
-// array:3 [▼ // app\Livewire\RegistrationForm.php:134
-//   9 => array:1 [▼
-//     "proficiency_level" => "Advanced"
-//   ]
-//   11 => array:1 [▼
-//     "proficiency_level" => "Intermediate"
-//   ]
-//   28 => array:1 [▼
-//     "proficiency_level" => "Intermediate"
-//   ]
-// ]

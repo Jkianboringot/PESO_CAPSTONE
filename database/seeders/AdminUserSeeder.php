@@ -18,13 +18,20 @@ class AdminUserSeeder extends Seeder
     {
             //    $adminRole = Role::where('slug', 'admin')->firstOrFail();
  
-        User::create([
+        User::create([[
             'name'      => 'PESO Administrator',
             'email'     => 'admin@peso-catanduanes.gov.ph',
-            'password'  => Hash::make('PESoAdmin@2025!'), // CHANGE IN PRODUCTION
+            'password'  => Hash::make('password'), // CHANGE IN PRODUCTION
             // 'role_id'   => $adminRole->id,
             'is_active' => true,
-        ]);
+        ],
+    [
+            'name'      => 'PESO Staff',
+            'email'     => 'staff@peso-catanduanes.gov.ph',
+            'password'  => Hash::make('password'), // CHANGE IN PRODUCTION
+            // 'role_id'   => $adminRole->id,
+            'is_active' => true,
+        ]]);
     }
 
     

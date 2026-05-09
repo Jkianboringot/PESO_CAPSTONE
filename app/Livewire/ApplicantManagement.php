@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Applicant;
 use App\Models\Barangay;
 use App\Models\SkillCategory;
+use App\Services\AuditLogService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -32,7 +33,9 @@ class ApplicantManagement extends Component
     public function updatingFilterStatus() { $this->resetPage(); }
     public function updatingFilterBarangay() { $this->resetPage(); }
  
-    public function openEdit(int $id) {
+    public function openEdit(int $id) { //safe id
+        //no // AUTHORIZE check
+
         $a = Applicant::findOrFail($id);
         $this->editingId = $id;
         $this->editData  = $a->only([
@@ -42,7 +45,9 @@ class ApplicantManagement extends Component
         $this->showModal = true;
     }
  
-    public function saveEdit( $audit) {
+    public function saveEdit(AuditLogService $audit) {
+        //no // AUTHORIZE check
+
         $this->validate([
             'editData.last_name'      => 'required|string|max:100',
             'editData.first_name'     => 'required|string|max:100',
@@ -51,7 +56,7 @@ class ApplicantManagement extends Component
         ]);
  
         $applicant = Applicant::findOrFail($this->editingId);
-        $before    = $applicant->only(array_keys($this->editData));
+        $before    = $applicant->only(array_keys($this->editData)); // REVIEW
         $applicant->update($this->editData);
  
         $audit->logApplicantUpdated($applicant, [
@@ -64,16 +69,22 @@ class ApplicantManagement extends Component
         session()->flash('success', 'Record updated successfully.');
     }
  
-    public function deactivate(int $id,  $audit) {
+    //this is good if they want for thier info to be remove, or not active for new job but they 
+    // are still in the system this save storage and comply with rule of data concern
+    public function deactivate(int $id, AuditLogService $audit) {
+        //no // AUTHORIZE check
+
         $a = Applicant::findOrFail($id);
         $a->update(['is_active' => false, 'status' => 'Inactive']);
-        $audit->log('APPLICANT_DEACTIVATED', $a);
+        $audit->logDeactivate($a);
     }
  
     public function render() {
+        //no // AUTHORIZE check
+
         $query = Applicant::with(['barangay.municipality', 'education', 'skills.category'])
             ->active()
-            ->when($this->search, fn($q) => $q->where(function($q) {
+            ->when($this->search, fn($q) => $q->where(function($q) { // REVIEW this always confuse me 
                 $q->where('last_name', 'like', "%{$this->search}%")
                   ->orWhere('first_name', 'like', "%{$this->search}%")
                   ->orWhere('reference_id', 'like', "%{$this->search}%");

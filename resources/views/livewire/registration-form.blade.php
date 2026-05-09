@@ -372,9 +372,16 @@
 
                                         @if(in_array($skill->id, $selected_skills))
                                         <div class="mt-2 ml-7">
-                                            <select wire:model="skill_proficiencies.{{ $skill->id }}"
+                                            <select wire:model="skill_proficiencies.{{ 1 }}"
                                                     class="w-full px-3 py-1.5 rounded-lg border border-[#1F4E79]/30 text-xs font-medium transition-all"
                                                     style="color:#1F4E79; background:#fff;">
+
+                                                    <!-- value of select so anyseelcted one is teh value, i forgot how select work fuck thats why i dont understand
+                                                     pretty much anything we select in option below will be send in backend as the 
+                                                     [skill_proficiencies.skill_id then skill level]
+                                                     //   9 => "Advanced"
+                                                    //   10 => "Intermediate"
+                                                    //   20 => "Advanced" -->
                                                 @foreach($proficiencyLevels as $pl)
                                                     <option>{{ $pl }}</option>
                                                 @endforeach

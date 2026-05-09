@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -15,17 +16,39 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        //         Role::insert([
-        //     ['name' => 'Staff',         'slug' => 'staff',         'created_at' => now(), 'updated_at' => now()],
-        //     ['name' => 'Administrator', 'slug' => 'admin',         'created_at' => now(), 'updated_at' => now()],
-        // ]);
-        $role_admin = Role::create(['name' => 'admin']);
-        $permission=Permission::create(['name'=>'manage users']);
+       // Create roles
+    $adminRole = Role::firstOrCreate([
+        'name' => 'admin',
+        'guard_name' => 'web'
+    ]);
 
-        $role_admin->givePermissionTo($permission);
+    $staffRole = Role::firstOrCreate([
+        'name' => 'staff',
+        'guard_name' => 'web'
+    ]);
 
-        $user=User::find(1);
+    // Admin
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@peso-catanduanes.gov.ph'],
+        [
+            'name'      => 'PESO Administrator',
+            'password'  => Hash::make('password'),
+            'is_active' => true,
+        ]
+    );
 
-        $user->assignRole($role_admin);
+    $admin->assignRole($adminRole);
+
+    // Staff
+    $staff = User::firstOrCreate(
+        ['email' => 'staff@peso-catanduanes.gov.ph'],
+        [
+            'name'      => 'PESO Staff',
+            'password'  => Hash::make('password'),
+            'is_active' => true,
+        ]
+    );
+
+    $staff->assignRole($staffRole);
     }
 }

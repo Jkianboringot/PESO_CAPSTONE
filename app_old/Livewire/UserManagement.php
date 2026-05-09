@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Livewire;
 
 use App\Models\{User, Role};
@@ -7,45 +6,38 @@ use App\Services\AuditLogService;
 use Livewire\Component;
 use Illuminate\Support\Facades\Hash;
 
-class UserManagement extends Component
-{
-       public bool   $showForm   = false;
-    public ?int   $editingId  = null;
-    public string $name       = '';
-    public string $email      = '';
-    public string $password   = '';
-    public string $role_id    = '';
- 
-    public function openCreate() {
+class UserManagement extends Component {
+    public bool   $showForm  = false;
+    public ?int   $editingId = null;
+    public string $name      = '';
+    public string $email     = '';
+    public string $password  = '';
+    public string $role_id   = '';
 
-        // no // AUTHORIZE check
+    public function openCreate() {
         $this->reset(['name','email','password','role_id','editingId']);
         $this->showForm = true;
     }
- 
+
     public function openEdit(int $id) {
-        //no // AUTHORIZE check
-        $user = User::findOrFail($id);
+        $user            = User::findOrFail($id);
         $this->editingId = $id;
-        $this->name    = $user->name;
-        $this->email   = $user->email;
-        $this->role_id = $user->role_id;
-        $this->password = '';
-        $this->showForm = true;
+        $this->name      = $user->name;
+        $this->email     = $user->email;
+        $this->role_id   = $user->role_id;
+        $this->password  = '';
+        $this->showForm  = true;
     }
- 
+
     public function save(AuditLogService $audit) {
-        //no // AUTHORIZE check
         $rules = [
             'name'    => 'required|string|max:100',
-            'email'   => 'required|email|unique:users,email' . ($this->editingId ? ",{$this->editingId}" : ''),//REVIEW
+            'email'   => 'required|email|unique:users,email' . ($this->editingId ? ",{$this->editingId}" : ''),
             'role_id' => 'required|exists:roles,id',
         ];
-        if (!$this->editingId) { //if we are not in editing form we require password
-            $rules['password'] = 'required|min:8';
-        }
+        if (!$this->editingId) $rules['password'] = 'required|min:8';
         $this->validate($rules);
- 
+
         if ($this->editingId) {
             $user = User::findOrFail($this->editingId);
             $data = ['name' => $this->name, 'email' => $this->email, 'role_id' => $this->role_id];
@@ -56,17 +48,17 @@ class UserManagement extends Component
             $user = User::create([
                 'name'     => $this->name,
                 'email'    => $this->email,
-                'password'=> Hash::make($this->password),
-                'role_id' => $this->role_id,
+                'password' => Hash::make($this->password),
+                'role_id'  => $this->role_id,
             ]);
             $audit->log('USER_CREATED', $user);
         }
+
         $this->showForm = false;
         session()->flash('success', 'User saved.');
     }
- 
+
     public function deactivate(int $id, AuditLogService $audit) {
-        // Prevent self-deactivation   - no // AUTHORIZE check
         if ($id === auth()->id()) {
             session()->flash('error', 'You cannot deactivate your own account.');
             return;
@@ -74,13 +66,13 @@ class UserManagement extends Component
         $user = User::findOrFail($id);
         $user->update(['is_active' => false]);
         $audit->log('USER_DEACTIVATED', $user);
+        session()->flash('success', 'User deactivated.');
     }
- 
+
     public function render() {
         return view('livewire.user-management', [
             'users' => User::with('role')->orderBy('name')->paginate(20),
             'roles' => Role::all(),
         ])->layout('layouts.app');
     }
-
 }

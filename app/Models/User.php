@@ -29,6 +29,7 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+
     protected $hidden = [
         'password',
         'remember_token',
@@ -47,10 +48,10 @@ class User extends Authenticatable
         ];
     }
 
-    public function role()
-    {
-        return $this->belongsTo(Role::class);
-    }
+    // public function role()
+    // {
+    //     return $this->belongsTo(Role::class);
+    // }
 
     public function auditLogs()
     {
@@ -58,18 +59,18 @@ class User extends Authenticatable
     }
 
     // Helper: check if user has a specific role slug
-    public function hasRole(string $slug): bool
-    {
-        return $this->role?->slug === $slug;
-    }
+    // public function hasRole(string $slug): bool
+    // {
+    //     return $this->role?->slug === $slug;
+    // }
 
-    public function isAdmin(): bool
-    {
-        return $this->hasRole('admin');
-    }
-    public function isStaff(): bool
-    {
-        return $this->hasRole('staff');
-    }
+    // public function isAdmin(): bool
+    // {
+    //     return $this->hasRole('admin');
+    // }
+    // public function isStaff(): bool
+    // {
+    //     return $this->hasRole('staff');
+    // }
 
 }

@@ -16,8 +16,12 @@ class DuplicateReview extends Component
     public string $resolutionNotes = '';
  
     public function openFlag(int $flagId) {
-        $this->reviewingFlagId = $flagId;
-        $this->activeFlag = DuplicateFlag::with([
+        $this->reviewingFlagId = $flagId; 
+        $this->activeFlag = DuplicateFlag::with([ 
+            // OPTIMIZE
+            // FIXME  we need to check if id exist first before eager loading data, 
+            //because if it does not exist we just eager load for nothing
+
             'newApplicant.barangay',
             'newApplicant.education',
             'newApplicant.skills.category',
@@ -30,9 +34,9 @@ class DuplicateReview extends Component
  
     public function resolve(string $action, AuditLogService $audit) {
         $allowed = ['Merged', 'Retained Both', 'Deleted'];
-        if (!in_array($action, $allowed)) abort(422, 'Invalid action');
+        if (!in_array($action, $allowed)) abort(422, 'Invalid action'); // REVIEW
  
-        $flag = DuplicateFlag::findOrFail($this->reviewingFlagId);
+        $flag = DuplicateFlag::findOrFail($this->reviewingFlagId); // REVIEW - no need for this because reviewFlagId cannot be change anymore but ok
  
         if ($action === 'Merged') {
             // Mark newer applicant as inactive; keep existing
@@ -41,18 +45,18 @@ class DuplicateReview extends Component
             // Soft-delete the newer applicant
             $flag->newApplicant->update(['is_active' => false, 'status' => 'Inactive']);
         }
-        // "Retained Both" — no record change, just resolve the flag
+        // "Retained Both" — no record change, just resolve the flag - means thier are diff people
  
         $flag->update([
             'resolution_status' => $action,
             'resolved_by'       => auth()->id(),
-            'resolution_notes'  => $this->resolutionNotes ?: null,
+            'resolution_notes'  => $this->resolutionNotes ?: null, // SANITIZE
             'resolved_at'       => now(),
         ]);
  
         $audit->logDuplicateResolved($flag, $action);
  
-        $this->reviewingFlagId = null;
+        $this->reviewingFlagId = null; // REMOVE-LATER
         $this->activeFlag = null;
         session()->flash('success', "Flag resolved: {$action}");
     }

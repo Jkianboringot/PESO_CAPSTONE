@@ -11,13 +11,13 @@ Route::get('/', function () {
 });
 Route::get('/job-portal', \App\Livewire\RegistrationForm::class)->name('register');
 
-Route::middleware(['auth', 'role:staff,admin'])->group(function () {
+Route::middleware(['auth', 'role:staff|admin'])->group(function () {
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::middleware(['role'])->get('/dashboard', Dashboard::class)->name('dashboard');
+    Route::get('/dashboard', Dashboard::class)->name('dashboard');
 
 
       // Applicant Management (CRUD, search, filter)
