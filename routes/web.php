@@ -9,13 +9,13 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect('dashboard');
 });
-Route::get('/job-portal', \App\Livewire\RegistrationForm::class)->name('register');
+Route::middleware(["throttle:5,1"])->get('/job-portal', \App\Livewire\RegistrationForm::class)->name('register');
 
-Route::middleware(['auth', 'role:staff|admin'])->group(function () {
+Route::middleware(['auth', 'role:staff|admin',"throttle:60,1"])->group(function () {
 
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
 
@@ -30,7 +30,7 @@ Route::middleware(['auth', 'role:staff|admin'])->group(function () {
     Route::get('/analytics', \App\Livewire\WorkforceAnalyticsDashboard::class)->name('analytics');
 
     // Report Generation
-    Route::get('/reports', \App\Livewire\ReportGenerator::class)->name('reports');
+    // Route::get('/reports', \App\Livewire\ReportGenerator::class)->name('reports');
 
     // Skills Gap Analysis
     Route::get('/skills-gap', \App\Livewire\SkillsGapAnalysis::class)->name('skills-gap');

@@ -31,6 +31,7 @@ class DuplicateDetectionService {
                 $score++; $phonetic = true;
             }
 
+          
             // ── Criterion 2: Exact birthdate match ─────────────────
             if ($newApplicant->birthdate->isSameDay($existing->birthdate)) {
                 $score++; $bdate = true;

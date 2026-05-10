@@ -61,7 +61,7 @@
                         </td>
                         <td class="px-4 py-3" style="color: #475569;">{{ $flag->created_at->format('M d, Y') }}</td>
                         <td class="px-4 py-3">
-                            <button wire:click="openFlag({{ $flag->id }})"
+                            <button wire:click="openFlag({{ ($flag->id) }})"
                                     class="text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200"
                                     style="color: #2563eb; border-color: #bfdbfe;">
                                 Review
@@ -88,7 +88,7 @@
     </div>
 
     @else
-    {{-- Side-by-side comparison view --}}
+    {{-- Side-by-side comparison view 
     <div class="mb-4">
         <button wire:click="$set('activeFlag', null)"
                 class="text-xs font-medium px-4 py-2 rounded-lg border transition-colors hover:bg-slate-50"
@@ -96,6 +96,7 @@
             <i class="fas fa-arrow-left mr-1.5"></i> Back to Queue
         </button>
     </div>
+    --}}
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
         @foreach([['NEW (Incoming)', $activeFlag->newApplicant, '#fee2e2', '#dc2626'], ['EXISTING (On Record)', $activeFlag->existingApplicant, '#eff6ff', '#2563eb']] as [$label, $applicant, $headerBg, $headerColor])

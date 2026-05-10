@@ -97,14 +97,14 @@
 
         </div>
 
-        {{-- Apply Filters row --}}
+        <!-- {{-- Apply Filters row --}}
         <div class="flex justify-end mt-3 pt-3 border-t" style="border-color: #f1f5f9;">
             <button wire:click="$refresh"
                     class="text-xs font-semibold px-5 py-2 rounded-lg text-white transition-opacity hover:opacity-90"
                     style="background: #16a34a;">
                 <i class="fas fa-filter mr-1.5"></i> Apply Filters
             </button>
-        </div>
+        </div> -->
     </div>
 
     {{-- ===================== CHART GRID 2x2 ===================== --}}

@@ -12,6 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('duplicate_flags', function (Blueprint $table) {
+            $table->id();
+
             // The newer record that triggered the detection
             $table->foreignId('applicant_id_new')
                   ->constrained('applicants')

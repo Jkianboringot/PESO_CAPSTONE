@@ -72,7 +72,7 @@
             </div>
 
         </div>
-        <div class="flex justify-end mt-3 pt-3 border-t gap-2" style="border-color: #f1f5f9;">
+        <!-- <div class="flex justify-end mt-3 pt-3 border-t gap-2" style="border-color: #f1f5f9;">
             <button wire:click="$set('search','');$set('filterStatus','');$set('filterEdLevel','');$set('filterCategory','');$set('filterFrom','');$set('filterTo','')"
                     class="text-xs font-semibold px-4 py-2 rounded-lg border transition-colors hover:bg-slate-50"
                     style="color: #64748b; border-color: #d1d5db;">
@@ -83,7 +83,7 @@
                     style="background: #16a34a;">
                 <i class="fas fa-filter mr-1.5"></i> Apply Filters
             </button>
-        </div>
+        </div> -->
     </div>
 
     {{-- ===================== TABLE ===================== --}}

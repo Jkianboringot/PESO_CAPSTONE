@@ -11,12 +11,16 @@ class DuplicateReview extends Component
 {
        use WithPagination;
  
-    public ?int  $reviewingFlagId = null;
+    public ?int  $reviewingFlagId = null; // SANITIZE
     public ?DuplicateFlag $activeFlag = null;
     public string $resolutionNotes = '';
  
-    public function openFlag(int $flagId) {
+    public function openFlag(int $flagId) {  // SANITIZE
+        // SECURE needs authorization
+
         $this->reviewingFlagId = $flagId; 
+        // dd($this->reviewingFlagId);
+
         $this->activeFlag = DuplicateFlag::with([ 
             // OPTIMIZE
             // FIXME  we need to check if id exist first before eager loading data, 
@@ -33,6 +37,7 @@ class DuplicateReview extends Component
     }
  
     public function resolve(string $action, AuditLogService $audit) {
+        // SECURE needs authorization
         $allowed = ['Merged', 'Retained Both', 'Deleted'];
         if (!in_array($action, $allowed)) abort(422, 'Invalid action'); // REVIEW
  
