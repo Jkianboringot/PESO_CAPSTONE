@@ -113,7 +113,10 @@
                         <td class="px-4 py-3" style="color: #475569;">{{ $user->email }}</td>
                         <td class="px-4 py-3">
                             <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold" style="background: #eff6ff; color: #1d4ed8;">
-                                {{ $user->role?->name }}
+                                @foreach ($user->roles as $role )
+                                {{ $role?->name }}
+                                    
+                                @endforeach
                             </span>
                         </td>
                         <td class="px-4 py-3">
@@ -162,7 +165,5 @@
         @endif
     </div>
 
-    <div class="text-center mt-6">
-        <p class="text-xs italic" style="color: #94a3b8;">Design Pattern: Shneiderman's Information-Seeking Mantra</p>
-    </div>
+    
 </div>
