@@ -30,7 +30,7 @@ Route::middleware(['auth', 'role:staff|admin',"throttle:60,1"])->group(function 
     Route::get('/analytics', \App\Livewire\WorkforceAnalyticsDashboard::class)->name('analytics');
 
     // Report Generation
-    // Route::get('/reports', \App\Livewire\ReportGenerator::class)->name('reports');
+    Route::get('/reports', \App\Livewire\ReportGenerator::class)->name('reports');
 
     // Skills Gap Analysis
     Route::get('/skills-gap', \App\Livewire\SkillsGapAnalysis::class)->name('skills-gap');

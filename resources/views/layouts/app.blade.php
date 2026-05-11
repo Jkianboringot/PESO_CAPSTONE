@@ -105,13 +105,13 @@
                 </a>
 
                 <!-- Reports -->
-                {{-- <a href="{{ route('reports') }}"
+                 <a href="{{ route('reports') }}"
                     class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
                       {{ request()->routeIs('reports') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
                     <i
                         class="fas fa-file-alt w-4 text-center {{ request()->routeIs('reports') ? 'text-blue-400' : 'text-slate-400' }}"></i>
                     <span>Report Generation</span>
-            </a> --}}
+            </a> 
 
                 <!-- Duplicates -->
                 <a href="{{ route('duplicates') }}"
