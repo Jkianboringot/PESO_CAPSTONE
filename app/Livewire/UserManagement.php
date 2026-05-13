@@ -66,6 +66,7 @@ class UserManagement extends Component
             403
         );
 
+
         $rules = [
             'name' => 'required|string|max:100',
             'email' => 'required|email|unique:users,email' . ($this->editingId ? ",{$this->editingId}" : ''),//REVIEW
@@ -76,7 +77,7 @@ class UserManagement extends Component
         }
         $this->validate($rules);
 
-        //SECURE-DB transaction
+        //SECURE-DB transaction or try catch
         if ($this->editingId) {
             $user = User::findOrFail($this->editingId);
 

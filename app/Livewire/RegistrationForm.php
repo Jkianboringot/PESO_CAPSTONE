@@ -109,6 +109,8 @@ class RegistrationForm extends Component {
         
         $this->validate($this->rulesForStep()); //FIXME wrong use allRules - that current validate only validate the 5 one and you can skip prev step
 
+
+        //SECURE - no try catch
         DB::transaction(function () use ($detector, $audit) {
             $applicant = Applicant::create([
                 'last_name'        => $this->last_name,

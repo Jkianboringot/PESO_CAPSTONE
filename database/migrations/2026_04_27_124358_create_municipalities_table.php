@@ -12,8 +12,8 @@ return new class extends Migration {
     {
         Schema::create('municipalities', function (Blueprint $table) {
             $table->id();
-            $table->string('name');   // e.g., "Virac"
-            $table->string('province')->default('Catanduanes');
+            $table->string('name',75);   // e.g., "Virac"
+            $table->string('province',45)->default('Catanduanes');
 
             $table->timestamps();
         });

@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Livewire\AuditLog;
 use App\Livewire\Dashboard;
+use App\Livewire\Geogrophical;
 use Illuminate\Support\Facades\Route;
 
 
@@ -34,12 +36,14 @@ Route::middleware(['auth', 'role:staff|admin',"throttle:60,1"])->group(function 
 
     // Skills Gap Analysis
     Route::get('/skills-gap', \App\Livewire\SkillsGapAnalysis::class)->name('skills-gap');
+    Route::get('/geogrophical', Geogrophical::class)->name('geogrophical');
 });
 
 
   //Admin 
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/users', \App\Livewire\UserManagement::class)->name('admin.users');
+    route::get('admin/audit-logs',AuditLog::class)->name('admin.audit-logs');
 });
 
 require __DIR__.'/auth.php';

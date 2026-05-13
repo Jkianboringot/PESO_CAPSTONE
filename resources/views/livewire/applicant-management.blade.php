@@ -94,10 +94,7 @@
             <span class="text-sm font-semibold text-white">
                 <i class="fas fa-table mr-2 opacity-70"></i>Applicant Records
             </span>
-            <span class="text-xs" style="color: #94a3b8;"
-                  wire:loading wire:target="search,filterStatus,filterEdLevel,filterCategory,filterFrom,filterTo">
-                <i class="fas fa-spinner fa-spin mr-1"></i> Loading...
-            </span>
+      
         </div>
 
         {{-- Column headers --}}
@@ -105,6 +102,7 @@
             <table class="w-full text-xs">
                 <thead>
                     <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                        <!-- // OPTIMIZE - create a component for this if livewire is good enough for system, this too repeatitive -->
                         <th class="px-4 py-3 text-left font-semibold uppercase tracking-wide" style="color: #64748b; font-size: 10px;">Reference ID</th>
                         <th class="px-4 py-3 text-left font-semibold uppercase tracking-wide" style="color: #64748b; font-size: 10px;">Name</th>
                         <th class="px-4 py-3 text-left font-semibold uppercase tracking-wide" style="color: #64748b; font-size: 10px;">Barangay / Municipality</th>
