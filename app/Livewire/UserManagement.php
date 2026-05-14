@@ -29,7 +29,7 @@ class UserManagement extends Component
     public function openCreate()
     {
 
-        // no // AUTHORIZE check
+
         $this->reset(['name', 'email', 'password', 'role_id', 'editingId']);
         $this->showForm = true;
     }
@@ -45,7 +45,7 @@ class UserManagement extends Component
         foreach ($user->roles as $role) {
             $this->currentRoleId = $role->id;
         }
-        //no // AUTHORIZE check
+
 
         $this->editingId = $id;
         $this->name = $user->name;
@@ -60,7 +60,6 @@ class UserManagement extends Component
     public function save(AuditLogService $audit)
     {
 
-        //no // AUTHORIZE check
         abort_if(
             !auth()->user()->hasRole('admin'),
             403

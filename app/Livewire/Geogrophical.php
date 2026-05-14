@@ -16,7 +16,7 @@ class Geogrophical extends Component
     public string $municipalityName = '';
     public string $municipalityProvince = '';
 
-    public bool    $showModal      = false;
+    public bool $showModal = false;
 
     public string $barangayName = '';
 
@@ -43,24 +43,35 @@ class Geogrophical extends Component
 
         return $validateBarangay;
     }
-    public function openCreate() { 
+    public function openCreate()
+    {
+
         $this->showModal = true;
+    }
+
+    public function geoCreate()
+    {
+        Barangay::create([
+            'name' => $this->barangayName,
+            'municipality_id' => $this->municipalityID,
+        ])->save();
     }
 
     public function save()
     {
+        abort_if( // TODO-LATER - dont use this, use a proper message error , this is just for testing
+            !auth()->user()->hasRole(['staff', 'admin']),
+            403
+        );
 
         // dd($this->municipalityID);
 
         // $this->validate($this->rules());
         try {
-            Barangay::create([
-                'name'=>$this->barangayName,
-                'municipality_id'=>$this->municipalityID,
-            ])->save();
-            //might be over kill but we will need need this in the future  
 
-             return redirect()->route('geogrophical')
+            $this->geoCreate();
+
+            return redirect()->route('geogrophical')
                 ->with('success', 'Successfully Created.');
         } catch (\Throwable $th) {
             Log::error($th); //TODO-LATER make sure all has this, logging

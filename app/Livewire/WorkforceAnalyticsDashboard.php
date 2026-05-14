@@ -79,6 +79,8 @@ class WorkforceAnalyticsDashboard extends Component {
     }
 
     public function render() {
+    //CACHE - cache this as it is use available alot, but think about this am not an expert in cache
+
         return view('livewire.workforce-analytics-dashboard', [
             'chartData'      => $this->buildChartData(),
             'categories'     => SkillCategory::orderBy('name')->pluck('name','id'),

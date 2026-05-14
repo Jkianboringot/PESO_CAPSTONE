@@ -8,11 +8,16 @@ use Livewire\WithPagination;
 
 class AuditLog extends Component
 {
-            use WithPagination;
+    use WithPagination;
 
     public function render()
     {
-        $auditLogs=ModelsAuditLog::orderBy('created_at')->paginate(20);
-        return view('livewire.audit-log',['auditLogs'=>$auditLogs]);
+        abort_if( // TODO-LATER - dont use this, use a proper message error , this is just for testing
+            // REVIEW - although this is protected by route, is that enough? learn about this see if this can still be access
+            !auth()->user()->hasRole([ 'admin']),
+            403
+        );
+        $auditLogs = ModelsAuditLog::orderBy('created_at')->paginate(20);
+        return view('livewire.audit-log', ['auditLogs' => $auditLogs]);
     }
 }

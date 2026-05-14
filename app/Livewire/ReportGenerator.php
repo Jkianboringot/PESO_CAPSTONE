@@ -20,7 +20,10 @@ class ReportGenerator extends Component
     public string $format       = 'xlsx';  // xlsx or csv
  
     public function generate(AuditLogService $audit) {
-        //no // AUTHORIZE check
+        abort_if( // TODO-LATER - dont use this, use a proper message error , this is just for testing
+            !auth()->user()->hasRole(['staff','admin']),
+            403
+        );
 
         $this->validate([
             'dateFrom' => 'nullable|date',

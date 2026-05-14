@@ -13,6 +13,7 @@ class SkillsGapAnalysis extends Component
     public int $threshold = 10; // Skills with fewer applicants than this = gap
  
     public function render() {
+    //CACHE - since does not change much this is a good cache
         $skillRanking = DB::table('applicant_skill')
             ->join('skills', 'skills.id', '=', 'applicant_skill.skill_id')
             ->join('skill_categories', 'skill_categories.id', '=', 'skills.skill_category_id')

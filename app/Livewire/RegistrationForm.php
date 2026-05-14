@@ -53,6 +53,7 @@ class RegistrationForm extends Component {
     }
 
     private function loadBarangays() {
+    //CACHE - maybe i can cache this, so when one applies server just cache it and next applicant can just get that
         $this->barangays = Barangay::where('municipality_id', $this->municipality_id)
             ->orderBy('name')->pluck('name', 'id')->toArray();
     }

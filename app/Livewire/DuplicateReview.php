@@ -9,19 +9,20 @@ use Livewire\WithPagination;
 
 class DuplicateReview extends Component
 {
-       use WithPagination;
- 
-    public ?int  $reviewingFlagId = null; // SANITIZE
+    use WithPagination;
+
+    public ?int $reviewingFlagId = null; // SANITIZE
     public ?DuplicateFlag $activeFlag = null;
     public string $resolutionNotes = '';
- 
-    public function openFlag(int $flagId) {  // SANITIZE
+
+    public function openFlag(int $flagId)
+    {  // SANITIZE
         // SECURE needs authorization
 
-        $this->reviewingFlagId = $flagId; 
+        $this->reviewingFlagId = $flagId;
         // dd($this->reviewingFlagId);
 
-        $this->activeFlag = DuplicateFlag::with([ 
+        $this->activeFlag = DuplicateFlag::with([
             // OPTIMIZE
             // FIXME  we need to check if id exist first before eager loading data, 
             //because if it does not exist we just eager load for nothing
@@ -35,14 +36,19 @@ class DuplicateReview extends Component
         ])->findOrFail($flagId);
         $this->resolutionNotes = '';
     }
- 
-    public function resolve(string $action, AuditLogService $audit) {
-        // SECURE needs authorization
+
+    public function resolve(string $action, AuditLogService $audit)
+    {
+        abort_if( // TODO-LATER - dont use this, use a proper message error , this is just for testing
+            !auth()->user()->hasRole(['staff', 'admin']),
+            403
+        );
         $allowed = ['Merged', 'Retained Both', 'Deleted'];
-        if (!in_array($action, $allowed)) abort(422, 'Invalid action'); // REVIEW
- 
+        if (!in_array($action, $allowed))
+            abort(422, 'Invalid action'); // REVIEW
+
         $flag = DuplicateFlag::findOrFail($this->reviewingFlagId); // REVIEW - no need for this because reviewFlagId cannot be change anymore but ok
- 
+
         if ($action === 'Merged') {
             // Mark newer applicant as inactive; keep existing
             $flag->newApplicant->update(['is_active' => false, 'status' => 'Inactive']);
@@ -51,22 +57,23 @@ class DuplicateReview extends Component
             $flag->newApplicant->update(['is_active' => false, 'status' => 'Inactive']);
         }
         // "Retained Both" — no record change, just resolve the flag - means thier are diff people
- 
+
         $flag->update([
             'resolution_status' => $action,
-            'resolved_by'       => auth()->id(),
-            'resolution_notes'  => $this->resolutionNotes ?: null, // SANITIZE
-            'resolved_at'       => now(),
+            'resolved_by' => auth()->id(),
+            'resolution_notes' => $this->resolutionNotes ?: null, // SANITIZE
+            'resolved_at' => now(),
         ]);
- 
+
         $audit->logDuplicateResolved($flag, $action);
- 
+
         $this->reviewingFlagId = null; // REMOVE-LATER
         $this->activeFlag = null;
         session()->flash('success', "Flag resolved: {$action}");
     }
- 
-    public function render() {
+
+    public function render()
+    {
         return view('livewire.duplicate-review', [
             'flags' => DuplicateFlag::pending()
                 ->with(['newApplicant', 'existingApplicant'])

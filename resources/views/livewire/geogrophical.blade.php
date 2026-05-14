@@ -95,6 +95,7 @@
 
     </div>
 
+    
     @if($showModal)
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background: rgba(0,0,0,0.5);">
             <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden">

@@ -1,66 +1,200 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PESO Connect
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A web-based workforce skills registration and analytics system built for the Public Employment Service Office (PESO) of Catanduanes Province. It replaces paper-based registration and manual DOLE reporting with a centralized digital platform.
 
-## About Laravel
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## What It Does
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- Lets residents register their skills online — no office visit required
+- Detects duplicate registrations using a phonetic + demographic matching algorithm
+- Provides an interactive analytics dashboard with charts by skill, education, barangay, and registration trend
+- Generates DOLE BLE-compliant workforce reports as CSV or Excel
+- Maintains a full audit trail for RA 10173 (Data Privacy Act) compliance
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Tech Stack
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+| Layer | Technology |
+|---|---|
+| Backend | Laravel 12 (PHP 8.3+) |
+| Reactive UI | Livewire 3 |
+| Database | MySQL 8.0 |
+| CSS / UI | Bootstrap 5.3 |
+| Charts | Chart.js 4 |
+| Build Tool | Vite 5 |
+| Excel Export | Maatwebsite/Excel 3 |
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## Prerequisites
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Make sure these are installed before you begin:
 
-### Premium Partners
+- PHP 8.2+ — `php --version`
+- Composer 2.x — `composer --version`
+- MySQL 8.0+ — `mysql --version`
+- Node.js 18+ and npm — `node --version`
+- Git — `git --version`
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+---
 
-## Contributing
+## Installation
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 1. Clone the repository
 
-## Code of Conduct
+```bash
+git clone https://github.com/Jkianboringot/PESO_CAPSTONE
+cd PESO_CONNECT
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 2. Install PHP dependencies
 
-## Security Vulnerabilities
+```bash
+composer install
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 3. Install frontend dependencies
+
+```bash
+npm install
+```
+
+### 4. Set up your environment file
+
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+Open `.env` and set your database credentials:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=peso_connect
+DB_USERNAME=root
+DB_PASSWORD=your_password
+
+APP_NAME="PESO Connect"
+APP_URL=http://localhost:8000
+SESSION_DRIVER=database
+```
+
+### 5. Create the database
+
+```bash
+mysql -u root -p -e "CREATE DATABASE peso_connect CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+```
+
+### 6. Run migrations and seed data
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+This creates all 11 tables and seeds:
+- All 11 Catanduanes municipalities and their barangays
+- 10 PQF-aligned skill categories and ~45 skills
+- Staff and Administrator roles
+- A default admin account (see credentials below)
+
+### 7. Build frontend assets
+
+```bash
+npm run build
+```
+
+### 8. Start the development server
+
+```bash
+php artisan serve
+```
+
+The app is now running at **http://localhost:8000**
+
+---
+
+## Default Credentials
+
+> **Change these before deploying to production.**
+
+| Field | Value |
+|---|---|
+| URL | http://localhost:8000/login |
+| Email | admin@peso-catanduanes.gov.ph |
+| Password | PESoAdmin@2025! |
+
+---
+
+## User Roles
+
+There are three access levels in the system:
+
+**Resident Applicant** — No login required. Accesses the public registration form at `/register`. Submits personal info, education, and skills. Receives a unique Reference ID on completion.
+
+**PESO Staff** — Authenticated users with the `staff` role. Can manage applicant records, review duplicate flags, view analytics, and download DOLE reports. Cannot manage user accounts.
+
+**Administrator** — Has all staff permissions plus access to `/admin/users` for creating, editing, and deactivating staff accounts and `/admin/audit-logs` viewing activity logs of staff and admin.
+
+---
+
+## Key URLs
+
+| URL | Access | Description |
+|---|---|---|
+| `/` | Public | Landing page |
+| `/register` | Public | Resident skills registration form |
+| `/login` | Public | Staff / Admin login |
+| `/dashboard` | Staff + Admin | Summary statistics |
+| `/applicants` | Staff + Admin | Applicant records (search, filter, edit) |
+| `/analytics` | Staff + Admin | Workforce analytics dashboard |
+| `/duplicates` | Staff + Admin | Duplicate flag review queue |
+| `/reports` | Staff + Admin | DOLE report generator |
+| `/skills-gap` | Staff + Admin | Skills gap analysis |
+| `/geogrophical` | Staff + Admin | Geogrophical management |
+| `/admin/users` | Admin only | User account management |
+| `/admin/autdit-logs` | Admin only | Audit logs |
+---
+
+## Project Structure
+
+```
+peso-connect/
+├── app/
+│   ├── Livewire/              # All reactive UI components
+│   ├── Models/                # Eloquent models (Applicant, Skill, etc.)
+│   ├── Exports/               # ApplicantsExport (Maatwebsite/Excel)
+│   └── Providers/              # DuplicateDetectionService, AuditLogService
+├── database/
+│   ├── migrations/            # 11 ordered migration files
+│   └── seeders/               # Geography, skills, roles, admin user
+├── resources/
+│   └── views/
+│       ├── layouts/           # app.blade.php, guest.blade.php
+│       └── livewire/          # Blade views for each component
+└── routes/
+    └── web.php                # All application routes
+```
+
+---
+
+## How Duplicate Detection Works
+
+When a new applicant submits the form, the system scores them against all existing active applicants using three criteria:
+
+1. **Phonetic name match** — Uses PHP's `metaphone()` function on the last name, with an 85% string similarity fallback for typos
+2. **Exact birthdate match** — Compares full date of birth
+3. **Contact number match** — Compares the last 7 digits (handles `+63`, `0`, and `63` prefixes)
+
+A score of **2 or more** creates a duplicate flag and sets the applicant's status to `Flagged`. PESO staff then review flagged pairs side-by-side and choose to Merge, Retain Both, or Delete the newer record.
+
+---
+
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project was developed as a capstone project for BSIS 3A at Catanduanes State University (2025–2026). For academic and institutional use.
