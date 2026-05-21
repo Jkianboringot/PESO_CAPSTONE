@@ -60,6 +60,14 @@ class RegistrationForm extends Component {
 
     private function rulesForStep(): array {
         return match($this->step) {
+            //needs to be customize to comply with ISO , we need error message to be
+            //more detailed
+                // example - example below is put as second parameter $this->validate([...],['this one'])
+            //    [
+            //     'name.required' => 'Name is required.',
+            //     'name.max' => 'Name must not exceed 50 characters.',
+            //     'name.regex' => 'Name must contain letters only and single spaces between words.',
+            // ] use this 'regex:/^[A-Za-z]+(?: [A-Za-z]+)*$/' in validation
             1 => [
                 'last_name'      => 'required|string|max:100',
                 'first_name'     => 'required|string|max:100',

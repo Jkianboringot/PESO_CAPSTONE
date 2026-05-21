@@ -84,13 +84,9 @@ APP_URL=http://localhost:8000
 SESSION_DRIVER=database
 ```
 
-### 5. Create the database
 
-```bash
-mysql -u root -p -e "CREATE DATABASE peso_connect CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-```
 
-### 6. Run migrations and seed data
+### 5. Run migrations and seed data
 
 ```bash
 php artisan migrate:fresh --seed
@@ -102,13 +98,13 @@ This creates all 11 tables and seeds:
 - Staff and Administrator roles
 - A default admin account (see credentials below)
 
-### 7. Build frontend assets
+### 6. Build frontend assets
 
 ```bash
 npm run build
 ```
 
-### 8. Start the development server
+### 7. Start the development server
 
 ```bash
 php artisan serve
@@ -118,17 +114,6 @@ The app is now running at **http://localhost:8000**
 
 ---
 
-## Default Credentials
-
-> **Change these before deploying to production.**
-
-| Field | Value |
-|---|---|
-| URL | http://localhost:8000/login |
-| Email | admin@peso-catanduanes.gov.ph |
-| Password | PESoAdmin@2025! |
-
----
 
 ## User Roles
 

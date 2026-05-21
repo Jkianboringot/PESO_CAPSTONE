@@ -1,7 +1,11 @@
 <?php
 
+use App\Providers\AppServiceProvider;
+use App\Services\AuditLogService;
+use App\Services\DuplicateDetectionService;
+
 return [
-    App\Providers\AppServiceProvider::class,
-    App\Providers\AuditLogService::class,
-    App\Providers\DuplicateDetectionService::class,
+    AppServiceProvider::class,
+    AuditLogService::class,
+    DuplicateDetectionService::class,
 ];
