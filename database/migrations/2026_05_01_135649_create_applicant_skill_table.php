@@ -22,7 +22,7 @@ return new class extends Migration {
                 ['Beginner', 'Intermediate', 'Advanced', 'Expert']
             )
                 ->default('Beginner');
-            $table->primary(['applicant_id', 'skill_id']); // Composite PK
+            $table->primary(['applicant_id', 'skill_id']); 
         });
     }
 

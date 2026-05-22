@@ -21,7 +21,6 @@ class Applicant extends Model
         'consent_given_at'=> 'datetime',
     ];
  
-    // Auto-generate reference_id and metaphone before creating
     protected static function boot(): void {
         parent::boot();
         static::creating(function ($applicant) {
@@ -41,7 +40,6 @@ class Applicant extends Model
         return $this->hasMany(DuplicateFlag::class, 'applicant_id_new');
     }
  
-    // Scopes for filtering (used by Livewire components)
     public function scopeActive(Builder $q) { return $q->where('is_active', true); }
     public function scopeByBarangay(Builder $q, $id) {
         return $id ? $q->where('barangay_id', $id) : $q;

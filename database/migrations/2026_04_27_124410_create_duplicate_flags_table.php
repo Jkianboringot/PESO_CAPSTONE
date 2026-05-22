@@ -14,20 +14,19 @@ return new class extends Migration
         Schema::create('duplicate_flags', function (Blueprint $table) {
             $table->id();
 
-            // The newer record that triggered the detection
             $table->foreignId('applicant_id_new')
                   ->constrained('applicants')
                   ->restrictOnDelete();
-            // The existing record that matched
-            $table->foreignId('applicant_id_existing')
+
+                  $table->foreignId('applicant_id_existing')
                   ->constrained('applicants')
                   ->restrictOnDelete();
-            // Criteria matched (2 or 3 of the composite algorithm)
             $table->boolean('matched_phonetic')->default(false);
             $table->boolean('matched_birthdate')->default(false);
             $table->boolean('matched_contact')->default(false);
-            $table->unsignedTinyInteger('match_score'); // 2 or 3
-            // Resolution fields
+
+            $table->unsignedTinyInteger('match_score'); 
+
             $table->enum('resolution_status',
                   ['Pending','Merged','Retained Both','Deleted'])
                   ->default('Pending');
@@ -35,6 +34,7 @@ return new class extends Migration
                   ->nullable()
                   ->constrained('users')
                   ->nullOnDelete();
+                  
             $table->text('resolution_notes')->nullable();
             $table->timestamp('resolved_at')->nullable();
             $table->timestamps();

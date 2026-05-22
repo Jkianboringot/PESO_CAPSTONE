@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class SkillsGapAnalysis extends Component
 {
-    public int $threshold = 10; // Skills with fewer applicants than this = gap
+    public int $threshold = 10; 
  
     public function render() {
     //CACHE - since does not change much this is a good cache

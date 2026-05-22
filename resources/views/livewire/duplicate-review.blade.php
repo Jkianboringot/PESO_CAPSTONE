@@ -1,4 +1,3 @@
-{{-- resources/views/livewire/duplicates.blade.php --}}
 <div>
     <x-slot name="title">Duplicate Review</x-slot>
 

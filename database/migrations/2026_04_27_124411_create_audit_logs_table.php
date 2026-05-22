@@ -14,13 +14,17 @@ return new class extends Migration
         Schema::create('audit_logs', function (Blueprint $table) {
            $table->id();
             $table->foreignId('user_id')
-                  ->nullable()  // null = guest/applicant action
+                  ->nullable() 
                   ->constrained('users')
                   ->nullOnDelete();
-            $table->string('action');         // e.g., "APPLICANT_CREATED"
-            $table->string('model_type')->nullable(); // e.g., "Applicant"
+            $table->string('action');        
+            $table->string('model_type')->nullable(); 
+
+
             $table->unsignedBigInteger('model_id')->nullable();
-            $table->json('changes')->nullable();   // Before/after JSON diff
+
+            $table->json('changes')->nullable();   
+            
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             $table->timestamps();

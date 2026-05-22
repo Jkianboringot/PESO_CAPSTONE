@@ -1,0 +1,40 @@
+1.new program post
+    i dont want to make this system a full philjob.net thing because of all the things we need 
+    to consider, let put aside that we need to know how to aunthenticate someone properly 
+    by phone number or email, we also have to do that to business and ensure they actually pay
+    and along with checks for xss, and curses , vulgar word or what not, that not evne all but if we did put something like that the best thing to do in my Opinion is to just have a posting but it be focus on programs and this post can only be created by staff so we dont hve to worry about almost all issues becuase they would most likely not do that as it is thier job ,but its better if we have enforce regulation about that in system, any way for now the best way is to just let staff post prgam that user can apply , btw this programs are course where you are thought a certian subject for a limited amount of time pretty much up skilling.
+
+    -created a small draft for this new post program, below figure
+
+2.flexibilty
+    the system currently has no way to add new skill, barangay, municipality, category which is bad because if the system did grow it cant keep up becuase as of now thier is no new way to create does data input, so i will add some for both
+
+3.validation 
+    since this system data entry is mostly from resident i can i can be super strict in validation of registration, so i use alpha or regrex
+
+4.upgrade
+    i kind want ot make this system api or atleast close to it if its required but since system only care about interactivility and the descritive analysis its fine not too, but if am bored i will do it
+
+5.cache
+    this system is mostly read , since i dont expect every body to registrer all the time, and also we ahve alot of dashboard or charts and since client will spend most of the time thier it might be work to cache or index things
+
+6.queue
+    queue the service since it is not needed to be run at the same time but we need good testing here beucase what if it fail somehow
+
+7.testing
+    i do want this personally but if we can just do manual testing why not do that, althought system is super simple especially with almost all query in applicant model i can just use that in unit,integration testing 
+
+
+8.client concern
+    -wantend registration to have qr code so they can go to endpoint with qrcode
+    -add postal in municipal and barangay section of registion
+    -email required
+    -add 'other' as a skills - point less since we wil make this expandable but if it is needed
+
+
+figure
+                    
+![fig1](75ffc499-23fc-438f-97c8-05194e3b7153.jpg)
+
+
+![fig2](75ffc499-23fc-438f-97c8-05194e3b7153-1.jpg)

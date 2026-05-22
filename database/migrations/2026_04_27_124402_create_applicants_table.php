@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('applicants', function (Blueprint $table) {
                     $table->id();
-            $table->string('reference_id')->unique(); // Generated on registration
+            $table->string('reference_id')->unique(); 
             $table->string('last_name');
             $table->string('first_name');
             $table->string('middle_name')->nullable();
@@ -29,13 +29,13 @@ return new class extends Migration
             $table->enum('status', ['Pending','Verified','Flagged','Inactive'])
                   ->default('Pending');
             $table->boolean('is_active')->default(true); 
-            $table->boolean('consent_given')->default(false); // RA 10173 compliance
+            $table->boolean('consent_given')->default(false); 
             $table->timestamp('consent_given_at')->nullable();
-            // Duplicate detection fields — store metaphone of last_name for fast lookup
+           
             $table->string('last_name_metaphone')->nullable()->index();
             $table->timestamps();
  
-            // Indexes for analytics query performance
+          
             $table->index(['birthdate']);
             $table->index(['sex']);
             $table->index(['civil_status']);

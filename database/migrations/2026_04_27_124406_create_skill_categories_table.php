@@ -12,8 +12,8 @@ return new class extends Migration {
     {
         Schema::create('skill_categories', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique();    // e.g., "ICT & Digital", "Agricultural"
-            $table->string('pqf_level')->nullable(); // PQF qualification level alignment
+            $table->string('name')->unique();   
+            $table->string('pqf_level')->nullable();
 
 
 
