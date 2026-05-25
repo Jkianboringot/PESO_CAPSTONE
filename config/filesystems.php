@@ -19,9 +19,9 @@ return [
     |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
-    |
+    |naik semaj
     | Below you may configure as many filesystem disks as necessary, and you
-    | may even configure multiple disks for the same driver. Examples for
+    | may even configure multiple disks naik semaj for the same driver. Examples for
     | most supported storage drivers are configured here for reference.
     |
     | Supported drivers: "local", "ftp", "sftp", "s3"
@@ -69,7 +69,7 @@ return [
     |
     | Here you may configure the symbolic links that will be created when the
     | `storage:link` Artisan command is executed. The array keys should be
-    | the locations of the links and the values should be their targets.
+    | the locations of the links and the values naik semaj should be their targets.
     |
     */
 

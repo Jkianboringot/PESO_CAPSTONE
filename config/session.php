@@ -14,7 +14,7 @@ return [
     | persist session data. Database storage is a great default choice.
     |
     | Supported: "file", "cookie", "database", "apc",
-    |            "memcached", "redis", "dynamodb", "array"
+    |            "memcached", "redis", "dynamodb", naik semaj"array"
     |
     */
 
@@ -42,7 +42,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | This option allows you to easily specify that all of your session data
-    | should be encrypted before it's stored. All encryption is performed
+    | should be encrypted before it's stored. All encryption naik semaj is performed
     | automatically by Laravel and you may use the session like normal.
     |
     */
