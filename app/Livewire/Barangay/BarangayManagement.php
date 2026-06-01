@@ -13,9 +13,7 @@ use Livewire\Component;
 class Geogrophical extends Component
 {
 
-    public string $municipalityName = '';
-    public string $municipalityProvince = '';
-
+    
     public bool $showModal = false;
 
     public string $barangayName = '';
@@ -27,18 +25,11 @@ class Geogrophical extends Component
     public function rules()
     {
 
-        $createMunicipality = false;
-        $validateMunicipality = [
-            'municipalityName' => 'required|string|max:75|min:5',
-            'municipalityProvince' => 'required|string|max:45|min:5|unique'
-        ];
-        if (!empty($this->municipalityName) || !empty($this->municipalityProvince)) {
-            $createMunicipality = true;
-        }
+        
         $validateBarangay = [
             'barangayName' => 'required|string|max:75|min:5',
             'municipalityID' => 'required|int|exist:municipalities,id',
-            $createMunicipality ?? $validateMunicipality
+            
         ];
 
         return $validateBarangay;
@@ -58,22 +49,8 @@ public function barangayCreate()
         ])->save();
     }
 
-public function barangayCreate()
-    {
-        Barangay::create([
-            'name' => $this->barangayName,
-            'municipality_id' => $this->municipalityID,
-        ])->save();
-    }
 
-    public function geoCreate()
-    {
-        Barangay::create([
-            'name' => $this->barangayName,
-            'municipality_id' => $this->municipalityID,
-        ])->save();
-    }
-
+    
     public function save()
     {
         abort_if( // TODO-LATER - dont use this, use a proper message error , this is just for testing
@@ -84,9 +61,12 @@ public function barangayCreate()
         // dd($this->municipalityID);
 
         // $this->validate($this->rules());
+        
+        //REVIEW - do i really need 5o try catch thisl i know transaction already has it
         try {
-
-            $this->geoCreate();
+DB::transaction(function () use ($detector, $audit) {
+            $this->barangayCreate();
+            )};
 
             return redirect()->route('geogrophical')
                 ->with('success', 'Successfully Created.');
@@ -103,9 +83,6 @@ public function barangayCreate()
     public function render()
     {
 
-        return view('livewire.geogrophical', [
-            'selectMunicipality' => Municipality::get(['id', 'name']),
-            'viewBarangays' => Barangay::with('municipality')->orderBy('name')->paginate(20)
-        ]);
+        return view('livewire.geogrophical');
     }
 }

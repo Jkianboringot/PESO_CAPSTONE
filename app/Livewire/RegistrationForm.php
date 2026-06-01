@@ -117,9 +117,12 @@ class RegistrationForm extends Component {
     public function submit(DuplicateDetectionService $detector, AuditLogService $audit) {
         
         $this->validate($this->rulesForStep()); //FIXME wrong use allRules - that current validate only validate the 5 one and you can skip prev step
+try {
+    
+} catch (Exception ) {
+}
 
-
-        //SECURE - no try catch
+        //SECURE - no try catch or errror hamd
         DB::transaction(function () use ($detector, $audit) {
             $applicant = Applicant::create([
                 'last_name'        => $this->last_name,
@@ -161,6 +164,11 @@ class RegistrationForm extends Component {
         });
 
         $this->submitted = true;//CRITICAL they can skip process and go directly to submit so this is bad this need to be properly validated
+    } catch (\Throwable $th) {
+        //REVIEW - do i even need to log this, like is this important enough to log, imean error here will be db error so maybe
+            Log::error($th); //TODO-LATER make sure all has this, logging
+            $this->dispatch('done', error: "Something went wrong. Please try again.");
+        }
     }
 
     public function render() {
