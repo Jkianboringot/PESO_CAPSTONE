@@ -28,7 +28,7 @@ class BarangayManagement extends Component
 
 
 
-        return  [
+        return [
             'barangayName' => 'required|string|max:75|min:5|alpha_dash',//alpha is tem, wil fix it later or replace it with regrex
             'municipalityID' => 'required|int|exist:municipalities,id',
 
@@ -86,6 +86,7 @@ class BarangayManagement extends Component
     public function render()
     {
 
-        return view('livewire.geogrophical');
+
+        return view('livewire.geogrophical', ['selectMunicipality' => Municipality::get(['id', 'name'])]);
     }
 }
