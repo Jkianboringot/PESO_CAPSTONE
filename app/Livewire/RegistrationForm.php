@@ -2,7 +2,8 @@
 namespace App\Livewire;
 
 use App\Models\{Applicant, Education, Barangay, Municipality, Skill, SkillCategory};
-use App\Services\{DuplicateDetectionService, AuditLogService};
+use App\Services\DuplicateDetectionService;
+use App\Services\AuditLogService;
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;

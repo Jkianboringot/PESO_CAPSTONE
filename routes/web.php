@@ -12,7 +12,7 @@ Route::get('/', function () {
     return redirect('dashboard');
 });
 // limit to 5 since its public but maybe 60 is better, idk it something that can be fix later
-Route::middleware(["throttle:5,1"])->get('/job-portal', \App\Livewire\RegistrationForm::class)->name('job-portal.register');
+Route::middleware(["throttle:10,1"])->get('/job-portal', \App\Livewire\RegistrationForm::class)->name('job-portal.register');
 
 Route::middleware(['auth', 'role:staff|admin',"throttle:60,1"])->group(function () {
 
