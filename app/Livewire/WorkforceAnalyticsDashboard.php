@@ -61,7 +61,7 @@ class WorkforceAnalyticsDashboard extends Component {
             ->where('is_active', true)
             ->where('created_at', '>=', now()->subMonths(12))
             // ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as total") for mysql only
-            ->selectRaw("strftime('%Y-%m', created_at) as month, COUNT(*) as total") //for sqlite
+            ->selectRaw("DATE_FORMAT('%Y-%m', created_at) as month, COUNT(*) as total") //for sqlite
             ->groupBy('month')
             ->orderBy('month')
             ->get();

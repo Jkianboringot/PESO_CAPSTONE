@@ -31,7 +31,9 @@ Route::middleware(['auth', 'role:staff|admin',"throttle:60,1"])->group(function 
     Route::get('/duplicates', \App\Livewire\DuplicateReview::class)->name('duplicates');
 
     // Workforce Analytics Dashboard
-    Route::get('/analytics', \App\Livewire\WorkforceAnalyticsDashboard::class)->name('analytics');
+    Route::get('/analytics', function(){
+      return 'in development... sorry!';
+    })->name('analytics');
 
     // Report Generation
     Route::get('/reports', \App\Livewire\ReportGenerator::class)->name('reports');
