@@ -11,8 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('applicant_skill', function (Blueprint $table) {
-                $table->id(); // <-- add this line to work in render deployment as it is mandatory to be pk
-
+            
             $table->foreignId('applicant_id')
                 ->constrained('applicants')
                 ->cascadeOnDelete();
