@@ -17,9 +17,9 @@ echo "-----------------------------"
 # --- END DEBUG ---
 
 # Run migrations (safe to run on every deploy; --force skips the confirmation prompt)
-php artisan migrate:fresh --force
+php artisan migrate --force
 
-php artisan db:seed --force
+# php artisan db:seed --force
 # Link storage (safe if already linked)
 php artisan storage:link || true
 
