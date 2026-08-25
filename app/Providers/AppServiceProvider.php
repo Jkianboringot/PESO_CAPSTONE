@@ -20,7 +20,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        DB::prohibitDestructiveCommands(app()->environment('production'));
+        // remove temporary 
+        // DB::prohibitDestructiveCommands(app()->environment('production'));
          if (env('APP_ENV') === 'production') {
         \URL::forceScheme('https');
     }
