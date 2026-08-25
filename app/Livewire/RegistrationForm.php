@@ -5,6 +5,7 @@ use App\Models\{Applicant, Education, Barangay, Municipality, Skill, SkillCatego
 use App\Services\{DuplicateDetectionService, AuditLogService};
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class RegistrationForm extends Component {
     public int $step = 1;
@@ -119,8 +120,7 @@ class RegistrationForm extends Component {
         $this->validate($this->rulesForStep()); //FIXME wrong use allRules - that current validate only validate the 5 one and you can skip prev step
 try {
     
-} catch (Exception ) {
-}
+
 
         //SECURE - no try catch or errror hamd
         DB::transaction(function () use ($detector, $audit) {

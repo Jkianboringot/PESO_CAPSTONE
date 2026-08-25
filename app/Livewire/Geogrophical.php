@@ -58,13 +58,6 @@ public function barangayCreate()
         ])->save();
     }
 
-public function barangayCreate()
-    {
-        Barangay::create([
-            'name' => $this->barangayName,
-            'municipality_id' => $this->municipalityID,
-        ])->save();
-    }
 
     public function geoCreate()
     {
