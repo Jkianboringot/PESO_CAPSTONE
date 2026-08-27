@@ -7,6 +7,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ isset($title) ? $title . ' — ' : '' }}{{ config('app.name', 'PESO Catanduanes') }}</title>
 
+     <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('pesoLogo.ico') }}">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -135,14 +138,7 @@
 
 
 
-                <a href="{{route('geogrophical')  }}"
-                    class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
-                      {{ request()->routeIs('skills-gap') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
-                    <i
-                        class="fas fa-search w-4 text-center {{ request()->routeIs('geogrophical') ? 'text-blue-400' : 'text-slate-400' }}"></i>
-                    <span>Barangay/Municipalities</span>
-                </a>
-
+             
                 @role('admin')
 
                 <!-- Divider -->

@@ -6,48 +6,61 @@ use App\Livewire\Dashboard;
 use App\Livewire\Geogrophical;
 use Illuminate\Support\Facades\Route;
 
+use Endroid\QrCode\QrCode;
+use Endroid\QrCode\Writer\PngWriter;
 
 
 Route::get('/', function () {
-    return redirect('dashboard');
+  return redirect('dashboard');
 });
 // limit to 5 since its public but maybe 60 is better, idk it something that can be fix later
 Route::middleware(["throttle:30,1"])->get('/job-portal', \App\Livewire\RegistrationForm::class)->name('job-portal.register');
 
-Route::middleware(['auth', 'role:staff|admin',"throttle:60,1"])->group(function () {
 
-    // TODO will deactivate 
-    // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+Route::middleware(["throttle:30,1"])->get('/qr/job-portal', function () {
+  $qrCode = new QrCode(route('job-portal.register'));
+  $writer = new PngWriter();
+  $result = $writer->write($qrCode);
 
-    Route::get('/dashboard', Dashboard::class)->name('dashboard');
+  return response($result->getString(), 200)
+    ->header('Content-Type', $result->getMimeType());
+})->name('qr.job-portal');
 
 
-      // Applicant Management (CRUD, search, filter)
-    Route::get('/applicants', \App\Livewire\ApplicantManagement::class)->name('applicants');
+Route::middleware(['auth', 'role:staff|admin', "throttle:60,1"])->group(function () {
 
-    // Duplicate Detection Review Queue
-    Route::get('/duplicates', \App\Livewire\DuplicateReview::class)->name('duplicates');
+  // TODO will deactivate 
+  // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+  // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+  // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Workforce Analytics Dashboard
-    Route::get('/analytics', \App\Livewire\WorkforceAnalyticsDashboard::class)->name('analytics');
+  Route::get('/dashboard', Dashboard::class)->name('dashboard');
 
-    // Report Generation
-    Route::get('/reports', \App\Livewire\ReportGenerator::class)->name('reports');
 
-    // Skills Gap Analysis
-    Route::get('/skills-gap', \App\Livewire\SkillsGapAnalysis::class)->name('skills-gap');
-    Route::get('/geogrophical', Geogrophical::class)->name('geogrophical');
+  // Applicant Management (CRUD, search, filter)
+  Route::get('/applicants', \App\Livewire\ApplicantManagement::class)->name('applicants');
+
+  // Duplicate Detection Review Queue
+  Route::get('/duplicates', \App\Livewire\DuplicateReview::class)->name('duplicates');
+
+  // Workforce Analytics Dashboard
+  Route::get('/analytics', \App\Livewire\WorkforceAnalyticsDashboard::class)->name('analytics');
+
+  // Report Generation
+  Route::get('/reports', \App\Livewire\ReportGenerator::class)->name('reports');
+
+  // Skills Gap Analysis
+  Route::get('/skills-gap', \App\Livewire\SkillsGapAnalysis::class)->name('skills-gap');
+  // Route::get('/geogrophical', Geogrophical::class)->name('geogrophical');
 });
 
 
-  //Admin 
+//Admin 
 Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/admin/users', \App\Livewire\UserManagement::class)->name('admin.users');
-    route::get('admin/audit-logs',AuditLog::class)->name('admin.audit-logs');
+  Route::get('/admin/users', \App\Livewire\UserManagement::class)->name('admin.users');
+  route::get('admin/audit-logs', AuditLog::class)->name('admin.audit-logs');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 

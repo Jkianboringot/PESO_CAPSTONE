@@ -151,7 +151,7 @@
                     <i class="fas fa-bars"></i>
                 </button>
                 <span class="text-sm font-medium" style="color: #64748b;">
-                    PESO Catanduanes — Labor Market Exchange System
+                    PESO Catanduanes 
                 </span>
             </div>
 
