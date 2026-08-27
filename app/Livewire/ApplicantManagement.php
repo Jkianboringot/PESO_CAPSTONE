@@ -118,7 +118,7 @@ class ApplicantManagement extends Component
             ->when($this->filterBarangay, fn($q) => $q->byBarangay($this->filterBarangay))
             ->when($this->filterEdLevel, fn($q) => $q->byEducation($this->filterEdLevel))
             ->when($this->filterCategory, fn($q) => $q->bySkillCategory($this->filterCategory))
-            ->byDateRange($this->filterFrom, $this->filterTo)
+            // ->byDateRange($this->filterFrom, $this->filterTo)
             ->orderByDesc('created_at');
 
         return view('livewire.applicant-management', [
