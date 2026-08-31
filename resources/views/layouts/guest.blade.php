@@ -92,7 +92,7 @@
                 <!-- Mobile-only logo (left panel is hidden below lg breakpoint) -->
                 <div class="lg:hidden flex justify-center mb-8">
                     <div class="inline-flex items-center justify-center bg-white rounded-xl p-3 shadow-md border" style="border-color:#e2e8f0;">
-                        <img src="{{ asset('pesoLogoLogin.png') }}" alt="PESO Connect" class="h-14 w-auto object-contain">
+                        <img src="{{ asset('pesoLogoLogin.png') }}" alt="{{ asset('pesoLogoLogin.png') }}" class="h-14 w-auto object-contain">
                     </div>
                 </div>
 

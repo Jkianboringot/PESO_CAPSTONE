@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ isset($title) ? $title . ' — ' : '' }}{{ config('app.name', 'PESO Catanduanes') }}</title>
 
-     <!-- Favicon -->
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ asset('pesoLogo.ico') }}">
 
     <!-- Fonts -->
@@ -67,16 +67,14 @@
 
             <!-- Logo / System Name -->
             <div class="flex items-center gap-3 px-5 py-5 border-b border-white/10">
-                <div class="flex items-center justify-center w-9 h-9 rounded-lg"
-                    style="background: linear-gradient(135deg, #2563eb, #1d4ed8);">
-                    <i class="fas fa-briefcase text-white text-sm"></i>
+                <div class="flex items-center justify-center w-9 h-9 rounded-lg overflow-hidden bg-white">
+                    <img src="{{ asset('pesoLogo.ico') }}" alt="PESO Connect" class="w-full h-full object-contain p-1">
                 </div>
                 <div class="leading-tight">
                     <div class="text-white font-bold text-sm tracking-wide">PESO</div>
                     <div class="text-xs" style="color: #94a3b8;">Catanduanes LME</div>
                 </div>
             </div>
-
             <!-- Navigation -->
             <nav class="flex-1 px-3 py-4 space-y-0.5">
 
@@ -138,7 +136,7 @@
 
 
 
-             
+
                 @role('admin')
 
                 <!-- Divider -->
