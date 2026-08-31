@@ -81,7 +81,7 @@
                 </select>
             </div>
 
-            <div>
+            <!-- <div>
                 <label class="block text-xs font-bold mb-1.5 uppercase tracking-wide" style="color: #374151;">From</label>
                 <input type="date" wire:model.live="filterFrom"
                        class="w-full text-xs px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
@@ -93,7 +93,7 @@
                 <input type="date" wire:model.live="filterTo"
                        class="w-full text-xs px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                        style="border-color: #d1d5db; color: #1e293b; background: #f9fafb;">
-            </div>
+            </div> -->
 
         </div>
 

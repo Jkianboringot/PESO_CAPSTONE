@@ -9,8 +9,8 @@ class WorkforceAnalyticsDashboard extends Component {
     public string $filterCategory = '';
     public string $filterBarangay = '';
     public string $filterEdLevel  = '';
-    public string $filterFrom     = '';
-    public string $filterTo       = '';
+    // public string $filterFrom     = '';
+    // public string $filterTo       = '';
     public string $filterSex      = '';
 
     public function updated() {
@@ -19,7 +19,7 @@ class WorkforceAnalyticsDashboard extends Component {
 
     private function baseQuery() {
         return Applicant::active()
-            ->byDateRange($this->filterFrom, $this->filterTo)
+            // ->byDateRange($this->filterFrom, $this->filterTo)
             ->byBarangay($this->filterBarangay)
             ->byEducation($this->filterEdLevel)
             ->bySkillCategory($this->filterCategory)
