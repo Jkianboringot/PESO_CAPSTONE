@@ -68,11 +68,11 @@
             <!-- Logo / System Name -->
             <div class="flex items-center gap-3 px-5 py-5 border-b border-white/10">
                 <div class="flex items-center justify-center w-9 h-9 rounded-lg overflow-hidden bg-white">
-                    <img src="{{ asset('pesoLogo.ico') }}" alt="PESO Connect" class="w-full h-full object-contain p-1">
+                    <img src="{{ asset('pesoLogo.ico') }}" alt="PESO CONNECT" class="w-full h-full object-contain p-1">
                 </div>
                 <div class="leading-tight">
-                    <div class="text-white font-bold text-sm tracking-wide">PESO</div>
-                    <div class="text-xs" style="color: #94a3b8;">Catanduanes LME</div>
+                    <div class="text-white font-bold text-sm tracking-wide">PESO CONNECT</div>
+                    <div class="text-xs" style="color: #94a3b8;">Catanduanes </div>
                 </div>
             </div>
             <!-- Navigation -->
@@ -206,7 +206,7 @@
                         <i class="fas fa-bars"></i>
                     </button>
                     <span class="text-sm font-medium" style="color: #64748b;">
-                        PESO Catanduanes — Labor Market Exchange System
+                        PESO Catanduanes
                     </span>
                 </div>
 

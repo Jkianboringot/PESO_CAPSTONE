@@ -59,8 +59,8 @@
                 <i class="fas fa-briefcase text-white text-sm"></i>
             </div>
             <div class="leading-tight">
-                <div class="text-white font-bold text-sm tracking-wide">PESO</div>
-                <div class="text-xs" style="color: #94a3b8;">Catanduanes LME</div>
+                <div class="text-white font-bold text-sm tracking-wide">PESO CONNECT</div>
+                <div class="text-xs" style="color: #94a3b8;">Catanduanes</div>
             </div>
         </div>
 
