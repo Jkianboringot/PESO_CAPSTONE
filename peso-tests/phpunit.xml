@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  phpunit.xml — PESO Connect Test Configuration
+  ═══════════════════════════════════════════════
+  WHY EACH SETTING EXISTS:
+
+  testdirectories: We separate Unit and Feature tests so you can run
+  just one type when needed. Unit tests are fast (~ms each) and should
+  be run constantly. Feature tests hit the database and are slower.
+
+  stopOnFailure="false": We want to see ALL failures in a test run,
+  not just the first one. This gives a full picture of what broke
+  rather than fixing one test only to discover three more failed.
+
+  APP_ENV=testing: Forces Laravel to load .env.testing instead of .env.
+  This is the single most important setting — without it, tests could
+  write to your real PESO Connect database.
+
+  DB_CONNECTION=sqlite + DB_DATABASE=:memory: Uses an in-memory SQLite
+  database for tests. WHY:
+  - Much faster than MySQL (no disk I/O)
+  - Automatically destroyed after each test run (no cleanup needed)
+  - RefreshDatabase migrates fresh before each test class
+  - No risk of test data polluting the development database
+
+  CACHE_DRIVER=array: Cache operations in tests use in-memory arrays.
+  Without this, tests that rely on caching would read stale cached data
+  from a previous test run — making tests non-deterministic.
+
+  SESSION_DRIVER=array: Same reason as cache. Session data is ephemeral
+  per test request, not persisted between test cases.
+
+  QUEUE_CONNECTION=sync: Background jobs run synchronously in tests.
+  If a test dispatches a job and the queue is "database" or "redis",
+  the job would be queued but never processed — tests would fail
+  or give false positives depending on what the job does.
+
+  MAIL_MAILER=array: Emails are not actually sent during tests.
+  They are collected in an array. This lets tests assert that an email
+  was sent without needing an SMTP server.
+-->
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+    bootstrap="vendor/autoload.php"
+    colors="true"
+    stopOnFailure="false"
+    displayDetailsOnTestsThatTriggerDeprecations="true"
+>
+    <!-- ── Test Suites ─────────────────────────────────────────────── -->
+    <testsuites>
+        <!--
+          Unit Suite: Pure logic tests with no HTTP, no Livewire, no DB.
+          Run with: php artisan test --testsuite=Unit
+          Expected speed: < 1 second for all unit tests combined.
+        -->
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+
+        <!--
+          Feature Suite: Full HTTP + Livewire + Database tests.
+          Run with: php artisan test --testsuite=Feature
+          Expected speed: 5–30 seconds depending on number of tests.
+        -->
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+
+    <!-- ── Coverage Sources ────────────────────────────────────────── -->
+    <!--
+      These directories are analyzed for code coverage.
+      Run coverage with: php artisan test --coverage
+      Target: aim for > 80% coverage on app/ directory.
+
+      Excluded: Providers, Console, and Exceptions are boilerplate
+      Laravel code that does not contain custom business logic.
+    -->
+    <source>
+        <include>
+            <directory>app/Http/Controllers</directory>
+            <directory>app/Http/Middleware</directory>
+            <directory>app/Livewire</directory>
+            <directory>app/Models</directory>
+            <directory>app/Services</directory>
+            <directory>app/Exports</directory>
+        </include>
+        <exclude>
+            <directory>app/Console</directory>
+            <directory>app/Exceptions</directory>
+            <directory>app/Providers</directory>
+        </exclude>
+    </source>
+
+    <!-- ── Environment Variables for Testing ──────────────────────── -->
+    <php>
+        <!-- CRITICAL: Forces .env.testing to be loaded -->
+        <env name="APP_ENV"          value="testing"/>
+        <env name="APP_DEBUG"        value="true"/>
+        <env name="APP_KEY"          value="base64:GENERATE_WITH_php_artisan_key_generate"/>
+
+        <!--
+          In-memory SQLite for fast, isolated, zero-cleanup test database.
+          All 11 migrations run fresh before each test class via RefreshDatabase.
+          The database is destroyed when the PHP process ends.
+        -->
+        <env name="DB_CONNECTION"    value="sqlite"/>
+        <env name="DB_DATABASE"      value=":memory:"/>
+
+        <!-- All drivers set to array/sync for isolation -->
+        <env name="CACHE_DRIVER"     value="array"/>
+        <env name="SESSION_DRIVER"   value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="MAIL_MAILER"      value="array"/>
+
+        <!-- Disable HTTPS enforcement in tests (EnforceHttps middleware) -->
+        <env name="APP_URL"          value="http://localhost"/>
+
+        <!--
+          Livewire-specific: disable component caching in tests so
+          every test gets a fresh component render without cached state
+          from a previous test bleeding through.
+        -->
+        <env name="LIVEWIRE_DISABLE_COMPONENT_CACHING" value="true"/>
+    </php>
+</phpunit>
