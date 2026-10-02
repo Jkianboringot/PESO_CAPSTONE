@@ -1,14 +1,15 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use App\Livewire\AuditLog;
 use App\Livewire\Dashboard;
-use App\Livewire\Geogrophical;
 use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Route;
 
-use Endroid\QrCode\QrCode;
-use Endroid\QrCode\Writer\PngWriter;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Writer;
 
 
 Route::get('/', function () {
@@ -23,14 +24,17 @@ Route::middleware(['log.jobportal'])->group(function () {
 });
 
 
-Route::middleware(["throttle:30,1"])->get('/qr/job-portal', function () {
-  $qrCode = new QrCode(route('job-portal.register'));
-  $writer = new PngWriter();
-  $result = $writer->write($qrCode);
+Route::get('/qr/job-portal', function () {
+  $renderer = new ImageRenderer(
+    new RendererStyle(300, 1),
+    new SvgImageBackEnd()
+  );
 
-  return response($result->getString(), 200)
-    ->header('Content-Type', $result->getMimeType());
+  $svg = (new Writer($renderer))->writeString(url('/job-portal'));
+
+  return response($svg, 200)->header('Content-Type', 'image/svg+xml');
 })->name('qr.job-portal');
+
 
 
 Route::middleware(['auth', 'role:staff|admin', "throttle:60,1"])->group(function () {
@@ -40,7 +44,7 @@ Route::middleware(['auth', 'role:staff|admin', "throttle:60,1"])->group(function
   // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
   // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-  
+
   Route::get('/admin/activity-stats', function () {
     $stats = [
       'total_job_portal_views' => ActivityLog::where('event', 'job_portal_view')->count(),

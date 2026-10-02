@@ -19,10 +19,8 @@
                         style="color: #64748b; font-size: 10px;">User</th>
                     <th class="px-4 py-3 text-left font-semibold uppercase tracking-wide"
                         style="color: #64748b; font-size: 10px;">Action</th>
-                    <th class="px-4 py-3 text-left font-semibold uppercase tracking-wide"
-                        style="color: #64748b; font-size: 10px;">Type</th>
-                    <th class="px-4 py-3 text-left font-semibold uppercase tracking-wide"
-                        style="color: #64748b; font-size: 10px;">Details</th>
+               
+                    
                     <th class="px-4 py-3 text-left font-semibold uppercase tracking-wide"
                         style="color: #64748b; font-size: 10px;">IP</th>
                 </tr>
@@ -48,27 +46,8 @@
                         <code class="text-xs px-1.5 py-0.5 rounded font-mono"
                             style="background: #f1f5f9; color: #1F4E79;">  {{ ucfirst($log->action) }}</code>
                     </td>
-                    <td class="px-4 py-3">
-                        <code class="text-xs px-1.5 py-0.5 rounded font-mono"
-                            style="background: #f1f5f9; color: #1F4E79;">  {{ class_basename($log->model) }}</code>
-                    </td>
-                    <td class="px-4 py-3">
-                        @php $changes = $log->enriched_changes; @endphp
-
-                        @if(isset($changes))
-                        @foreach($changes as $product)
-                        <div class="activity-product-block mb-2">
-                            <div class="fw-semibold text-inv-dark small lh-sm">
-                                {{ $product['before'] }}
-                            </div>
-                         <div class="fw-semibold text-inv-dark small lh-sm">
-                                {{ $product['after'] }}
-                            </div>
-                        </div>
-                        @endforeach
-                        @endif
-                    </td>
                  
+                   
                     <td class="px-4 py-3" style="color: #475569;">{{ $log->ip_address ?? 'Unknown' }}</td>
                   
                 </tr>
