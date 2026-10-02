@@ -129,22 +129,16 @@
         </div>
 
         {{-- Chart C: Vertical Bar — Barangay --}}
-        <div class="bg-white rounded-xl border p-5" style="border-color: #e2e8f0;">
+      {{-- Chart C: Vertical Bar — Barangay --}}
+<div class="bg-white rounded-xl border p-5 md:col-span-2" style="border-color: #e2e8f0;">
             <h6 class="font-bold text-sm mb-0.5" style="color: #1e293b;">Registrants by Barangay (Top 20)</h6>
             <p class="text-xs mb-0.5" style="color: #64748b;">Distribution of applicants per barangay</p>
             <p class="text-xs mb-3" style="color: #94a3b8;">Type: Vertical Bar Chart</p>
-            <canvas id="barangayChart" height="220"></canvas>
+         <canvas id="barangayChart" height="100"></canvas>
             <p class="text-xs italic mt-3 text-center" style="color: #94a3b8;">Click a bar to filter by that barangay</p>
         </div>
 
-        {{-- Chart D: Line — Monthly Trend --}}
-        <div class="bg-white rounded-xl border p-5" style="border-color: #e2e8f0;">
-            <h6 class="font-bold text-sm mb-0.5" style="color: #1e293b;">Monthly Registration Trend (Last 12 Months)</h6>
-            <p class="text-xs mb-0.5" style="color: #64748b;">Registration volume over the past year</p>
-            <p class="text-xs mb-3" style="color: #94a3b8;">Type: Line Graph with Filled Area</p>
-            <canvas id="trendChart" height="220"></canvas>
-            <p class="text-xs italic mt-3 text-center" style="color: #94a3b8;">Click a point to view registrants for that month</p>
-        </div>
+        
 
     </div>
 
@@ -158,7 +152,7 @@
     let charts = {};
 
     function renderCharts(data) {
-        ['skillsChart','eduChart','barangayChart','trendChart'].forEach(id => {
+        ['skillsChart','eduChart','barangayChart'].forEach(id => {
             if (charts[id]) charts[id].destroy();
         });
 
@@ -243,37 +237,7 @@
             }
         });
 
-        // Chart D: Line with filled area
-        charts.trendChart = new Chart(document.getElementById('trendChart'), {
-            type: 'line',
-            data: {
-                labels: data.trend.labels,
-                datasets: [{
-                    label: 'Registrations',
-                    data: data.trend.data,
-                    borderColor: '#1F4E79',
-                    backgroundColor: 'rgba(31,78,121,0.12)',
-                    tension: 0.4,
-                    fill: true,
-                    pointBackgroundColor: '#2563eb',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { callbacks: { label: ctx => ` ${ctx.raw} registrations` } }
-                },
-                scales: {
-                    x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-                    y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 11 } } }
-                }
-            }
-        });
+       
     }
 
     document.addEventListener('livewire:initialized', () => {

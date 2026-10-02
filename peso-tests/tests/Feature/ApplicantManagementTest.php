@@ -273,7 +273,7 @@ class ApplicantManagementTest extends TestCase
     {
         $applicant = $this->makeApplicant(['is_active' => true]);
         $id        = $applicant->id;
-
+        
         Livewire::actingAs($this->staffUser)
             ->test(ApplicantManagement::class)
             ->call('deactivate', $id);

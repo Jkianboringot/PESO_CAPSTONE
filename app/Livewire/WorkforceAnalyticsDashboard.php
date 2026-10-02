@@ -56,21 +56,12 @@ class WorkforceAnalyticsDashboard extends Component {
             ->limit(20)
             ->get();
 
-        // Chart 4: Monthly registration trend (last 12 months)
-        $trendData = DB::table('applicants')
-            ->where('is_active', true)
-            ->where('created_at', '>=', now()->subMonths(12))
-            // ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as total") for mysql only
-            ->selectRaw("DATE_FORMAT('%Y-%m', created_at) as month, COUNT(*) as total") //for sqlite
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
+    
 
         return [
             'skills'    => ['labels' => $skillsData->pluck('name'),         'data' => $skillsData->pluck('total')],
             'education' => ['labels' => $eduData->pluck('highest_level'),   'data' => $eduData->pluck('total')],
             'barangay'  => ['labels' => $barangayData->pluck('name'),        'data' => $barangayData->pluck('total')],
-            'trend'     => ['labels' => $trendData->pluck('month'),          'data' => $trendData->pluck('total')],
             'totals'    => [
                 'total'     => $this->baseQuery()->count(),
                 'thisMonth' => $this->baseQuery()->whereMonth('created_at', now()->month)->count(),
