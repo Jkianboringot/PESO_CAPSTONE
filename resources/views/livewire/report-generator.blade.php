@@ -7,8 +7,20 @@
                 <i class="fas fa-file-alt mr-2" style="color: #e65100;"></i>
                 Report Generation
             </h1>
-            <p class="text-xs mt-0.5" style="color: #64748b;">Export DOLE BLE-compliant reports with custom filters</p>
         </div>
+
+        <button wire:click="generate"
+                wire:loading.attr="disabled"
+                wire:target="generate"
+                class="text-xs font-semibold px-5 py-2.5 rounded-lg text-white transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                style="background: #1a2035;">
+            <span class="hidden" wire:loading wire:target="generate">
+                Generating...
+            </span>
+            <span wire:loading.remove wire:target="generate">
+                <i class="fas fa-download mr-1.5"></i> Download Report
+            </span>
+        </button>
     </div>
 
     {{-- Config Panel --}}
@@ -90,23 +102,6 @@
 
             </div>
         </div>
-
-        <div class="px-5 py-4 flex items-center justify-between border-t" style="border-color: #e2e8f0; background: #f8fafc;">
-            <p class="text-xs" style="color: #64748b;">
-                <i class="fas fa-info-circle mr-1 text-blue-400"></i>
-                Report columns are aligned with DOLE BLE submission format.
-            </p>
-            <button wire:click="generate"
-                    class="text-xs font-semibold px-5 py-2.5 rounded-lg text-white transition-opacity hover:opacity-90"
-                    style="background: #1a2035;">
-                <span wire:loading wire:target="generate">
-                    <i class="fas fa-spinner fa-spin mr-1.5"></i> Generating...
-                </span>
-                <span wire:loading.remove wire:target="generate">
-                    <i class="fas fa-download mr-1.5"></i> Download Report
-                </span>
-            </button>
-        </div>
     </div>
 
     {{-- Columns Panel --}}
@@ -125,9 +120,5 @@
                 @endforeach
             </div>
         </div>
-    </div>
-
-    <div class="text-center mt-6">
-        <p class="text-xs italic" style="color: #94a3b8;">Design Pattern: Shneiderman's Information-Seeking Mantra</p>
     </div>
 </div>

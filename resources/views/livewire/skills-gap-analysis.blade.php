@@ -7,7 +7,6 @@
                 <i class="fas fa-search mr-2" style="color: #00796b;"></i>
                 Skills Gap Analysis
             </h1>
-            <p class="text-xs mt-0.5" style="color: #64748b;">Identify underrepresented PQF skill clusters in Catanduanes</p>
         </div>
     </div>
 

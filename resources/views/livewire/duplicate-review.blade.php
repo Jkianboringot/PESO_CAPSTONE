@@ -7,7 +7,6 @@
                 <i class="fas fa-copy mr-2" style="color: #ca8a04;"></i>
                 Duplicate Review Queue
             </h1>
-            <p class="text-xs mt-0.5" style="color: #64748b;">Review and resolve flagged duplicate registrations</p>
         </div>
     </div>
 

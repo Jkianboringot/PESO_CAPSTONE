@@ -8,8 +8,6 @@
                 <i class="fas fa-users mr-2" style="color: #2563eb;"></i>
                 Applicant Management
             </h1>
-            <p class="text-xs mt-0.5" style="color: #64748b;">Search, filter, edit, and manage all registered applicants
-            </p>
         </div>
     </div>
 

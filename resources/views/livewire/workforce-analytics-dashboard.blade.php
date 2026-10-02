@@ -8,7 +8,6 @@
                 <i class="fas fa-chart-bar mr-2" style="color: #2563eb;"></i>
                 Workforce Analytics Dashboard
             </h1>
-            <p class="text-xs mt-0.5" style="color: #64748b;">Visual insights on registrant skills, education, and trends</p>
         </div>
     </div>
 

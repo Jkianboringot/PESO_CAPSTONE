@@ -7,7 +7,6 @@
                 <i class="fas fa-user-cog mr-2" style="color: #2563eb;"></i>
                 User Management
             </h1>
-            <p class="text-xs mt-0.5" style="color: #64748b;">Manage staff accounts and access roles</p>
         </div>
         <button wire:click="openCreate"
                 class="text-xs font-semibold px-4 py-2.5 rounded-lg text-white transition-opacity hover:opacity-90"
