@@ -129,7 +129,22 @@ class UserManagement extends Component
         }
         $user = User::findOrFail($id);
         $user->update(['is_active' => false]);
+
         $audit->log('USER_DEACTIVATED', $user);
+    }
+
+      public function activated(int $id, AuditLogService $audit)
+    {
+        // Prevent self-deactivation   - no // AUTHORIZE its good enough
+        if ($id === auth()->id()) {
+            session()->flash('error', 'You cannot activate your own account.');
+            return;
+        }
+        $user = User::findOrFail($id);
+        $user->update(['is_active' => true]);
+        // dd($user);
+
+        $audit->log('USER_ACTIVATED', $user);
     }
 
     public function render()

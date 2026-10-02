@@ -93,7 +93,6 @@
                         <th class="px-4 py-3 text-left font-semibold uppercase tracking-wide" style="color: #64748b; font-size: 10px;">Email</th>
                         <th class="px-4 py-3 text-left font-semibold uppercase tracking-wide" style="color: #64748b; font-size: 10px;">Role</th>
                         <th class="px-4 py-3 text-left font-semibold uppercase tracking-wide" style="color: #64748b; font-size: 10px;">Status</th>
-                        <th class="px-4 py-3 text-left font-semibold uppercase tracking-wide" style="color: #64748b; font-size: 10px;">Last Login</th>
                         <th class="px-4 py-3 text-left font-semibold uppercase tracking-wide" style="color: #64748b; font-size: 10px;">Actions</th>
                     </tr>
                 </thead>
@@ -112,10 +111,7 @@
                         <td class="px-4 py-3" style="color: #475569;">{{ $user->email }}</td>
                         <td class="px-4 py-3">
                             <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold" style="background: #eff6ff; color: #1d4ed8;">
-                                @foreach ($user->roles as $role )
-                                {{ $role?->name }}
-                                    
-                                @endforeach
+                                {{ $user->roles->pluck('name')->join(', ') }}
                             </span>
                         </td>
                         <td class="px-4 py-3">
@@ -125,9 +121,7 @@
                                 <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold" style="background: #f1f5f9; color: #64748b;">Inactive</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3" style="color: #475569;">
-                            {{ $user->last_login_at?->format('M d, Y h:i A') ?? 'Never' }}
-                        </td>
+                    
                         <td class="px-4 py-3">
                             <div class="flex items-center gap-1.5">
                                 <button wire:click="openEdit({{ $user->id }})"
@@ -135,13 +129,24 @@
                                         style="color: #2563eb; border-color: #bfdbfe;">
                                     Edit
                                 </button>
+
                                 @if($user->is_active && $user->id !== auth()->id())
-                                <button wire:click="deactivate({{ $user->id }})"
-                                        onclick="return confirm('Deactivate this user?')"
-                                        class="text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors hover:bg-red-50 hover:text-red-700 hover:border-red-200"
-                                        style="color: #dc2626; border-color: #fecaca;">
-                                    Deactivate
-                                </button>
+                                    <button wire:key="deactivate-{{ $user->id }}"
+                                     wire:click="deactivate({{ $user->id }})"
+                                            wire:confirm="Deactivate this user?"
+                                            class="text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors hover:bg-red-50 hover:text-red-700 hover:border-red-200"
+                                            style="color: #dc2626; border-color: #fecaca;">
+                                        Deactivate
+                                    </button>
+                                @elseif(! $user->is_active)
+                                    <button 
+                                    wire:key="activate-{{ $user->id }}"
+                                    wire:click="activated({{ $user->id }})"
+                                            wire:confirm="Activate this user?"
+                                            class="text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors hover:bg-green-50 hover:text-green-700 hover:border-green-200"
+                                            style="color: #16a34a; border-color: #bbf7d0;">
+                                        Activate
+                                    </button>
                                 @endif
                             </div>
                         </td>
@@ -163,6 +168,4 @@
         </div>
         @endif
     </div>
-
-    
 </div>
