@@ -122,9 +122,16 @@
                 {{-- Card header --}}
                 <div class="px-7 pt-7 pb-5 border-b border-slate-50">
                     <h3 class="text-lg font-bold" style="color:#1e293b;">
-                        {{ ['Personal Information', 'Address & Location', 'Educational Background', 'Skills Profile', 'Data Privacy Consent'][$step - 1] }}
+                        {{ ['Personal Information', 'Address & Location', 'Educational Background', 'Skills Profile', 'Review & Consent'][$step - 1] }}
                     </h3>
-                    <p class="text-xs mt-0.5" style="color:#94a3b8;">Step {{ $step }} of {{ $totalSteps }}</p>
+                    <p class="text-xs mt-0.5" style="color:#94a3b8;">
+                        {{-- PREVIEW: tell the applicant they are in edit mode --}}
+                        @if($returnToReview)
+                            Editing from review — save to go back
+                        @else
+                            Step {{ $step }} of {{ $totalSteps }}
+                        @endif
+                    </p>
                 </div>
 
                 {{-- Card body --}}
@@ -377,7 +384,8 @@
 
                                         @if(in_array($skill->id, $selected_skills))
                                         <div class="mt-2 ml-7">
-                                            <select wire:model="skill_proficiencies.{{ 1 }}"
+                                            {{-- PREVIEW: was {{ 1 }} (every skill wrote to key 1). Now uses the skill id so the review shows the right level. --}}
+                                            <select wire:model="skill_proficiencies.{{ $skill->id }}"
                                                     class="w-full px-3 py-1.5 rounded-lg border border-[#1F4E79]/30 text-xs font-medium transition-all"
                                                     style="color:#1F4E79; background:#fff;">
 
@@ -402,9 +410,12 @@
                     </div>
                     @endif
 
-                    {{-- ══ STEP 5: Consent ════════════════════════ --}}
+                    {{-- ══ STEP 5: Review + Consent ═══════════════ --}}
                     @if($step === 5)
                     <div class="space-y-5">
+
+                        {{-- PREVIEW: full review with Edit buttons (replaces the old small summary box) --}}
+                        @include('livewire.partials.review-summary')
 
                         <div class="rounded-xl p-5 text-sm leading-relaxed" style="background:#f8fafc; border:1px solid #e2e8f0; color:#475569;">
                             <div class="flex items-center gap-2 mb-3">
@@ -422,19 +433,6 @@
                                 right to access, correct, or request erasure of your data at any time by visiting
                                 the PESO office.
                             </p>
-                        </div>
-
-                        {{-- Summary --}}
-                        <div class="rounded-xl p-5" style="background:#eff6ff; border:1px solid #bfdbfe;">
-                            <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#1F4E79;">Registration Summary</p>
-                            <div class="grid grid-cols-2 gap-y-1.5 text-xs" style="color:#1e293b;">
-                                <span class="font-semibold" style="color:#64748b;">Full Name</span>
-                                <span>{{ trim("$first_name $middle_name $last_name") ?: '—' }}</span>
-                                <span class="font-semibold" style="color:#64748b;">Education</span>
-                                <span>{{ $highest_level ?: '—' }}</span>
-                                <span class="font-semibold" style="color:#64748b;">Skills Selected</span>
-                                <span>{{ count($selected_skills) }} skill(s)</span>
-                            </div>
                         </div>
 
                         {{-- Consent checkbox --}}
@@ -465,7 +463,8 @@
                 {{-- Card footer / navigation --}}
                 <div class="px-7 py-5 border-t border-slate-50 flex items-center justify-between">
 
-                    @if($step > 1)
+                    {{-- PREVIEW: Previous is hidden while editing from the review screen --}}
+                    @if($step > 1 && ! $returnToReview)
                     <button wire:click="prevStep"
                             class="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-lg border transition-all"
                             style="border-color:#e2e8f0; color:#64748b;">
@@ -479,7 +478,8 @@
                     <button wire:click="nextStep"
                             class="flex items-center gap-2 text-sm font-bold px-6 py-2.5 rounded-lg text-white transition-all hover:opacity-90 active:scale-95"
                             style="background:#1F4E79;">
-                        Continue <i class="fas fa-arrow-right text-xs"></i>
+                        {{-- PREVIEW: label changes while editing from review --}}
+                        {{ $returnToReview ? 'Save & back to review' : 'Continue' }} <i class="fas fa-arrow-right text-xs"></i>
                     </button>
                     @else
           <form wire:submit.prevent="submit" class="bg-white rounded-2xl shadow-sm border border-slate-100">

@@ -12,6 +12,9 @@ class RegistrationForm extends Component {
     public int $step = 1;
     public int $totalSteps = 5;
 
+    // PREVIEW: true while the applicant is editing one section from the review screen
+    public bool $returnToReview = false;
+
     // Step 1: Personal Information
     public string $last_name     = '';
     public string $first_name    = '';
@@ -101,11 +104,27 @@ class RegistrationForm extends Component {
 
     public function nextStep() {
         $this->validate($this->rulesForStep());
+
+        // PREVIEW: editing from the review screen -> save, then go straight back to review
+        if ($this->returnToReview) {
+            $this->returnToReview = false;
+            $this->step = $this->totalSteps;
+            return;
+        }
+
         if ($this->step < $this->totalSteps) $this->step++;
     }
 
     public function prevStep() {
         if ($this->step > 1) $this->step--;
+    }
+
+    // PREVIEW: "Edit" button on the review screen jumps to that step
+    public function goToStep(int $target) {
+        if ($target >= 1 && $target < $this->totalSteps) {
+            $this->step = $target;
+            $this->returnToReview = true;
+        }
     }
 
 //     private function allRules(): array
@@ -180,24 +199,3 @@ try {
         ])->layout('layouts.registration');
     }
 }
-
-            // dd( $ $this->skill_proficiencies);
-// array:3 [▼ // app\Livewire\RegistrationForm.php:127
-//   9 => "Advanced"
-//   10 => "Intermediate"
-//   20 => "Advanced"
-// ]
-
-
-            // dd( $skillData);
-// array:3 [▼ // app\Livewire\RegistrationForm.php:134
-//   9 => array:1 [▼
-//     "proficiency_level" => "Advanced"
-//   ]
-//   11 => array:1 [▼
-//     "proficiency_level" => "Intermediate"
-//   ]
-//   28 => array:1 [▼
-//     "proficiency_level" => "Intermediate"
-//   ]
-// ]

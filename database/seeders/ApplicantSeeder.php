@@ -307,7 +307,7 @@ class ApplicantSeeder extends Seeder
             'birthdate'           => $now->copy()->subYears($age)->subDays(rand(0, 364))->format('Y-m-d'),
             'sex'                 => $sex,
             'civil_status'        => $this->weightedPick(['Single', 'Married', 'Widowed', 'Separated'], [55, 35, 5, 5]),
-            'contact_number'      => $this->pick($this->contactPrefixes) . rand(1000000, 9999999),
+            'contact_number'      => $this->pick($this->contactPrefixes) . rand(1, 100),
             'email'               => $this->rand() < 0.45
                 ? strtolower($firstName) . '.' . strtolower(str_replace(' ', '', $lastName)) . rand(1, 999) . '@' . $this->pick(['gmail.com', 'yahoo.com', 'outlook.com'])
                 : null,

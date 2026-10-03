@@ -1,6 +1,9 @@
 <div>
     <x-slot name="title">Duplicate Review</x-slot>
 
+    {{-- Toast notifications (resources/views/components/toast.blade.php) --}}
+    <x-toast />
+
     <div class="flex items-center justify-between mb-6">
         <div>
             <h1 class="text-xl font-bold" style="color: #1e293b;">
@@ -11,7 +14,9 @@
     </div>
 
     @if(!$activeFlag)
-    {{-- Queue Table --}}
+    {{-- ═══════════════════════════════════════════════════
+         QUEUE TABLE
+    ════════════════════════════════════════════════════ --}}
     <div class="bg-white rounded-xl border overflow-hidden" style="border-color: #e2e8f0;">
         <div class="px-5 py-3" style="background: #1a2035;">
             <span class="text-sm font-semibold text-white">
@@ -32,7 +37,7 @@
                 </thead>
                 <tbody class="divide-y" style="border-color: #f1f5f9;">
                     @forelse($flags as $flag)
-                    <tr class="hover:bg-slate-50 transition-colors">
+                    <tr wire:key="flag-{{ $flag->id }}" class="hover:bg-slate-50 transition-colors">
                         <td class="px-4 py-3">
                             <div class="font-medium" style="color: #1e293b;">{{ $flag->newApplicant?->full_name ?? '—' }}</div>
                             <code class="text-xs px-1 py-0.5 rounded" style="background: #f1f5f9; color: #64748b;">{{ $flag->newApplicant?->reference_id }}</code>
@@ -59,8 +64,9 @@
                         </td>
                         <td class="px-4 py-3" style="color: #475569;">{{ $flag->created_at->format('M d, Y') }}</td>
                         <td class="px-4 py-3">
-                            <button wire:click="openFlag({{ ($flag->id) }})"
-                                    class="text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200"
+                            <button wire:click="openFlag({{ $flag->id }})"
+                                    wire:loading.attr="disabled" wire:target="openFlag"
+                                    class="text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 disabled:opacity-50"
                                     style="color: #2563eb; border-color: #bfdbfe;">
                                 Review
                             </button>
@@ -86,15 +92,31 @@
     </div>
 
     @else
-    {{-- Side-by-side comparison view 
+    {{-- ═══════════════════════════════════════════════════
+         SIDE-BY-SIDE COMPARISON
+    ════════════════════════════════════════════════════ --}}
     <div class="mb-4">
-        <button wire:click="$set('activeFlag', null)"
+        <button wire:click="closeFlag"
                 class="text-xs font-medium px-4 py-2 rounded-lg border transition-colors hover:bg-slate-50"
                 style="color: #64748b; border-color: #d1d5db;">
             <i class="fas fa-arrow-left mr-1.5"></i> Back to Queue
         </button>
     </div>
-    --}}
+
+    {{-- Which criteria matched --}}
+    <div class="flex flex-wrap items-center gap-2 mb-4">
+        <span class="text-xs font-semibold" style="color: #64748b;">Matched on:</span>
+        @if($activeFlag->matched_phonetic)
+            <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background: #fef9c3; color: #a16207;">Name</span>
+        @endif
+        @if($activeFlag->matched_birthdate)
+            <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background: #e0f2fe; color: #0369a1;">Birthdate</span>
+        @endif
+        @if($activeFlag->matched_contact)
+            <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background: #f1f5f9; color: #475569;">Contact</span>
+        @endif
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold" style="background: #fee2e2; color: #dc2626;">{{ $activeFlag->match_score }}/3</span>
+    </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
         @foreach([['NEW (Incoming)', $activeFlag->newApplicant, '#fee2e2', '#dc2626'], ['EXISTING (On Record)', $activeFlag->existingApplicant, '#eff6ff', '#2563eb']] as [$label, $applicant, $headerBg, $headerColor])
@@ -114,9 +136,11 @@
                     <tr class="border-b" style="border-color: #f1f5f9;"><th class="py-2 pr-3 text-left font-semibold" style="color: #64748b;">Education</th><td class="py-2" style="color: #475569;">{{ $applicant?->education?->highest_level ?? '—' }}</td></tr>
                     <tr><th class="py-2 pr-3 text-left font-semibold align-top" style="color: #64748b;">Skills</th><td class="py-2">
                         <div class="flex flex-wrap gap-1">
-                            @foreach($applicant?->skills ?? [] as $s)
+                            @forelse($applicant?->skills ?? [] as $s)
                                 <span class="px-2 py-0.5 rounded text-xs" style="background: #f1f5f9; color: #374151; border: 1px solid #e2e8f0;">{{ $s->name }}</span>
-                            @endforeach
+                            @empty
+                                <span style="color: #94a3b8;">—</span>
+                            @endforelse
                         </div>
                     </td></tr>
                 </table>
@@ -125,7 +149,9 @@
         @endforeach
     </div>
 
-    {{-- Resolution Panel --}}
+    {{-- ═══════════════════════════════════════════════════
+         RESOLUTION PANEL
+    ════════════════════════════════════════════════════ --}}
     <div class="bg-white rounded-xl border overflow-hidden" style="border-color: #e2e8f0;">
         <div class="px-5 py-3" style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
             <span class="text-sm font-bold" style="color: #1e293b;">Resolve This Flag</span>
@@ -134,33 +160,42 @@
             <div class="mb-4">
                 <label class="block text-xs font-semibold mb-1.5" style="color: #374151;">Resolution Notes (optional)</label>
                 <textarea wire:model="resolutionNotes"
-                          class="w-full text-sm px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          class="w-full text-sm px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none @error('resolutionNotes') border-red-400 @enderror"
                           style="border-color: #d1d5db;"
                           rows="2"
+                          maxlength="1000"
                           placeholder="Add any notes about your decision..."></textarea>
+                @error('resolutionNotes')<p class="text-xs mt-1" style="color: #dc2626;">{{ $message }}</p>@enderror
             </div>
+
             <div class="flex flex-wrap gap-3">
                 <button wire:click="resolve('Merged')"
-                        onclick="return confirm('Merge: the incoming record will be deactivated. Proceed?')"
-                        class="text-xs font-semibold px-4 py-2.5 rounded-lg text-white transition-opacity hover:opacity-90"
+                        wire:confirm="Merge: the incoming record will be deactivated. Proceed?"
+                        wire:loading.attr="disabled" wire:target="resolve"
+                        class="text-xs font-semibold px-4 py-2.5 rounded-lg text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                         style="background: #ca8a04;">
                     <i class="fas fa-sync-alt mr-1.5"></i> Merge (Keep Existing, Deactivate New)
                 </button>
+
                 <button wire:click="resolve('Retained Both')"
-                        class="text-xs font-semibold px-4 py-2.5 rounded-lg text-white transition-opacity hover:opacity-90"
+                        wire:loading.attr="disabled" wire:target="resolve"
+                        class="text-xs font-semibold px-4 py-2.5 rounded-lg text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                         style="background: #16a34a;">
                     <i class="fas fa-check mr-1.5"></i> Retain Both (Not a Duplicate)
                 </button>
+
                 <button wire:click="resolve('Deleted')"
-                        onclick="return confirm('Delete: the incoming record will be deactivated. Proceed?')"
-                        class="text-xs font-semibold px-4 py-2.5 rounded-lg text-white transition-opacity hover:opacity-90"
+                        wire:confirm="Delete: the incoming record will be deactivated. Proceed?"
+                        wire:loading.attr="disabled" wire:target="resolve"
+                        class="text-xs font-semibold px-4 py-2.5 rounded-lg text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                         style="background: #dc2626;">
                     <i class="fas fa-trash mr-1.5"></i> Delete New Record
                 </button>
+
+             
             </div>
         </div>
     </div>
     @endif
 
-   
 </div>
