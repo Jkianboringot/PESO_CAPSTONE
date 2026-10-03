@@ -132,6 +132,41 @@
                     </div>
                 </form>
 
+                {{-- ===================== JOB PORTAL SHORTCUT ===================== --}}
+                <div class="mt-8 pt-6" style="border-top:1px solid #e2e8f0;">
+                    <p class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:#94a3b8;">
+                        Looking to register as an applicant?
+                    </p>
+
+                    <a href="{{ url('/job-portal') }}"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg text-sm font-semibold transition"
+                       style="background:#ffffff; color:#1a2035; border:1px solid #cbd5e1;"
+                       onmouseover="this.style.background='#f8fafc'"
+                       onmouseout="this.style.background='#ffffff'">
+                        <i class="fas fa-user-plus text-xs"></i>
+                        Go to Job Portal
+                        <i class="fas fa-arrow-up-right-from-square text-[10px]" style="color:#94a3b8;"></i>
+                    </a>
+
+                    {{-- QR code (hidden on phones, since they can just tap the button) --}}
+                    <div class="hidden sm:flex items-center gap-4 mt-4">
+                        <a href="{{ url('/job-portal') }}"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="flex-shrink-0 rounded-lg p-2"
+                           style="background:#ffffff; border:1px solid #e2e8f0;">
+                            <img src="{{ route('qr.job-portal') }}"
+                                 alt="QR code for the PESO Job Portal"
+                                 style="width:96px; height:96px; display:block;">
+                        </a>
+                        <p class="text-xs leading-relaxed" style="color:#64748b;">
+                            Applicants can scan this QR code with their phone to open the registration form.
+                        </p>
+                    </div>
+                </div>
+
                 <p class="text-center text-xs mt-8" style="color:#94a3b8;">
                     Having trouble signing in? Contact your PESO system administrator.
                 </p>

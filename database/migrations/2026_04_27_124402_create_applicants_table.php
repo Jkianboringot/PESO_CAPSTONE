@@ -20,7 +20,7 @@ return new class extends Migration
             $table->date('birthdate');
             $table->enum('sex', ['Male','Female','Prefer not to say']);
             $table->enum('civil_status', ['Single','Married','Widowed','Separated']);
-            $table->string('contact_number', 20);
+            $table->string('contact_number', 11);
             $table->string('email')->nullable();
             $table->text('address')->nullable();
             $table->foreignId('barangay_id')

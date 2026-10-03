@@ -3,7 +3,7 @@
     {{-- ═══════════════════════════════════════════════════
          LEFT PANEL — Branding + Info
     ════════════════════════════════════════════════════ --}}
-    <div class="hero-pattern lg:w-2/5 xl:w-1/3 flex flex-col justify-between px-10 py-12 text-white hidden lg:flex">
+   <div class="hero-pattern lg:w-72 xl:w-80 shrink-0 flex-col justify-between px-6 py-10 text-white hidden lg:flex">
 
         {{-- Logo / Office --}}
         <div>
@@ -196,6 +196,7 @@
                                     <i class="fas fa-phone text-xs"></i>
                                 </span>
                                 <input wire:model.live="contact_number"
+                                type="number"
                                        placeholder="09XXXXXXXXX"
                                        class="field-input w-full pl-9 pr-4 py-2.5 rounded-lg border text-sm transition-all @error('contact_number') border-red-400 bg-red-50 @else border-slate-200 @enderror">
                             </div>
@@ -281,13 +282,17 @@
                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                 @foreach(['Elementary','High School','Senior High School','Vocational/Technical','College Undergraduate','College Graduate','Post-Graduate'] as $level)
                                 <label class="relative cursor-pointer">
-                                    <input type="radio" wire:model="highest_level" value="{{ $level }}" class="peer sr-only">
-                                    <div class="px-3 py-2.5 rounded-lg border text-xs font-medium text-center transition-all
-                                                peer-checked:border-[#1F4E79] peer-checked:bg-[#eff6ff] peer-checked:text-[#1F4E79]
-                                                border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50">
-                                        {{ $level }}
-                                    </div>
-                                </label>
+    <input type="radio"
+           name="highest_level"
+           wire:model="highest_level"
+           value="{{ $level }}"
+           class="peer sr-only">
+    <div class="px-3 py-2.5 rounded-lg border text-xs font-medium text-center transition-all
+                peer-checked:border-[#1F4E79] peer-checked:bg-[#eff6ff] peer-checked:text-[#1F4E79]
+                border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50">
+        {{ $level }}
+    </div>
+</label>
                                 @endforeach
                             </div>
                             @error('highest_level')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror

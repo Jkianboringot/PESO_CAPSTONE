@@ -76,7 +76,7 @@ class RegistrationForm extends Component {
                 'birthdate'      => 'required|date|before:today',
                 'sex'            => 'required|in:Male,Female,Prefer not to say',
                 'civil_status'   => 'required|in:Single,Married,Widowed,Separated',
-                'contact_number' => 'required|regex:/^[0-9+\s\-]{10,15}$/',
+                'contact_number' => 'required|regex:/^[0-9+\s\-]{10,15}$/|min:11|max:11',
                 'email'          => 'nullable|email|max:150',
             ],
             2 => [

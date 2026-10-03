@@ -162,7 +162,5 @@
     </div>
     @endif
 
-    <div class="text-center mt-6">
-        <p class="text-xs italic" style="color: #94a3b8;">Design Pattern: Shneiderman's Information-Seeking Mantra</p>
-    </div>
+   
 </div>
