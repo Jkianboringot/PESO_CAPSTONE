@@ -6,19 +6,21 @@
         <div class="hidden lg:flex lg:w-2/5 flex-col justify-between px-10 py-12 relative overflow-hidden"
              style="background:#1a2035;">
 
-            <div class="absolute inset-0 opacity-[0.04]"
+            <div class="absolute inset-0 opacity-[0.04] pointer-events-none"
                  style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 18px 18px;"></div>
 
             <div class="relative">
-                <div class="flex items-center gap-3 mb-10">
-                    <div class="flex items-center justify-center w-10 h-10 rounded-lg"
-                         style="background: linear-gradient(135deg, #2563eb, #1d4ed8);">
-                        <i class="fas fa-briefcase text-white text-sm"></i>
-                    </div>
-                    <div class="leading-tight">
-                        <div class="text-xs font-semibold uppercase tracking-widest" style="color:#94a3b8;">Catanduanes Province</div>
-                        <div class="text-white font-bold text-sm">PESO Skills Registry</div>
-                    </div>
+                {{-- Logo (fixed size so it never collapses) --}}
+                <div class="inline-flex items-center justify-center rounded-xl p-3 mb-6"
+                     style="background:#ffffff; width:96px; height:96px;">
+                    <img src="{{ asset('images/logo.png') }}"
+                         alt="PESO Connect"
+                         style="width:100%; height:100%; object-fit:contain; display:block;">
+                </div>
+
+                <div class="leading-tight mb-10">
+                    <div class="text-xs font-semibold uppercase tracking-widest" style="color:#94a3b8;">Catanduanes Province</div>
+                    <div class="text-white font-bold text-sm">PESO Skills Registry</div>
                 </div>
 
                 <h1 class="text-3xl font-bold text-white leading-snug mb-3">
@@ -70,9 +72,10 @@
 
                 <!-- Mobile-only logo -->
                 <div class="lg:hidden flex items-center gap-3 mb-8">
-                    <div class="flex items-center justify-center w-10 h-10 rounded-lg"
-                         style="background: linear-gradient(135deg, #2563eb, #1d4ed8);">
-                        <i class="fas fa-briefcase text-white text-sm"></i>
+                    <div style="width:48px; height:48px;">
+                        <img src="{{ asset('images/pesoLogoLogin.png') }}"
+                             alt="PESO Connect"
+                             style="width:100%; height:100%; object-fit:contain; display:block;">
                     </div>
                     <div class="leading-tight">
                         <div class="font-bold text-sm" style="color:#1e293b;">PESO Catanduanes</div>

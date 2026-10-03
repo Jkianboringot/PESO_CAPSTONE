@@ -31,11 +31,11 @@
 
     {{-- ===================== FILTER BAR ===================== --}}
     <div class="bg-white rounded-xl border mb-6 p-4" style="border-color: #e2e8f0;">
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 items-end">
 
             <div>
                 <label class="block text-xs font-bold mb-1.5 uppercase tracking-wide" style="color: #374151;">Skills Category</label>
-                <select wire:model.live="filterCategory"
+                <select wire:model="filterCategory"
                         class="w-full text-xs px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         style="border-color: #d1d5db; color: #1e293b; background: #f9fafb;">
                     <option value="">All Categories</option>
@@ -47,7 +47,7 @@
 
             <div>
                 <label class="block text-xs font-bold mb-1.5 uppercase tracking-wide" style="color: #374151;">Barangay</label>
-                <select wire:model.live="filterBarangay"
+                <select wire:model="filterBarangay"
                         class="w-full text-xs px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         style="border-color: #d1d5db; color: #1e293b; background: #f9fafb;">
                     <option value="">All Barangays</option>
@@ -59,7 +59,7 @@
 
             <div>
                 <label class="block text-xs font-bold mb-1.5 uppercase tracking-wide" style="color: #374151;">Education Level</label>
-                <select wire:model.live="filterEdLevel"
+                <select wire:model="filterEdLevel"
                         class="w-full text-xs px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         style="border-color: #d1d5db; color: #1e293b; background: #f9fafb;">
                     <option value="">All Levels</option>
@@ -71,7 +71,7 @@
 
             <div>
                 <label class="block text-xs font-bold mb-1.5 uppercase tracking-wide" style="color: #374151;">Sex</label>
-                <select wire:model.live="filterSex"
+                <select wire:model="filterSex"
                         class="w-full text-xs px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         style="border-color: #d1d5db; color: #1e293b; background: #f9fafb;">
                     <option value="">All</option>
@@ -80,30 +80,21 @@
                 </select>
             </div>
 
-            <!-- <div>
-                <label class="block text-xs font-bold mb-1.5 uppercase tracking-wide" style="color: #374151;">From</label>
-                <input type="date" wire:model.live="filterFrom"
-                       class="w-full text-xs px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                       style="border-color: #d1d5db; color: #1e293b; background: #f9fafb;">
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold mb-1.5 uppercase tracking-wide" style="color: #374151;">To</label>
-                <input type="date" wire:model.live="filterTo"
-                       class="w-full text-xs px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                       style="border-color: #d1d5db; color: #1e293b; background: #f9fafb;">
-            </div> -->
-
         </div>
 
-        <!-- {{-- Apply Filters row --}}
-        <div class="flex justify-end mt-3 pt-3 border-t" style="border-color: #f1f5f9;">
-            <button wire:click="$refresh"
-                    class="text-xs font-semibold px-5 py-2 rounded-lg text-white transition-opacity hover:opacity-90"
-                    style="background: #16a34a;">
-                <i class="fas fa-filter mr-1.5"></i> Apply Filters
+        {{-- Filter / Clear buttons --}}
+        <div class="flex justify-end mt-3 pt-3 border-t gap-2" style="border-color: #f1f5f9;">
+            <button type="button" wire:click="clearFilters"
+                    class="text-xs font-semibold px-4 py-2 rounded-lg border transition-colors hover:bg-slate-50"
+                    style="color: #64748b; border-color: #d1d5db;">
+                <i class="fas fa-times mr-1"></i> Clear
             </button>
-        </div> -->
+            <button type="button" wire:click="applyFilters"
+                    class="text-xs font-semibold px-5 py-2 rounded-lg text-white transition-opacity hover:opacity-90"
+                    style="background: #1a2035;">
+                <i class="fas fa-filter mr-1.5"></i> Filter
+            </button>
+        </div>
     </div>
 
     {{-- ===================== CHART GRID 2x2 ===================== --}}
@@ -128,16 +119,13 @@
         </div>
 
         {{-- Chart C: Vertical Bar — Barangay --}}
-      {{-- Chart C: Vertical Bar — Barangay --}}
-<div class="bg-white rounded-xl border p-5 md:col-span-2" style="border-color: #e2e8f0;">
+        <div class="bg-white rounded-xl border p-5 md:col-span-2" style="border-color: #e2e8f0;">
             <h6 class="font-bold text-sm mb-0.5" style="color: #1e293b;">Registrants by Barangay (Top 20)</h6>
             <p class="text-xs mb-0.5" style="color: #64748b;">Distribution of applicants per barangay</p>
             <p class="text-xs mb-3" style="color: #94a3b8;">Type: Vertical Bar Chart</p>
-         <canvas id="barangayChart" height="100"></canvas>
+            <canvas id="barangayChart" height="100"></canvas>
             <p class="text-xs italic mt-3 text-center" style="color: #94a3b8;">Click a bar to filter by that barangay</p>
         </div>
-
-        
 
     </div>
 
@@ -235,8 +223,6 @@
                 }
             }
         });
-
-       
     }
 
     document.addEventListener('livewire:initialized', () => {

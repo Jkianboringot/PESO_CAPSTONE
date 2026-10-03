@@ -7,8 +7,11 @@ namespace App\Livewire;
 
 use App\Models\{User, Role};
 use App\Services\AuditLogService;
-use Livewire\Component;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
+use Livewire\Component;
+
 class UserManagement extends Component
 {
     public bool $showForm = false;
@@ -19,6 +22,7 @@ class UserManagement extends Component
     public string $role_id = '';
 
     public string $currentRoleId = '';
+
     public function mount()
     {
 
@@ -27,6 +31,12 @@ class UserManagement extends Component
             403
         );
 
+    }
+
+    // ---------- TOAST HELPER ----------
+    private function notify(string $type, string $message): void
+    {
+        $this->dispatch('notify', type: $type, message: $message);
     }
 
     public function openCreate()
@@ -44,7 +54,7 @@ class UserManagement extends Component
         //OPTIMIZE mount user if edit is click this way its faster becuase its the first
         //thing that loads
         $user = User::findOrFail($id);
-        $this->currentRoleId;
+        $this->currentRoleId = '';
         foreach ($user->roles as $role) {
             $this->currentRoleId = $role->id;
         }
@@ -77,74 +87,105 @@ class UserManagement extends Component
         if (!$this->editingId) { //if we are not in editing form we require password
             $rules['password'] = 'required|min:8';
         }
-        $this->validate($rules);
 
-        //SECURE-DB transaction or try catch
-        if ($this->editingId) {
-            $user = User::findOrFail($this->editingId);
-
-            //REVIEW
-            //temporary -> this should only be activate if role_id is to change
-            if (($this->role_id != $this->currentRoleId) && ($user->id === auth()->id())) {
-                abort(403, 'Cannot edit your own Role');
-            }
-
-            $role = Role::findOrFail($this->role_id);
-            $user->syncRoles($role->name);
-
-            // dd($role);
-            $data = ['name' => $this->name, 'email' => $this->email];
-
-
-
-
-
-            if ($this->password)
-                $data['password'] = Hash::make($this->password);
-            $user->update($data);
-            $audit->log('USER_UPDATED', $user);
-        } else {
-            $user = User::create([
-                'name' => $this->name,
-                'email' => $this->email,
-                'password' => Hash::make($this->password),
-                // 'role_id' => $this->role_id,
-            ]);
-            $role = Role::findOrFail($this->role_id ?? '');
-            $user->syncRoles($role->name);
-
-
-            $audit->log('USER_CREATED', $user);
+        try {
+            $this->validate($rules);
+        } catch (ValidationException $e) {
+            $this->notify('error', 'Please fix the highlighted fields.');
+            throw $e; // keeps the inline field errors
         }
+
+        //REVIEW
+        //temporary -> this should only be activate if role_id is to change
+        if (
+            $this->editingId
+            && ($this->role_id != $this->currentRoleId)
+            && ((int) $this->editingId === (int) auth()->id())
+        ) {
+            $this->notify('error', 'You cannot change your own role.');
+            return;
+        }
+
+        $isEdit = (bool) $this->editingId;
+
+        try {
+            DB::transaction(function () use ($audit, $isEdit) {
+                if ($isEdit) {
+                    $user = User::findOrFail($this->editingId);
+
+                    $role = Role::findOrFail($this->role_id);
+                    $user->syncRoles($role->name);
+
+                    $data = ['name' => $this->name, 'email' => $this->email];
+                    if ($this->password)
+                        $data['password'] = Hash::make($this->password);
+                    $user->update($data);
+
+                    $audit->log('USER_UPDATED', $user);
+                } else {
+                    $user = User::create([
+                        'name' => $this->name,
+                        'email' => $this->email,
+                        'password' => Hash::make($this->password),
+                    ]);
+                    $role = Role::findOrFail($this->role_id);
+                    $user->syncRoles($role->name);
+
+                    $audit->log('USER_CREATED', $user);
+                }
+            });
+        } catch (\Throwable $e) {
+            report($e);
+            $this->notify('error', 'Could not save the user. Please try again.');
+            return;
+        }
+
         $this->showForm = false;
-        session()->flash('success', 'User saved.');
+        $this->notify('success', $isEdit ? 'User updated successfully.' : 'User created successfully.');
     }
 
     public function deactivate(int $id, AuditLogService $audit)
     {
         // Prevent self-deactivation   - no // AUTHORIZE its good enough
         if ($id === auth()->id()) {
-            session()->flash('error', 'You cannot deactivate your own account.');
+            $this->notify('error', 'You cannot deactivate your own account.');
             return;
         }
-        $user = User::findOrFail($id);
-        $user->update(['is_active' => false]);
 
-        $audit->log('USER_DEACTIVATED', $user);
+        try {
+            $user = User::findOrFail($id);
+            $user->update(['is_active' => false]);
+
+            $audit->log('USER_DEACTIVATED', $user);
+        } catch (\Throwable $e) {
+            report($e);
+            $this->notify('error', 'Could not deactivate the user. Please try again.');
+            return;
+        }
+
+        $this->notify('success', 'User deactivated.');
     }
 
-      public function activated(int $id, AuditLogService $audit)
+    public function activated(int $id, AuditLogService $audit)
     {
-        // Prevent self-deactivation   - no // AUTHORIZE its good enough
+        // Prevent self-activation   - no // AUTHORIZE its good enough
         if ($id === auth()->id()) {
-            session()->flash('error', 'You cannot activate your own account.');
+            $this->notify('error', 'You cannot activate your own account.');
             return;
         }
-        $user = User::findOrFail($id);
-        $user->update(['is_active' => true]);
-        // dd($user);
 
-        $audit->log('USER_ACTIVATED', $user);
+        try {
+            $user = User::findOrFail($id);
+            $user->update(['is_active' => true]);
+
+            $audit->log('USER_ACTIVATED', $user);
+        } catch (\Throwable $e) {
+            report($e);
+            $this->notify('error', 'Could not activate the user. Please try again.');
+            return;
+        }
+
+        $this->notify('success', 'User activated.');
     }
 
     public function render()

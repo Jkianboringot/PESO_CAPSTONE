@@ -83,4 +83,15 @@ class WorkforceAnalyticsDashboard extends Component {
             ],
         ])->layout('layouts.app');
     }
+
+    public function applyFilters()
+{
+    $this->dispatch('refresh-charts', charts: $this->buildChartData()); // your existing call
+}
+
+public function clearFilters()
+{
+    $this->reset(['filterCategory', 'filterBarangay', 'filterEdLevel', 'filterSex']);
+    $this->dispatch('refresh-charts', charts: $this->buildChartData());
+}
 }

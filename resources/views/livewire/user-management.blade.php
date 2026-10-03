@@ -1,6 +1,9 @@
 <div>
     <x-slot name="title">User Management</x-slot>
 
+    {{-- Toast notifications (resources/views/components/toast.blade.php) --}}
+    <x-toast />
+
     <div class="flex items-center justify-between mb-6">
         <div>
             <h1 class="text-xl font-bold" style="color: #1e293b;">
@@ -98,7 +101,7 @@
                 </thead>
                 <tbody class="divide-y" style="border-color: #f1f5f9;">
                     @forelse($users as $user)
-                    <tr class="hover:bg-slate-50 transition-colors">
+                    <tr wire:key="user-{{ $user->id }}" class="hover:bg-slate-50 transition-colors">
                         <td class="px-4 py-3">
                             <div class="flex items-center gap-2">
                                 <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
@@ -121,8 +124,8 @@
                                 <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold" style="background: #f1f5f9; color: #64748b;">Inactive</span>
                             @endif
                         </td>
-                    
-                        <td class="px-4 py-3">
+
+                        <td class="px-4 py-3 whitespace-nowrap">
                             <div class="flex items-center gap-1.5">
                                 <button wire:click="openEdit({{ $user->id }})"
                                         class="text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200"
@@ -132,16 +135,15 @@
 
                                 @if($user->is_active && $user->id !== auth()->id())
                                     <button wire:key="deactivate-{{ $user->id }}"
-                                     wire:click="deactivate({{ $user->id }})"
+                                            wire:click="deactivate({{ $user->id }})"
                                             wire:confirm="Deactivate this user?"
                                             class="text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors hover:bg-red-50 hover:text-red-700 hover:border-red-200"
                                             style="color: #dc2626; border-color: #fecaca;">
                                         Deactivate
                                     </button>
                                 @elseif(! $user->is_active)
-                                    <button 
-                                    wire:key="activate-{{ $user->id }}"
-                                    wire:click="activated({{ $user->id }})"
+                                    <button wire:key="activate-{{ $user->id }}"
+                                            wire:click="activated({{ $user->id }})"
                                             wire:confirm="Activate this user?"
                                             class="text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors hover:bg-green-50 hover:text-green-700 hover:border-green-200"
                                             style="color: #16a34a; border-color: #bbf7d0;">
@@ -153,7 +155,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-12 text-center">
+                        <td colspan="5" class="px-4 py-12 text-center">
                             <i class="fas fa-users text-3xl mb-3 block opacity-20"></i>
                             <p class="text-xs" style="color: #94a3b8;">No users found.</p>
                         </td>
