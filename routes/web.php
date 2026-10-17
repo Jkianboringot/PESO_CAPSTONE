@@ -48,28 +48,33 @@ Route::get('/qr/job-portal', function () {
 | Applicant portal (separate 'applicant' guard, NOT the staff/admin login)
 |--------------------------------------------------------------------------
 */
+Route::prefix('applicant')->name('applicant.')->group(function () {
 
-Route::middleware('auth:applicant')->group(function () {
+    Route::get('/login', ApplicantLogin::class)
+        ->middleware('guest:applicant')
+        ->name('login');
 
-    Route::get('/dashboard', ApplicantDashboard::class)->name('dashboard');
-    Route::get('/profile', Profile::class)->name('profile');
-    Route::get('/skills', Skills::class)->name('skills');
-    Route::get('/employment', EducationEmployment::class)->name('employment');
-    Route::get('/password', ChangePassword::class)->name('password');
+    // auth first, then role (role:<role>,<guard>)
+    Route::middleware(['auth:applicant', 'role:applicant'])->group(function () {
 
+        Route::get('/dashboard', ApplicantDashboard::class)->name('dashboard');
+        Route::get('/profile', Profile::class)->name('profile');
+        Route::get('/skills', Skills::class)->name('skills');
+        Route::get('/employment', EducationEmployment::class)->name('employment');
+        Route::get('/password', ChangePassword::class)->name('password');
+    });
+
+    // keep logout outside the role check so any logged-in applicant can always sign out
     Route::post('/logout', function (Request $request) {
         Auth::guard('applicant')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return redirect()->route('applicant.login');
-    })->name('logout');
+    })->middleware('auth:applicant')->name('logout');
 });
-/*
-|--------------------------------------------------------------------------
-| Authenticated (all logged-in users, throttled)
-|--------------------------------------------------------------------------
-*/
+
+
 Route::middleware(['auth', 'throttle:60,1'])->group(function () {
 
     // ── Admin AND staff ──────────────────────────────────────────────

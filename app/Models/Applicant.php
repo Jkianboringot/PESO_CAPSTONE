@@ -3,14 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
-
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Traits\HasRoles;
 
 class Applicant extends Authenticatable
 {
-    use Notifiable;
+    use Notifiable, HasRoles;
+
+    protected $guard_name = 'applicant';
     protected $fillable = [
         'reference_id',
         'last_name',
@@ -29,7 +31,6 @@ class Applicant extends Authenticatable
         'consent_given_at',
         'last_name_metaphone',
     ];
-    protected $guard_name = 'applicant';
     protected $hidden = [
         'password',
         'remember_token',
@@ -104,11 +105,12 @@ class Applicant extends Authenticatable
         return trim("{$this->last_name}, {$this->first_name} {$this->middle_name}");
     }
 
-    protected static function booted(): void
-    {
-        static::created(function (Applicant $applicant) {
-            $applicant->assignRole('applicant');
-        });
-    }
+protected static function booted(): void
+{
+    static::created(function (Applicant $applicant) {
+        Role::findOrCreate('applicant', 'applicant');
+        $applicant->assignRole('applicant');
+    });
+}
 
 }

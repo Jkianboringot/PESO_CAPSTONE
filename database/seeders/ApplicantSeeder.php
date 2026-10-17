@@ -8,6 +8,8 @@ use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 /**
  * Seeds 20 applicants:
@@ -19,7 +21,9 @@ use Illuminate\Support\Facades\Hash;
  * Flags are created by running the REAL DuplicateDetectionService on each
  * duplicate, so the service itself decides who gets flagged.
  *
- * Every applicant gets the dev password "123" (see $passwordHash).
+ * Every applicant gets the dev password "123" (see $passwordHash) and the
+ * "applicant" role (assigned manually, because DB::insert skips the model's
+ * `created` event).
  *
  * Reset first so old rows don't add extra matches:
  *   php artisan migrate:fresh --seed
@@ -30,77 +34,243 @@ class ApplicantSeeder extends Seeder
     private string $passwordHash = '';
 
     private array $lastNames = [
-        'Reyes','Cruz','Ocampo','Flores','Ramos','Lopez','Hernandez','Gonzales',
-        'Perez','Castillo','Morales','Soriano','Tolentino','Magno','Abad','Aguilar',
-        'Arellano','Balmaceda','Baltazar','Basilio','Buenaventura','Cabrales',
-        'Capili','Castañeda','Catacutan','Cervantes','Concepcion','Corpuz',
-        'Dimaano','Dizon','Estrada','Fajardo','Galvez','Guerrero','Guevara',
-        'Ignacio','Lazaro','Luna','Manansala','Navarro','Pangilinan',
-        'Resurrecion','Salazar','Tagala','Valdez','Zamora',
+        'Reyes',
+        'Cruz',
+        'Ocampo',
+        'Flores',
+        'Ramos',
+        'Lopez',
+        'Hernandez',
+        'Gonzales',
+        'Perez',
+        'Castillo',
+        'Morales',
+        'Soriano',
+        'Tolentino',
+        'Magno',
+        'Abad',
+        'Aguilar',
+        'Arellano',
+        'Balmaceda',
+        'Baltazar',
+        'Basilio',
+        'Buenaventura',
+        'Cabrales',
+        'Capili',
+        'Castañeda',
+        'Catacutan',
+        'Cervantes',
+        'Concepcion',
+        'Corpuz',
+        'Dimaano',
+        'Dizon',
+        'Estrada',
+        'Fajardo',
+        'Galvez',
+        'Guerrero',
+        'Guevara',
+        'Ignacio',
+        'Lazaro',
+        'Luna',
+        'Manansala',
+        'Navarro',
+        'Pangilinan',
+        'Resurrecion',
+        'Salazar',
+        'Tagala',
+        'Valdez',
+        'Zamora',
     ];
 
     private array $firstNamesMale = [
-        'Juan','Jose','Antonio','Manuel','Francisco','Miguel','Luis','Pedro',
-        'Ricardo','Roberto','Eduardo','Fernando','Alfredo','Rodrigo','Noel',
-        'Christian','Mark','John','Michael','Ryan','Jerome','Jayson','Julius',
-        'Kenneth','Kevin','Lester','Marlon','Nathan','Patrick','Rafael',
+        'Juan',
+        'Jose',
+        'Antonio',
+        'Manuel',
+        'Francisco',
+        'Miguel',
+        'Luis',
+        'Pedro',
+        'Ricardo',
+        'Roberto',
+        'Eduardo',
+        'Fernando',
+        'Alfredo',
+        'Rodrigo',
+        'Noel',
+        'Christian',
+        'Mark',
+        'John',
+        'Michael',
+        'Ryan',
+        'Jerome',
+        'Jayson',
+        'Julius',
+        'Kenneth',
+        'Kevin',
+        'Lester',
+        'Marlon',
+        'Nathan',
+        'Patrick',
+        'Rafael',
     ];
 
     private array $firstNamesFemale = [
-        'Ana','Rosa','Carmen','Luz','Gloria','Pilar','Lourdes','Angelica',
-        'Beatriz','Bernadette','Carla','Cecilia','Cherry','Christine','Corazon',
-        'Cristina','Daisy','Diana','Eden','Grace','Hazel','Irene','Jasmine',
-        'Joyce','Karen','Leah','Marites','Nina','Rhea','Sheila',
+        'Ana',
+        'Rosa',
+        'Carmen',
+        'Luz',
+        'Gloria',
+        'Pilar',
+        'Lourdes',
+        'Angelica',
+        'Beatriz',
+        'Bernadette',
+        'Carla',
+        'Cecilia',
+        'Cherry',
+        'Christine',
+        'Corazon',
+        'Cristina',
+        'Daisy',
+        'Diana',
+        'Eden',
+        'Grace',
+        'Hazel',
+        'Irene',
+        'Jasmine',
+        'Joyce',
+        'Karen',
+        'Leah',
+        'Marites',
+        'Nina',
+        'Rhea',
+        'Sheila',
     ];
 
     private array $middleNames = [
-        'A.','B.','C.','D.','E.','G.','L.','M.','P.','R.','S.','T.',
-        'Santos','Reyes','Cruz','Garcia','Ramos','Flores','Lopez','Morales',
+        'A.',
+        'B.',
+        'C.',
+        'D.',
+        'E.',
+        'G.',
+        'L.',
+        'M.',
+        'P.',
+        'R.',
+        'S.',
+        'T.',
+        'Santos',
+        'Reyes',
+        'Cruz',
+        'Garcia',
+        'Ramos',
+        'Flores',
+        'Lopez',
+        'Morales',
     ];
 
     private array $streets = [
-        'Purok 1','Purok 2','Purok 3','Purok 4','Sitio Bagong Buhay',
-        'Sitio Mabini','Sitio Rizal','Sitio Pag-asa','Blk 1 Lot 5','Blk 2 Lot 12',
-        'National Highway','Barangay Road','Coastal Road','Near the Church',
-        'Near the School','Near the Market',
+        'Purok 1',
+        'Purok 2',
+        'Purok 3',
+        'Purok 4',
+        'Sitio Bagong Buhay',
+        'Sitio Mabini',
+        'Sitio Rizal',
+        'Sitio Pag-asa',
+        'Blk 1 Lot 5',
+        'Blk 2 Lot 12',
+        'National Highway',
+        'Barangay Road',
+        'Coastal Road',
+        'Near the Church',
+        'Near the School',
+        'Near the Market',
     ];
 
     private array $contactPrefixes = [
-        '0917','0918','0919','0920','0921','0926','0927','0928','0929','0930',
-        '0935','0936','0939','0946','0947','0955','0956','0961','0975','0995',
+        '0917',
+        '0918',
+        '0919',
+        '0920',
+        '0921',
+        '0926',
+        '0927',
+        '0928',
+        '0929',
+        '0930',
+        '0935',
+        '0936',
+        '0939',
+        '0946',
+        '0947',
+        '0955',
+        '0956',
+        '0961',
+        '0975',
+        '0995',
     ];
 
     private array $educationLevels = [
-        'Elementary','High School','Senior High School',
-        'Vocational/Technical','College Undergraduate',
-        'College Graduate','Post-Graduate',
+        'Elementary',
+        'High School',
+        'Senior High School',
+        'Vocational/Technical',
+        'College Undergraduate',
+        'College Graduate',
+        'Post-Graduate',
     ];
 
     private array $eduWeights = [15, 25, 15, 20, 10, 12, 3];
 
     private array $courses = [
-        'BS Information Systems','BS Information Technology','BS Computer Science',
-        'BS Nursing','BS Education','BS Agriculture','BS Criminology',
-        'BS Business Administration','BS Accountancy','BS Tourism',
-        'Bachelor of Secondary Education','Bachelor of Elementary Education',
-        'NC II Computer Hardware Servicing','NC II Electrical Installation',
-        'NC II Welding','NC II Caregiving','NC II Bookkeeping','NC II Beauty Care',
+        'BS Information Systems',
+        'BS Information Technology',
+        'BS Computer Science',
+        'BS Nursing',
+        'BS Education',
+        'BS Agriculture',
+        'BS Criminology',
+        'BS Business Administration',
+        'BS Accountancy',
+        'BS Tourism',
+        'Bachelor of Secondary Education',
+        'Bachelor of Elementary Education',
+        'NC II Computer Hardware Servicing',
+        'NC II Electrical Installation',
+        'NC II Welding',
+        'NC II Caregiving',
+        'NC II Bookkeeping',
+        'NC II Beauty Care',
     ];
 
     private array $schools = [
-        'Catanduanes State University','Catanduanes College','Divine Word College',
-        'STI College','Bicol University','Partido College',
-        'Catanduanes National High School','Virac National High School',
-        'Pandan National High School','Bato National High School',
+        'Catanduanes State University',
+        'Catanduanes College',
+        'Divine Word College',
+        'STI College',
+        'Bicol University',
+        'Partido College',
+        'Catanduanes National High School',
+        'Virac National High School',
+        'Pandan National High School',
+        'Bato National High School',
         'TESDA Training Center - Catanduanes',
     ];
 
     private array $categoryNames = [
-        'ICT & Digital Technology','Agricultural & Fisheries',
-        'Construction & Engineering','Health & Social Services',
-        'Tourism & Hospitality','Business & Administration',
-        'Maritime & Transport','Arts, Crafts & Design',
-        'Teaching & Education','Trade & Technical Services',
+        'ICT & Digital Technology',
+        'Agricultural & Fisheries',
+        'Construction & Engineering',
+        'Health & Social Services',
+        'Tourism & Hospitality',
+        'Business & Administration',
+        'Maritime & Transport',
+        'Arts, Crafts & Design',
+        'Teaching & Education',
+        'Trade & Technical Services',
     ];
 
     // ── Duplicate scenarios ──────────────────────────────────────────────
@@ -109,52 +279,112 @@ class ApplicantSeeder extends Seeder
     {
         return [
             'A' => [
-                'label'  => 'Phonetic + Birthdate',
-                'flag'   => true,
-                'original'  => ['last_name' => 'Santos', 'first_name' => 'Maria', 'sex' => 'Female',
-                                'birthdate' => '1995-03-14', 'contact_number' => '09171110001'],
-                'duplicate' => ['last_name' => 'Santoz', 'first_name' => 'Maria', 'sex' => 'Female',
-                                'birthdate' => '1995-03-14', 'contact_number' => '09282220001'],
+                'label' => 'Phonetic + Birthdate',
+                'flag' => true,
+                'original' => [
+                    'last_name' => 'Santos',
+                    'first_name' => 'Maria',
+                    'sex' => 'Female',
+                    'birthdate' => '1995-03-14',
+                    'contact_number' => '09171110001'
+                ],
+                'duplicate' => [
+                    'last_name' => 'Santoz',
+                    'first_name' => 'Maria',
+                    'sex' => 'Female',
+                    'birthdate' => '1995-03-14',
+                    'contact_number' => '09282220001'
+                ],
             ],
             'B' => [
-                'label'  => 'Phonetic (typo) + Contact (+63 format)',
-                'flag'   => true,
-                'original'  => ['last_name' => 'Villanueva', 'first_name' => 'Jose', 'sex' => 'Male',
-                                'birthdate' => '1991-06-30', 'contact_number' => '09173334444'],
-                'duplicate' => ['last_name' => 'Villanueba', 'first_name' => 'Jose', 'sex' => 'Male',
-                                'birthdate' => '1999-12-01', 'contact_number' => '+63 917 333 4444'],
+                'label' => 'Phonetic (typo) + Contact (+63 format)',
+                'flag' => true,
+                'original' => [
+                    'last_name' => 'Villanueva',
+                    'first_name' => 'Jose',
+                    'sex' => 'Male',
+                    'birthdate' => '1991-06-30',
+                    'contact_number' => '09173334444'
+                ],
+                'duplicate' => [
+                    'last_name' => 'Villanueba',
+                    'first_name' => 'Jose',
+                    'sex' => 'Male',
+                    'birthdate' => '1999-12-01',
+                    'contact_number' => '+63 917 333 4444'
+                ],
             ],
             'C' => [
-                'label'  => 'Birthdate + Contact (different surname)',
-                'flag'   => true,
-                'original'  => ['last_name' => 'Torres', 'first_name' => 'Carlos', 'sex' => 'Male',
-                                'birthdate' => '1988-07-22', 'contact_number' => '09285550123'],
-                'duplicate' => ['last_name' => 'Mendoza', 'first_name' => 'Carlos', 'sex' => 'Male',
-                                'birthdate' => '1988-07-22', 'contact_number' => '0928-555-0123'],
+                'label' => 'Birthdate + Contact (different surname)',
+                'flag' => true,
+                'original' => [
+                    'last_name' => 'Torres',
+                    'first_name' => 'Carlos',
+                    'sex' => 'Male',
+                    'birthdate' => '1988-07-22',
+                    'contact_number' => '09285550123'
+                ],
+                'duplicate' => [
+                    'last_name' => 'Mendoza',
+                    'first_name' => 'Carlos',
+                    'sex' => 'Male',
+                    'birthdate' => '1988-07-22',
+                    'contact_number' => '0928-555-0123'
+                ],
             ],
             'D' => [
-                'label'  => 'All 3 criteria (Jr. suffix)',
-                'flag'   => true,
-                'original'  => ['last_name' => 'Dela Cruz', 'first_name' => 'Elena', 'sex' => 'Female',
-                                'birthdate' => '1985-02-18', 'contact_number' => '09396667777'],
-                'duplicate' => ['last_name' => 'Dela Cruz Jr.', 'first_name' => 'Elena', 'sex' => 'Female',
-                                'birthdate' => '1985-02-18', 'contact_number' => '+63 939 666 7777'],
+                'label' => 'All 3 criteria (Jr. suffix)',
+                'flag' => true,
+                'original' => [
+                    'last_name' => 'Dela Cruz',
+                    'first_name' => 'Elena',
+                    'sex' => 'Female',
+                    'birthdate' => '1985-02-18',
+                    'contact_number' => '09396667777'
+                ],
+                'duplicate' => [
+                    'last_name' => 'Dela Cruz Jr.',
+                    'first_name' => 'Elena',
+                    'sex' => 'Female',
+                    'birthdate' => '1985-02-18',
+                    'contact_number' => '+63 939 666 7777'
+                ],
             ],
             'E' => [
-                'label'  => 'Phonetic ONLY (control, 1 criterion)',
-                'flag'   => false,
-                'original'  => ['last_name' => 'Bautista', 'first_name' => 'Ramon', 'sex' => 'Male',
-                                'birthdate' => '1990-01-10', 'contact_number' => '09451118888'],
-                'duplicate' => ['last_name' => 'Bautista', 'first_name' => 'Ramon', 'sex' => 'Male',
-                                'birthdate' => '2001-08-09', 'contact_number' => '09561119999'],
+                'label' => 'Phonetic ONLY (control, 1 criterion)',
+                'flag' => false,
+                'original' => [
+                    'last_name' => 'Bautista',
+                    'first_name' => 'Ramon',
+                    'sex' => 'Male',
+                    'birthdate' => '1990-01-10',
+                    'contact_number' => '09451118888'
+                ],
+                'duplicate' => [
+                    'last_name' => 'Bautista',
+                    'first_name' => 'Ramon',
+                    'sex' => 'Male',
+                    'birthdate' => '2001-08-09',
+                    'contact_number' => '09561119999'
+                ],
             ],
             'F' => [
-                'label'  => 'Birthdate ONLY (control, 1 criterion)',
-                'flag'   => false,
-                'original'  => ['last_name' => 'Aquino', 'first_name' => 'Angela', 'sex' => 'Female',
-                                'birthdate' => '1992-11-05', 'contact_number' => '09771230000'],
-                'duplicate' => ['last_name' => 'Lim', 'first_name' => 'Angela', 'sex' => 'Female',
-                                'birthdate' => '1992-11-05', 'contact_number' => '09882340000'],
+                'label' => 'Birthdate ONLY (control, 1 criterion)',
+                'flag' => false,
+                'original' => [
+                    'last_name' => 'Aquino',
+                    'first_name' => 'Angela',
+                    'sex' => 'Female',
+                    'birthdate' => '1992-11-05',
+                    'contact_number' => '09771230000'
+                ],
+                'duplicate' => [
+                    'last_name' => 'Lim',
+                    'first_name' => 'Angela',
+                    'sex' => 'Female',
+                    'birthdate' => '1992-11-05',
+                    'contact_number' => '09882340000'
+                ],
             ],
         ];
     }
@@ -213,13 +443,29 @@ class ApplicantSeeder extends Seeder
             ->whereIn('reference_id', array_column($rows, 'reference_id'))
             ->pluck('id', 'reference_id');
 
+        // ── Assign the "applicant" role to every seeded applicant ────────
+        // DB::insert skips the model's `created` event, so the role that
+        // Applicant::booted() normally assigns has to be done here.
+        $role = Role::findOrCreate('applicant', 'applicant');
+
+        DB::table('model_has_roles')->insert(
+            $ids->values()->map(fn($id) => [
+                'role_id' => $role->id,
+                'model_type' => Applicant::class, // use the morph alias if you use Relation::morphMap()
+                'model_id' => $id,
+            ])->all()
+        );
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
         // ── Education + skills for every applicant ───────────────────────
         $educationRows = [];
         $skillRows = [];
 
         foreach ($rows as $row) {
             $applicantId = $ids[$row['reference_id']] ?? null;
-            if (!$applicantId) continue;
+            if (!$applicantId)
+                continue;
 
             $eduLevel = $this->weightedPick($this->educationLevels, $this->eduWeights);
             $course = $school = $yearGrad = null;
@@ -234,13 +480,13 @@ class ApplicantSeeder extends Seeder
             }
 
             $educationRows[] = [
-                'applicant_id'   => $applicantId,
-                'highest_level'  => $eduLevel,
+                'applicant_id' => $applicantId,
+                'highest_level' => $eduLevel,
                 'course_program' => $course,
-                'school_name'    => $school,
+                'school_name' => $school,
                 'year_graduated' => $yearGrad,
-                'created_at'     => $row['created_at'],
-                'updated_at'     => $row['updated_at'],
+                'created_at' => $row['created_at'],
+                'updated_at' => $row['updated_at'],
             ];
 
             // 1–3 categories, up to 3 skills each
@@ -249,14 +495,16 @@ class ApplicantSeeder extends Seeder
             $used = [];
             foreach (array_slice($cats, 0, rand(1, 3)) as $catName) {
                 $catSkills = $skillMap->get($catName);
-                if (!$catSkills || $catSkills->isEmpty()) continue;
+                if (!$catSkills || $catSkills->isEmpty())
+                    continue;
 
                 foreach ($catSkills->shuffle()->take(rand(1, min(3, $catSkills->count()))) as $skill) {
-                    if (isset($used[$skill->skill_id])) continue;
+                    if (isset($used[$skill->skill_id]))
+                        continue;
                     $used[$skill->skill_id] = true;
                     $skillRows[] = [
-                        'applicant_id'      => $applicantId,
-                        'skill_id'          => $skill->skill_id,
+                        'applicant_id' => $applicantId,
+                        'skill_id' => $skill->skill_id,
                         'proficiency_level' => $this->pick($proficiencies),
                     ];
                 }
@@ -307,34 +555,34 @@ class ApplicantSeeder extends Seeder
         $barangay = $barangays->random();
 
         $row = [
-            'reference_id'        => 'PESO-' . strtoupper(substr(md5(uniqid((string) mt_rand(), true)), 0, 13)),
-            'last_name'           => $lastName,
-            'first_name'          => $firstName,
-            'middle_name'         => $this->rand() < 0.85 ? $this->pick($this->middleNames) : null,
-            'birthdate'           => $now->copy()->subYears($age)->subDays(rand(0, 364))->format('Y-m-d'),
-            'sex'                 => $sex,
-            'civil_status'        => $this->weightedPick(['Single', 'Married', 'Widowed', 'Separated'], [55, 35, 5, 5]),
-            'contact_number'      => $this->pick($this->contactPrefixes) . rand(1, 100),
-            'email'               => $this->rand() < 0.45
+            'reference_id' => 'PESO-' . strtoupper(substr(md5(uniqid((string) mt_rand(), true)), 0, 13)),
+            'last_name' => $lastName,
+            'first_name' => $firstName,
+            'middle_name' => $this->rand() < 0.85 ? $this->pick($this->middleNames) : null,
+            'birthdate' => $now->copy()->subYears($age)->subDays(rand(0, 364))->format('Y-m-d'),
+            'sex' => $sex,
+            'civil_status' => $this->weightedPick(['Single', 'Married', 'Widowed', 'Separated'], [55, 35, 5, 5]),
+            'contact_number' => $this->pick($this->contactPrefixes) . rand(1, 100),
+            'email' => $this->rand() < 0.45
                 ? strtolower($firstName) . '.' . strtolower(str_replace(' ', '', $lastName)) . rand(1, 999) . '@' . $this->pick(['gmail.com', 'yahoo.com', 'outlook.com'])
                 : null,
-            'password'            => $this->passwordHash, // DB::insert skips the model's hashed cast
-            'address'             => $this->pick($this->streets) . ', ' . $barangay->barangay_name,
-            'barangay_id'         => $barangay->barangay_id,
-            'is_active'           => true,
-            'consent_given'       => true,
-            'consent_given_at'    => $createdAt,
+            'password' => $this->passwordHash, // DB::insert skips the model's hashed cast
+            'address' => $this->pick($this->streets) . ', ' . $barangay->barangay_name,
+            'barangay_id' => $barangay->barangay_id,
+            'is_active' => true,
+            'consent_given' => true,
+            'consent_given_at' => $createdAt,
             'last_name_metaphone' => '',
-            'created_at'          => $createdAt,
-            'updated_at'          => $createdAt,
+            'created_at' => $createdAt,
+            'updated_at' => $createdAt,
         ];
 
         $row = array_merge($row, $overrides);
 
         // keep derived fields in sync with any overrides
         $row['last_name_metaphone'] = metaphone($row['last_name']);
-        $row['consent_given_at']    = $row['created_at'];
-        $row['updated_at']          = $row['created_at'];
+        $row['consent_given_at'] = $row['created_at'];
+        $row['updated_at'] = $row['created_at'];
 
         return $row;
     }
@@ -357,7 +605,8 @@ class ApplicantSeeder extends Seeder
         $cumulative = 0;
         foreach ($items as $i => $item) {
             $cumulative += $weights[$i];
-            if ($roll <= $cumulative) return $item;
+            if ($roll <= $cumulative)
+                return $item;
         }
         return $items[array_key_last($items)];
     }
@@ -365,10 +614,19 @@ class ApplicantSeeder extends Seeder
     private function weightedAge(): int
     {
         $r = $this->rand() * 100;
-        if ($r < 20) return rand(18, 24);
-        if ($r < 55) return rand(25, 35);
-        if ($r < 80) return rand(36, 45);
-        if ($r < 95) return rand(46, 55);
+        if ($r < 20)
+            return rand(18, 24);
+        if ($r < 55)
+            return rand(25, 35);
+        if ($r < 80)
+            return rand(36, 45);
+        if ($r < 95)
+            return rand(46, 55);
         return rand(56, 65);
     }
+
+    // sample user
+//   Email: maria.santos@example.com
+// Contact number: 09171110001
+// Password: 123
 }

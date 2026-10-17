@@ -24,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
            $request->is('applicant/*') ? route('applicant.login') : route('login'));
            
         $middleware->redirectUsersTo(fn(Request $request) =>
-            $request->routeIs('applicant.*') ? route('applicant.dashboard') : route('dashboard'));
+            $request->routeIs('applicant.*') ? route('applicant.profile') : route('dashboard'));
 
         $middleware->alias([
             'role' => RoleMiddleware::class,

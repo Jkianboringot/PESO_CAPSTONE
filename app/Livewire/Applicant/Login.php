@@ -11,7 +11,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 
-#[Layout('layouts.applicant')] // change to whatever layout your login pages use
+#[Layout('layouts.applicant-guest')]// change to whatever layout your login pages use
 class Login extends Component
 {
     #[Validate('required|string')]
@@ -60,7 +60,7 @@ class Login extends Component
         // always land on their own dashboard.
         session()->forget('url.intended');
 
-        return $this->redirectRoute('applicant.applicant-dashboard');
+        return $this->redirectRoute('applicant.profile');
     }
 
     protected function throttleKey(): string
