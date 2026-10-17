@@ -35,7 +35,7 @@
 
             <div>
                 <label class="block text-xs font-bold mb-1.5 uppercase tracking-wide" style="color: #374151;">Skills Category</label>
-                <select wire:model="filterCategory"
+                <select wire:model.live="filterCategory"
                         class="w-full text-xs px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         style="border-color: #d1d5db; color: #1e293b; background: #f9fafb;">
                     <option value="">All Categories</option>
@@ -47,7 +47,7 @@
 
             <div>
                 <label class="block text-xs font-bold mb-1.5 uppercase tracking-wide" style="color: #374151;">Barangay</label>
-                <select wire:model="filterBarangay"
+                <select wire:model.live="filterBarangay"
                         class="w-full text-xs px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         style="border-color: #d1d5db; color: #1e293b; background: #f9fafb;">
                     <option value="">All Barangays</option>
@@ -59,7 +59,7 @@
 
             <div>
                 <label class="block text-xs font-bold mb-1.5 uppercase tracking-wide" style="color: #374151;">Education Level</label>
-                <select wire:model="filterEdLevel"
+                <select wire:model.live="filterEdLevel"
                         class="w-full text-xs px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         style="border-color: #d1d5db; color: #1e293b; background: #f9fafb;">
                     <option value="">All Levels</option>
@@ -71,7 +71,7 @@
 
             <div>
                 <label class="block text-xs font-bold mb-1.5 uppercase tracking-wide" style="color: #374151;">Sex</label>
-                <select wire:model="filterSex"
+                <select wire:model.live="filterSex"
                         class="w-full text-xs px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         style="border-color: #d1d5db; color: #1e293b; background: #f9fafb;">
                     <option value="">All</option>
@@ -97,7 +97,7 @@
         </div>
     </div>
 
-    {{-- ===================== CHART GRID 2x2 ===================== --}}
+    {{-- ===================== CHART GRID ===================== --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
 
         {{-- Chart A: Horizontal Bar — Skills --}}
@@ -106,7 +106,6 @@
             <p class="text-xs mb-0.5" style="color: #64748b;">Most common skills across all filtered applicants</p>
             <p class="text-xs mb-3" style="color: #94a3b8;">Type: Horizontal Bar Chart</p>
             <canvas id="skillsChart" height="220"></canvas>
-            <p class="text-xs italic mt-3 text-center" style="color: #94a3b8;">Click a bar to filter by that skill</p>
         </div>
 
         {{-- Chart B: Donut — Education --}}
@@ -115,18 +114,52 @@
             <p class="text-xs mb-0.5" style="color: #64748b;">Breakdown by highest education level completed</p>
             <p class="text-xs mb-3" style="color: #94a3b8;">Type: Donut / Doughnut Chart</p>
             <canvas id="eduChart" height="220"></canvas>
-            <p class="text-xs italic mt-3 text-center" style="color: #94a3b8;">Click a segment to filter by education level</p>
         </div>
 
-        {{-- Chart C: Vertical Bar — Barangay --}}
-        <div class="bg-white rounded-xl border p-5 md:col-span-2" style="border-color: #e2e8f0;">
-            <h6 class="font-bold text-sm mb-0.5" style="color: #1e293b;">Registrants by Barangay (Top 20)</h6>
-            <p class="text-xs mb-0.5" style="color: #64748b;">Distribution of applicants per barangay</p>
+    </div>
+
+    {{-- ===================== DEMOGRAPHICS ===================== --}}
+    <div class="mb-3">
+        <h2 class="text-sm font-bold uppercase tracking-wide" style="color: #1e293b;">
+            <i class="fas fa-people-group mr-2" style="color: #2563eb;"></i> Demographics
+        </h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+
+        {{-- Chart D: Donut — Sex --}}
+        <div class="bg-white rounded-xl border p-5" style="border-color: #e2e8f0;">
+            <h6 class="font-bold text-sm mb-0.5" style="color: #1e293b;">Sex</h6>
+            <p class="text-xs mb-0.5" style="color: #64748b;">Filtered applicants by sex</p>
+            <p class="text-xs mb-3" style="color: #94a3b8;">Type: Donut / Doughnut Chart</p>
+            <canvas id="sexChart" height="220"></canvas>
+        </div>
+
+        {{-- Chart E: Donut — Civil Status --}}
+        <div class="bg-white rounded-xl border p-5" style="border-color: #e2e8f0;">
+            <h6 class="font-bold text-sm mb-0.5" style="color: #1e293b;">Civil Status</h6>
+            <p class="text-xs mb-0.5" style="color: #64748b;">Filtered applicants by civil status</p>
+            <p class="text-xs mb-3" style="color: #94a3b8;">Type: Donut / Doughnut Chart</p>
+            <canvas id="civilChart" height="220"></canvas>
+        </div>
+
+        {{-- Chart F: Vertical Bar — Age Groups --}}
+        <div class="bg-white rounded-xl border p-5" style="border-color: #e2e8f0;">
+            <h6 class="font-bold text-sm mb-0.5" style="color: #1e293b;">Age Groups</h6>
+            <p class="text-xs mb-0.5" style="color: #64748b;">Filtered applicants by age bracket</p>
             <p class="text-xs mb-3" style="color: #94a3b8;">Type: Vertical Bar Chart</p>
-            <canvas id="barangayChart" height="100"></canvas>
-            <p class="text-xs italic mt-3 text-center" style="color: #94a3b8;">Click a bar to filter by that barangay</p>
+            <canvas id="ageChart" height="220"></canvas>
         </div>
 
+    </div>
+
+    {{-- ===================== BARANGAY (not affected by filters) ===================== --}}
+    {{-- Chart C: Vertical Bar — Barangay --}}
+    <div class="bg-white rounded-xl border p-5" style="border-color: #e2e8f0;">
+        <h6 class="font-bold text-sm mb-0.5" style="color: #1e293b;">Registrants by Barangay (Top 20)</h6>
+        <p class="text-xs mb-0.5" style="color: #64748b;">Distribution of applicants per barangay</p>
+        <p class="text-xs mb-3" style="color: #94a3b8;">Type: Vertical Bar Chart</p>
+        <canvas id="barangayChart" height="100"></canvas>
     </div>
 
     {{-- Footer Note --}}
@@ -139,7 +172,7 @@
     let charts = {};
 
     function renderCharts(data) {
-        ['skillsChart','eduChart','barangayChart'].forEach(id => {
+        ['skillsChart','eduChart','barangayChart','sexChart','civilChart','ageChart'].forEach(id => {
             if (charts[id]) charts[id].destroy();
         });
 
@@ -220,6 +253,80 @@
                 scales: {
                     x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45 } },
                     y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 11 } } }
+                }
+            }
+        });
+
+        // Chart D: Sex donut
+        charts.sexChart = new Chart(document.getElementById('sexChart'), {
+            type: 'doughnut',
+            data: {
+                labels: data.sex.labels,
+                datasets: [{
+                    data: data.sex.data,
+                    backgroundColor: ['#2563eb','#db2777','#94a3b8'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { font: { size: 11 }, padding: 12, boxWidth: 12 }
+                    }
+                },
+                cutout: '60%',
+            }
+        });
+
+        // Chart E: Civil status donut
+        charts.civilChart = new Chart(document.getElementById('civilChart'), {
+            type: 'doughnut',
+            data: {
+                labels: data.civilStatus.labels,
+                datasets: [{
+                    data: data.civilStatus.data,
+                    backgroundColor: ['#1F4E79','#2e7d32','#f59e0b','#7c3aed'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { font: { size: 11 }, padding: 12, boxWidth: 12 }
+                    }
+                },
+                cutout: '60%',
+            }
+        });
+
+        // Chart F: Age groups vertical bar
+        charts.ageChart = new Chart(document.getElementById('ageChart'), {
+            type: 'bar',
+            data: {
+                labels: data.ageGroups.labels,
+                datasets: [{
+                    label: 'Applicants',
+                    data: data.ageGroups.data,
+                    backgroundColor: '#00796b',
+                    borderRadius: 4,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: ctx => ` ${ctx.raw} applicants` } }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                    y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 11 }, precision: 0 } }
                 }
             }
         });

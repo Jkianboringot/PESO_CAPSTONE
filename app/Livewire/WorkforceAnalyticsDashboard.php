@@ -26,6 +26,53 @@ class WorkforceAnalyticsDashboard extends Component {
             ->when($this->filterSex, fn($q) => $q->where('sex', $this->filterSex));
     }
 
+    // ── Demographics helpers ─────────────────────────────────────────────
+
+    // Count filtered applicants grouped by a single column (sex, civil_status)
+    private function countBy(string $column): array {
+        $rows = $this->baseQuery()
+            ->selectRaw("$column as label, COUNT(*) as total")
+            ->groupBy($column)
+            ->orderByDesc('total')
+            ->get();
+
+        return ['labels' => $rows->pluck('label'), 'data' => $rows->pluck('total')];
+    }
+
+    // Count filtered applicants per age bracket, computed from birthdate
+    private function ageGroups(): array {
+        // [min age, max age]; null = no upper limit
+        $groups = [
+            'Under 18' => [0, 17],
+            '18–24'    => [18, 24],
+            '25–34'    => [25, 34],
+            '35–44'    => [35, 44],
+            '45–54'    => [45, 54],
+            '55+'      => [55, null],
+        ];
+
+        $labels = [];
+        $data   = [];
+
+        foreach ($groups as $label => [$min, $max]) {
+            // age >= min  ->  birthdate on or before (today - min years)
+            $q = $this->baseQuery()
+                ->where('birthdate', '<=', now()->subYears($min)->toDateString());
+
+            // age <= max  ->  birthdate after (today - (max + 1) years)
+            if ($max !== null) {
+                $q->where('birthdate', '>', now()->subYears($max + 1)->toDateString());
+            }
+
+            $labels[] = $label;
+            $data[]   = $q->count();
+        }
+
+        return ['labels' => $labels, 'data' => $data];
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+
     public function buildChartData(): array {
         // Chart 1: Top 10 skills by applicant count
         $skillsData = DB::table('applicant_skill')
@@ -56,13 +103,17 @@ class WorkforceAnalyticsDashboard extends Component {
             ->limit(20)
             ->get();
 
-    
-
         return [
-            'skills'    => ['labels' => $skillsData->pluck('name'),         'data' => $skillsData->pluck('total')],
-            'education' => ['labels' => $eduData->pluck('highest_level'),   'data' => $eduData->pluck('total')],
-            'barangay'  => ['labels' => $barangayData->pluck('name'),        'data' => $barangayData->pluck('total')],
-            'totals'    => [
+            'skills'      => ['labels' => $skillsData->pluck('name'),         'data' => $skillsData->pluck('total')],
+            'education'   => ['labels' => $eduData->pluck('highest_level'),   'data' => $eduData->pluck('total')],
+            'barangay'    => ['labels' => $barangayData->pluck('name'),        'data' => $barangayData->pluck('total')],
+
+            // Demographics
+            'sex'         => $this->countBy('sex'),
+            'civilStatus' => $this->countBy('civil_status'),
+            'ageGroups'   => $this->ageGroups(),
+
+            'totals'      => [
                 'total'     => $this->baseQuery()->count(),
                 'thisMonth' => $this->baseQuery()->whereMonth('created_at', now()->month)->count(),
             ],
@@ -85,13 +136,13 @@ class WorkforceAnalyticsDashboard extends Component {
     }
 
     public function applyFilters()
-{
-    $this->dispatch('refresh-charts', charts: $this->buildChartData()); // your existing call
-}
+    {
+        $this->dispatch('refresh-charts', charts: $this->buildChartData()); // your existing call
+    }
 
-public function clearFilters()
-{
-    $this->reset(['filterCategory', 'filterBarangay', 'filterEdLevel', 'filterSex']);
-    $this->dispatch('refresh-charts', charts: $this->buildChartData());
-}
+    public function clearFilters()
+    {
+        $this->reset(['filterCategory', 'filterBarangay', 'filterEdLevel', 'filterSex']);
+        $this->dispatch('refresh-charts', charts: $this->buildChartData());
+    }
 }
