@@ -29,7 +29,7 @@ class Applicant extends Authenticatable
         'consent_given_at',
         'last_name_metaphone',
     ];
-
+    protected $guard_name = 'applicant';
     protected $hidden = [
         'password',
         'remember_token',
@@ -102,6 +102,13 @@ class Applicant extends Authenticatable
     public function getFullNameAttribute(): string
     {
         return trim("{$this->last_name}, {$this->first_name} {$this->middle_name}");
+    }
+
+    protected static function booted(): void
+    {
+        static::created(function (Applicant $applicant) {
+            $applicant->assignRole('applicant');
+        });
     }
 
 }

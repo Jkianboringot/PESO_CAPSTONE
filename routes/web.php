@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Applicant\Login as ApplicantLogin;
+use App\Livewire\Applicant\ApplicantDashboard;
 use App\Livewire\ApplicantManagement;
 use App\Livewire\AuditLog;
 use App\Livewire\Dashboard;
@@ -18,8 +19,12 @@ use BaconQrCode\Writer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Livewire\Applicant\ChangePassword;
+use App\Livewire\Applicant\EducationEmployment;
+use App\Livewire\Applicant\Profile;
+use App\Livewire\Applicant\Skills;
 
-Route::get('/', fn () => redirect()->route('dashboard'));
+Route::get('/', fn() => redirect()->route('dashboard'));
 
 /*
 |--------------------------------------------------------------------------
@@ -43,27 +48,23 @@ Route::get('/qr/job-portal', function () {
 | Applicant portal (separate 'applicant' guard, NOT the staff/admin login)
 |--------------------------------------------------------------------------
 */
-Route::prefix('applicant')->name('applicant.')->group(function () {
 
-    Route::get('/login', ApplicantLogin::class)
-        ->middleware('guest:applicant')
-        ->name('login');
+Route::middleware('auth:applicant')->group(function () {
 
-    Route::middleware('auth:applicant')->group(function () {
+    Route::get('/dashboard', ApplicantDashboard::class)->name('dashboard');
+    Route::get('/profile', Profile::class)->name('profile');
+    Route::get('/skills', Skills::class)->name('skills');
+    Route::get('/employment', EducationEmployment::class)->name('employment');
+    Route::get('/password', ChangePassword::class)->name('password');
 
-        // replace with your real applicant page / Livewire component
-        Route::view('/dashboard', 'applicant.dashboard')->name('dashboard');
+    Route::post('/logout', function (Request $request) {
+        Auth::guard('applicant')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
-        Route::post('/logout', function (Request $request) {
-            Auth::guard('applicant')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            return redirect()->route('applicant.login');
-        })->name('logout');
-    });
+        return redirect()->route('applicant.login');
+    })->name('logout');
 });
-
 /*
 |--------------------------------------------------------------------------
 | Authenticated (all logged-in users, throttled)
@@ -91,11 +92,11 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {
 
             return view('activity-stats', [
                 'total_job_portal_views' => (clone $jobPortalViews)->count(),
-                'unique_visitors'        => (clone $jobPortalViews)->distinct('ip_address')->count('ip_address'),
-                'views_today'            => (clone $jobPortalViews)->whereDate('created_at', today())->count(),
-                'login_success'          => ActivityLog::where('event', 'login_success')->count(),
-                'login_failed'           => ActivityLog::where('event', 'login_failed')->count(),
-                'logs'                   => ActivityLog::with('user')->latest()->take(50)->get(),
+                'unique_visitors' => (clone $jobPortalViews)->distinct('ip_address')->count('ip_address'),
+                'views_today' => (clone $jobPortalViews)->whereDate('created_at', today())->count(),
+                'login_success' => ActivityLog::where('event', 'login_success')->count(),
+                'login_failed' => ActivityLog::where('event', 'login_failed')->count(),
+                'logs' => ActivityLog::with('user')->latest()->take(50)->get(),
             ]);
         })->name('admin.activity-stats');
     });

@@ -20,9 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
         //     'role' => \App\Http\Middleware\CheckRole::class,
         // ]);
     
-        $middleware->redirectGuestsTo(fn(Request $request) =>
-            $request->is('applicant.*') ? route('applicant.login') : route('applicant.login'));
-
+       $middleware->redirectGuestsTo(fn ($request) =>
+           $request->is('applicant/*') ? route('applicant.login') : route('login'));
+           
         $middleware->redirectUsersTo(fn(Request $request) =>
             $request->routeIs('applicant.*') ? route('applicant.dashboard') : route('dashboard'));
 
