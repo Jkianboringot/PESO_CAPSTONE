@@ -38,15 +38,13 @@ class DuplicateReview extends Component
 
     public function openFlag(int $flagId): void
     {
-        if (! $this->canReview()) {
+        if (!$this->canReview()) {
             $this->notify('error', 'You are not allowed to review duplicate flags.');
             return;
         }
 
         try {
             // pending() = only flags that are still unresolved.
-            // find() returns null when nothing matches, and Laravel only runs the
-            // eager-load queries when a flag was actually found.
             $flag = DuplicateFlag::pending()->with([
                 'newApplicant.barangay',
                 'newApplicant.education',
@@ -61,14 +59,14 @@ class DuplicateReview extends Component
             return;
         }
 
-        if (! $flag) {
+        if (!$flag) {
             $this->closeFlag();
             $this->notify('error', 'This flag was already resolved or no longer exists.');
             return;
         }
 
         $this->reviewingFlagId = $flag->id;
-        $this->activeFlag      = $flag;
+        $this->activeFlag = $flag;
         $this->resolutionNotes = '';
         $this->resetValidation();
     }
@@ -79,19 +77,50 @@ class DuplicateReview extends Component
         $this->resetValidation();
     }
 
+    // ---------- ACTION HANDLERS ----------
+    // Each outcome has its own method, so the only thing the client controls is
+    // WHICH of these runs (and $action is whitelisted against ACTIONS first).
+
+    // Merged / Deleted: the incoming record is removed from the active list.
+    // Its verification status is left alone; is_active alone drives the tabs.
+    private function applyRemoveIncoming(DuplicateFlag $flag): void
+    {
+        $flag->newApplicant->update(['is_active' => false,'status'=>'Duplicated']);
+    }
+
+    // Retained Both: incoming AND existing both end up Verified.
+    private function applyRetainBoth(DuplicateFlag $flag, AuditLogService $audit): void
+    {
+        // Incoming: always set to active + Verified
+        $flag->newApplicant->update(['is_active' => true, 'status' => 'Verified']);
+
+        // Existing: only touch it if it is not already Verified
+        $existing = $flag->existingApplicant;
+
+        if ($existing && $existing->status !== 'Verified') {
+            $before = $existing->only(['status']);
+            $existing->update(['status' => 'Verified']);
+
+            $audit->logApplicantUpdated($existing, [
+                'before' => $before,
+                'after' => ['status' => 'Verified'],
+            ]);
+        }
+    }
+
     public function resolve(string $action, AuditLogService $audit): void
     {
-        if (! $this->canReview()) {
+        if (!$this->canReview()) {
             $this->notify('error', 'You are not allowed to resolve duplicate flags.');
             return;
         }
 
-        if (! in_array($action, self::ACTIONS, true)) {
+        if (!in_array($action, self::ACTIONS, true)) {
             $this->notify('error', 'Invalid action.');
             return;
         }
 
-        if (! $this->reviewingFlagId) {
+        if (!$this->reviewingFlagId) {
             $this->notify('error', 'Open a flag first.');
             return;
         }
@@ -107,28 +136,32 @@ class DuplicateReview extends Component
         }
 
         $flagId = $this->reviewingFlagId;
-        $notes  = trim($this->resolutionNotes);
+        $notes = trim($this->resolutionNotes);
 
         try {
             $resolved = DB::transaction(function () use ($flagId, $action, $notes, $audit) {
                 // Lock the row: if two staff click at the same time, the second one waits,
                 // then finds the flag is no longer pending and stops.
-                $flag = DuplicateFlag::pending()->lockForUpdate()->find($flagId);
+                $flag = DuplicateFlag::pending()
+                    ->with(['newApplicant', 'existingApplicant'])
+                    ->lockForUpdate()
+                    ->find($flagId);
 
-                if (! $flag) {
+                if (!$flag) {
                     return false; // someone else already resolved it
                 }
 
-                // "Retained Both" = different people, so no applicant change
-                if (in_array($action, ['Merged', 'Deleted'], true)) {
-                    $flag->newApplicant->update(['is_active' => false, 'status' => 'Inactive']);
-                }
+                // The action is already whitelisted, so this match can never hit an unknown value.
+                match ($action) {
+                    'Merged', 'Deleted' => $this->applyRemoveIncoming($flag),
+                    'Retained Both' => $this->applyRetainBoth($flag, $audit),
+                };
 
                 $flag->update([
                     'resolution_status' => $action,
-                    'resolved_by'       => auth()->id(),
-                    'resolution_notes'  => $notes !== '' ? $notes : null,
-                    'resolved_at'       => now(),
+                    'resolved_by' => auth()->id(),
+                    'resolution_notes' => $notes !== '' ? $notes : null,
+                    'resolved_at' => now(),
                 ]);
 
                 // Inside the transaction: if the audit log fails, everything rolls back
@@ -144,7 +177,7 @@ class DuplicateReview extends Component
 
         $this->closeFlag();
 
-        if (! $resolved) {
+        if (!$resolved) {
             $this->notify('error', 'This flag was already resolved by someone else.');
             return;
         }

@@ -169,13 +169,7 @@
             </div>
 
             <div class="flex flex-wrap gap-3">
-                <button wire:click="resolve('Merged')"
-                        wire:confirm="Merge: the incoming record will be deactivated. Proceed?"
-                        wire:loading.attr="disabled" wire:target="resolve"
-                        class="text-xs font-semibold px-4 py-2.5 rounded-lg text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-                        style="background: #ca8a04;">
-                    <i class="fas fa-sync-alt mr-1.5"></i> Merge (Keep Existing, Deactivate New)
-                </button>
+              
 
                 <button wire:click="resolve('Retained Both')"
                         wire:loading.attr="disabled" wire:target="resolve"

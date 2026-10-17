@@ -75,7 +75,7 @@
                     class="w-full text-xs px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     style="border-color: #d1d5db; color: #1e293b; background: #f9fafb;">
                     <option value="">All Barangays</option>
-                    @foreach($barangays as $id=>$b)
+                    @foreach($barangays as $id => $b)
                     <option value="{{ $id}}">{{ $b }}</option>@endforeach
                 </select>
             </div>
@@ -108,14 +108,12 @@
             @php $viewTabs = ['active' => 'Active', 'inactive' => 'Inactive', 'all' => 'All']; @endphp
             <div class="flex items-center gap-1.5">
                 @foreach($viewTabs as $value => $label)
-                    <button type="button" wire:key="view-tab-{{ $value }}"
-                        wire:click="setViewStatus('{{ $value }}')"
-                        class="text-xs font-semibold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-90"
-                        style="{{ $viewStatus === $value
-                            ? 'background:#2563eb; color:#ffffff;'
-                            : 'background:rgba(255,255,255,0.08); color:#cbd5e1;' }}">
-                        {{ $label }}
-                    </button>
+                            <button type="button" wire:key="view-tab-{{ $value }}" wire:click="setViewStatus('{{ $value }}')"
+                                class="text-xs font-semibold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-90" style="{{ $viewStatus === $value
+                    ? 'background:#2563eb; color:#ffffff;'
+                    : 'background:rgba(255,255,255,0.08); color:#cbd5e1;' }}">
+                                {{ $label }}
+                            </button>
                 @endforeach
             </div>
         </div>
@@ -144,6 +142,7 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y" style="border-color: #f1f5f9;">
+
                     @forelse($applicants as $a)
                         <tr wire:key="applicant-{{ $a->id }}" class="hover:bg-slate-50 transition-colors">
                             <td class="px-4 py-3">
@@ -158,7 +157,8 @@
                             <td class="px-4 py-3">
                                 <div class="flex flex-wrap gap-1">
                                     @foreach($a->skills->take(2) as $skill)
-                                        <span title="{{ $skill->name }}" class="inline-block px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap truncate align-middle"
+                                        <span title="{{ $skill->name }}"
+                                            class="inline-block px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap truncate align-middle"
                                             style="max-width:150px; background: #f1f5f9; color: #374151; border: 1px solid #e2e8f0;">
                                             {{ $skill->name }}
                                         </span>
@@ -182,7 +182,8 @@
                                     {{ $a->status }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 whitespace-nowrap" style="color: #475569;">{{ $a->created_at->format('M d, Y') }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap" style="color: #475569;">
+                                {{ $a->created_at->format('M d, Y') }}</td>
                             <td class="px-4 py-3 whitespace-nowrap">
                                 <div class="flex items-center gap-1.5">
                                     <button wire:click="openView({{ $a->id }})"
@@ -195,17 +196,22 @@
                                         style="color: #2563eb; border-color: #bfdbfe;">
                                         Edit
                                     </button>
+                                    <button wire:key="verified-{{ $a->id }}" wire:click="verified({{ $a->id }})"
+                                        wire:confirm="Verified this applicant?"
+                                        class="text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors hover:bg-red-50 hover:text-red-700 hover:border-red-200"
+                                        style="color: #3ba361ff; border-color: #9dddb6ff;">
+                                        Verify
+                                    </button>
+
                                     @if($a->is_active)
-                                        <button wire:key="deactivate-{{ $a->id }}"
-                                            wire:click="deactivate({{ $a->id }})"
+                                        <button wire:key="deactivate-{{ $a->id }}" wire:click="deactivate({{ $a->id }})"
                                             wire:confirm="Deactivate this applicant?"
                                             class="text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors hover:bg-red-50 hover:text-red-700 hover:border-red-200"
                                             style="color: #dc2626; border-color: #fecaca;">
                                             Deactivate
                                         </button>
                                     @else
-                                        <button wire:key="activate-{{ $a->id }}"
-                                            wire:click="activate({{ $a->id }})"
+                                        <button wire:key="activate-{{ $a->id }}" wire:click="activate({{ $a->id }})"
                                             wire:confirm="Activate this applicant?"
                                             class="text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors hover:bg-green-50 hover:text-green-700 hover:border-green-200"
                                             style="color: #16a34a; border-color: #bbf7d0;">
@@ -295,11 +301,13 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
                             <div>
                                 <div class="text-xs" style="color: #94a3b8;">Contact Number</div>
-                                <div class="text-sm font-medium" style="color: #1e293b;">{{ $viewing->contact_number ?: '—' }}</div>
+                                <div class="text-sm font-medium" style="color: #1e293b;">
+                                    {{ $viewing->contact_number ?: '—' }}</div>
                             </div>
                             <div>
                                 <div class="text-xs" style="color: #94a3b8;">Email</div>
-                                <div class="text-sm font-medium break-all" style="color: #1e293b;">{{ $viewing->email ?: '—' }}</div>
+                                <div class="text-sm font-medium break-all" style="color: #1e293b;">
+                                    {{ $viewing->email ?: '—' }}</div>
                             </div>
                         </div>
                     </div>
@@ -312,15 +320,18 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
                             <div>
                                 <div class="text-xs" style="color: #94a3b8;">Barangay</div>
-                                <div class="text-sm font-medium" style="color: #1e293b;">{{ $viewing->barangay?->name ?? '—' }}</div>
+                                <div class="text-sm font-medium" style="color: #1e293b;">
+                                    {{ $viewing->barangay?->name ?? '—' }}</div>
                             </div>
                             <div>
                                 <div class="text-xs" style="color: #94a3b8;">Municipality</div>
-                                <div class="text-sm font-medium" style="color: #1e293b;">{{ $viewing->barangay?->municipality?->name ?? '—' }}</div>
+                                <div class="text-sm font-medium" style="color: #1e293b;">
+                                    {{ $viewing->barangay?->municipality?->name ?? '—' }}</div>
                             </div>
                             <div class="sm:col-span-2">
                                 <div class="text-xs" style="color: #94a3b8;">Address</div>
-                                <div class="text-sm font-medium" style="color: #1e293b;">{{ $viewing->address ?: '—' }}</div>
+                                <div class="text-sm font-medium" style="color: #1e293b;">{{ $viewing->address ?: '—' }}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -331,14 +342,16 @@
                             <i class="fas fa-graduation-cap mr-1.5 opacity-70"></i>Education
                         </h6>
                         <div class="text-xs" style="color: #94a3b8;">Highest Level</div>
-                        <div class="text-sm font-medium" style="color: #1e293b;">{{ $viewing->education?->highest_level ?? '—' }}</div>
+                        <div class="text-sm font-medium" style="color: #1e293b;">
+                            {{ $viewing->education?->highest_level ?? '—' }}</div>
                     </div>
 
                     {{-- Skills grouped by category --}}
                     <div class="pt-5 border-t" style="border-color: #f1f5f9;">
                         <h6 class="text-xs font-bold uppercase tracking-wide mb-3" style="color: #64748b;">
                             <i class="fas fa-screwdriver-wrench mr-1.5 opacity-70"></i>Skills
-                            <span class="font-normal normal-case" style="color: #94a3b8;">({{ $viewing->skills->count() }})</span>
+                            <span class="font-normal normal-case"
+                                style="color: #94a3b8;">({{ $viewing->skills->count() }})</span>
                         </h6>
                         @forelse($skillGroups as $category => $skills)
                             <div class="mb-3 last:mb-0">
@@ -365,11 +378,13 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
                             <div>
                                 <div class="text-xs" style="color: #94a3b8;">Registered</div>
-                                <div class="text-sm font-medium" style="color: #1e293b;">{{ $viewing->created_at->format('M d, Y h:i A') }}</div>
+                                <div class="text-sm font-medium" style="color: #1e293b;">
+                                    {{ $viewing->created_at->format('M d, Y h:i A') }}</div>
                             </div>
                             <div>
                                 <div class="text-xs" style="color: #94a3b8;">Last Updated</div>
-                                <div class="text-sm font-medium" style="color: #1e293b;">{{ $viewing->updated_at->format('M d, Y h:i A') }}</div>
+                                <div class="text-sm font-medium" style="color: #1e293b;">
+                                    {{ $viewing->updated_at->format('M d, Y h:i A') }}</div>
                             </div>
                         </div>
                     </div>
@@ -415,7 +430,7 @@
                         <div>
                             <label class="block text-xs font-semibold mb-1.5" style="color: #374151;">Last Name *</label>
                             <input wire:model="editData.last_name" class="w-full text-sm px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none
-                                          @error('editData.last_name') border-red-400 @enderror"
+                                              @error('editData.last_name') border-red-400 @enderror"
                                 style="border-color: #d1d5db;">
                             @error('editData.last_name')
                                 <p class="text-xs mt-1" style="color: #dc2626;">{{ $message }}</p>
@@ -424,7 +439,7 @@
                         <div>
                             <label class="block text-xs font-semibold mb-1.5" style="color: #374151;">First Name *</label>
                             <input wire:model="editData.first_name" class="w-full text-sm px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none
-                                          @error('editData.first_name') border-red-400 @enderror"
+                                              @error('editData.first_name') border-red-400 @enderror"
                                 style="border-color: #d1d5db;">
                             @error('editData.first_name')
                                 <p class="text-xs mt-1" style="color: #dc2626;">{{ $message }}</p>
@@ -440,7 +455,7 @@
                             <label class="block text-xs font-semibold mb-1.5" style="color: #374151;">Contact Number
                                 *</label>
                             <input wire:model="editData.contact_number" class="w-full text-sm px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none
-                                          @error('editData.contact_number') border-red-400 @enderror"
+                                              @error('editData.contact_number') border-red-400 @enderror"
                                 style="border-color: #d1d5db;">
                             @error('editData.contact_number')
                                 <p class="text-xs mt-1" style="color: #dc2626;">{{ $message }}</p>
@@ -452,20 +467,7 @@
                                 class="w-full text-sm px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 style="border-color: #d1d5db;">
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold mb-1.5" style="color: #374151;">Status *</label>
-                            <select wire:model="editData.status" class="w-full text-sm px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none
-                                           @error('editData.status') border-red-400 @enderror"
-                                style="border-color: #d1d5db;">
-                                <option>Pending</option>
-                                <option>Verified</option>
-                                <option>Flagged</option>
-                                <option>Inactive</option>
-                            </select>
-                            @error('editData.status')
-                                <p class="text-xs mt-1" style="color: #dc2626;">{{ $message }}</p>
-                            @enderror
-                        </div>
+
                         <div class="md:col-span-3">
                             <label class="block text-xs font-semibold mb-1.5" style="color: #374151;">Address</label>
                             <input wire:model="editData.address"

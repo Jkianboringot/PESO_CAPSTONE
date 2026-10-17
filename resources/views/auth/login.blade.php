@@ -20,7 +20,7 @@
 
                 <div class="leading-tight mb-10">
                     <div class="text-xs font-semibold uppercase tracking-widest" style="color:#94a3b8;">Catanduanes Province</div>
-                    <div class="text-white font-bold text-sm">PESO Skills Registry</div>
+                    <div class="text-white font-bold text-sm">Fake login</div>
                 </div>
 
                 <h1 class="text-3xl font-bold text-white leading-snug mb-3">

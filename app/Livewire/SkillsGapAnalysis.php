@@ -28,7 +28,7 @@ class SkillsGapAnalysis extends Component
             ->orderByDesc('applicant_count')
             ->get();
  
-        $gaps    = $skillRanking->where('applicant_count', '<', $this->threshold);
+        $gaps    = $skillRanking->where('applicant_count', '<', $this->threshold??0);
         $surplus = $skillRanking->where('applicant_count', '>=', $this->threshold);
  
         // Category-level aggregation

@@ -7,6 +7,8 @@ use App\Services\AuditLogService;
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class RegistrationForm extends Component {
     public int $step = 1;
@@ -63,8 +65,10 @@ class RegistrationForm extends Component {
             ->orderBy('name')->pluck('name', 'id')->toArray();
     }
 
-    private function rulesForStep(): array {
-        return match($this->step) {
+    // NEW: takes an optional step number so allRules() can ask for any step.
+    // Leave it null and it uses the current step like before.
+    private function rulesForStep(?int $step = null): array {
+        return match($step ?? $this->step) {
             //needs to be customize to comply with ISO , we need error message to be
             //more detailed
                 // example - example below is put as second parameter $this->validate([...],['this one'])
@@ -76,6 +80,7 @@ class RegistrationForm extends Component {
             1 => [
                 'last_name'      => 'required|string|max:100',
                 'first_name'     => 'required|string|max:100',
+                'middle_name'    => 'nullable|string|max:100', // NEW
                 'birthdate'      => 'required|date|before:today',
                 'sex'            => 'required|in:Male,Female,Prefer not to say',
                 'civil_status'   => 'required|in:Single,Married,Widowed,Separated',
@@ -94,12 +99,42 @@ class RegistrationForm extends Component {
                 'year_graduated' => 'nullable|integer|min:1950|max:'.(date('Y')+1),
             ],
             4 => [
-                'selected_skills'   => 'required|array|min:1',
-                'selected_skills.*' => 'exists:skills,id',
+                'selected_skills'       => 'required|array|min:1',
+                'selected_skills.*'     => 'exists:skills,id',
+                'skill_proficiencies.*' => 'nullable|in:Beginner,Intermediate,Advanced,Expert', // NEW
             ],
             5 => ['consent_given' => 'accepted'],
             default => [],
         };
+    }
+
+//     private function allRules(): array
+// {
+//     return array_merge(
+//         ...collect(range(1, 5))
+//             ->map(fn($step) => $this->rulesForStep($step))
+//             ->toArray()
+//     );
+// }
+
+    // NEW: working version of the commented allRules above (merges rules of all 5 steps)
+    private function allRules(): array {
+        $rules = [];
+        foreach (range(1, $this->totalSteps) as $s) {
+            $rules = array_merge($rules, $this->rulesForStep($s));
+        }
+        return $rules;
+    }
+
+    // NEW: finds which step a field belongs to (handles dotted keys like skill_proficiencies.9)
+    private function stepForField(string $field): int {
+        $root = Str::before($field, '.');
+        foreach (range(1, $this->totalSteps) as $s) {
+            foreach (array_keys($this->rulesForStep($s)) as $key) {
+                if (Str::before($key, '.') === $root) return $s;
+            }
+        }
+        return 1;
     }
 
     public function nextStep() {
@@ -127,21 +162,30 @@ class RegistrationForm extends Component {
         }
     }
 
-//     private function allRules(): array
-// {
-//     return array_merge(
-//         ...collect(range(1, 5))
-//             ->map(fn($step) => $this->rulesForStep($step))
-//             ->toArray()
-//     );
-// }
     public function submit(DuplicateDetectionService $detector, AuditLogService $audit) {
-        
-        $this->validate($this->rulesForStep()); //FIXME wrong use allRules - that current validate only validate the 5 one and you can skip prev step
+
+        //FIXME wrong use allRules - that current validate only validate the 5 one and you can skip prev step
+        // FIXED: now validates all steps. It sits OUTSIDE the try/catch on purpose so a
+        // ValidationException reaches Livewire and the @error blocks show,
+        // instead of being swallowed as "Something went wrong".
+        try {
+            $this->validate($this->allRules());
+        } catch (ValidationException $e) {
+            // NEW: jump to the first step that has an error so the user can actually see it
+            $firstField = array_key_first($e->validator->errors()->toArray());
+            $target = $this->stepForField($firstField);
+
+            $this->step = $target;
+            // earlier step -> behave like "edit from review" (fix it, save, land back on review)
+            $this->returnToReview = $target < $this->totalSteps;
+
+            throw $e; // keeps the errors in the bag so the step shows them
+        }
+
 try {
-    
 
 
+// acid, fully succeed, or fully fail
         //SECURE - no try catch or errror hamd
         DB::transaction(function () use ($detector, $audit) {
             $applicant = Applicant::create([
@@ -155,8 +199,9 @@ try {
                 'email'            => $this->email ?: null,
                 'address'          => $this->address,
                 'barangay_id'      => $this->barangay_id,
-                'consent_given'    => true, //CRITICAL they can skip process and go directly to submit so this is bad this need to be properly validated
-                'consent_given_at' => now(), //should only be now() if consent is true, the proper way
+                'consent_given'    => $this->consent_given, //CRITICAL they can skip process and go directly to submit so this is bad this need to be properly validated
+                // FIXED: allRules() above now enforces consent_given = accepted, and we save the real value instead of hardcoded true
+                'consent_given_at' => $this->consent_given ? now() : null, //should only be now() if consent is true, the proper way
                 'status'           => 'Pending',
             ]);
 
@@ -167,10 +212,13 @@ try {
                 'school_name'   => $this->school_name ?: null,
                 'year_graduated'=> $this->year_graduated ?: null,
             ]);
+            
             $skillData = [];
             foreach ($this->selected_skills as $skillId) { //REVIEW skill category is not store since skill holds that as FK
                 //skillId is the id of skill
                 $skillData[$skillId] = [ // REVIEW how skill proficiencies is encoded i dont get it, its like a double attach of skill id
+                    // attach() wants [skill_id => [extra pivot columns]]
+                    // the key is the skill id, the inner array is the extra data saved on the pivot row
                     'proficiency_level' => $this->skill_proficiencies[$skillId] ?? 'Beginner',
                 ];
             }
@@ -184,6 +232,7 @@ try {
         });
 
         $this->submitted = true;//CRITICAL they can skip process and go directly to submit so this is bad this need to be properly validated
+        // FIXED: only reached after allRules() passed and the transaction did not throw
     } catch (\Throwable $th) {
         //REVIEW - do i even need to log this, like is this important enough to log, imean error here will be db error so maybe
             Log::error($th); //TODO-LATER make sure all has this, logging

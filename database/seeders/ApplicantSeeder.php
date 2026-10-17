@@ -7,6 +7,7 @@ use App\Services\DuplicateDetectionService;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash; // NEW
 
 /**
  * Seeds 20 applicants:
@@ -18,11 +19,16 @@ use Illuminate\Support\Facades\DB;
  * Flags are created by running the REAL DuplicateDetectionService on each
  * duplicate, so the service itself decides who gets flagged.
  *
+ * Every applicant gets the dev password "123" (see $passwordHash).
+ *
  * Reset first so old rows don't add extra matches:
  *   php artisan migrate:fresh --seed
  */
 class ApplicantSeeder extends Seeder
 {
+    // NEW: default password for every seeded applicant (hashed once, bcrypt is slow)
+    private string $passwordHash = '';
+
     // ── Name pools (trimmed; none sound like the scenario surnames) ──────
     private array $lastNames = [
         'Reyes','Cruz','Ocampo','Flores','Ramos','Lopez','Hernandez','Gonzales',
@@ -157,6 +163,9 @@ class ApplicantSeeder extends Seeder
     // ────────────────────────────────────────────────────────────────────
     public function run(): void
     {
+        // NEW: hash the dev password once; every seeded applicant shares it
+        $this->passwordHash = Hash::make('123');
+
         $this->command->info('Seeding 20 applicants (8 unique + 6 duplicate scenario pairs)...');
 
         $barangays = DB::table('barangays')
@@ -283,7 +292,7 @@ class ApplicantSeeder extends Seeder
 
         $this->command->newLine();
         $this->command->table(['#', 'Scenario', 'Expected', 'Result', 'Check'], $report);
-        $this->command->info('Done! ' . count($rows) . ' applicants seeded.');
+        $this->command->info('Done! ' . count($rows) . ' applicants seeded. Applicant password: 123');
     }
 
     // ── Row builder ──────────────────────────────────────────────────────
@@ -311,6 +320,7 @@ class ApplicantSeeder extends Seeder
             'email'               => $this->rand() < 0.45
                 ? strtolower($firstName) . '.' . strtolower(str_replace(' ', '', $lastName)) . rand(1, 999) . '@' . $this->pick(['gmail.com', 'yahoo.com', 'outlook.com'])
                 : null,
+            'password'            => $this->passwordHash, // NEW (DB::insert skips the model's hashed cast)
             'address'             => $this->pick($this->streets) . ', ' . $barangay->barangay_name,
             'barangay_id'         => $barangay->barangay_id,
             'is_active'           => true,

@@ -133,6 +133,36 @@ class ApplicantManagement extends Component
         return auth()->user()->hasRole(['staff', 'admin']);
     }
 
+    public function verified($id, AuditLogService $audit)
+    {
+
+        if (!$this->canManage()) {
+            $this->notify('error', 'You do not have permission to verify applicants.');
+            return;
+        }
+
+        try {
+            $a = Applicant::findOrFail($id);
+
+            if ($a->status == 'Flagged') {
+                $this->notify('error', 'Could not Verify the applicant that is Flagged. Please review it first.');
+                return;
+            }
+            if ($a->status == 'Verified') {
+                $this->notify('error', 'Applicant already Verified.');
+                return;
+            }
+            $a->update(['status' => 'Verified']);
+            $audit->logVerify($a);
+        } catch (\Throwable $e) {
+            report($e);
+            $this->notify('error', 'Could not Verify the applicant. Please try again.');
+            return;
+        }
+
+        $this->notify('success', 'Applicant Verified.');
+    }
+
     public function saveEdit(AuditLogService $audit)
     {
         if (!$this->canManage()) {
@@ -244,6 +274,7 @@ class ApplicantManagement extends Component
             ? Applicant::with(['barangay.municipality', 'education', 'skills.category'])->find($this->viewingId)
             : null;
 
+
         return view('livewire.applicant-management', [
             'applicants' => $query->paginate(20),
             'viewing' => $viewing,
@@ -258,7 +289,7 @@ class ApplicantManagement extends Component
                 'College Graduate',
                 'Post-Graduate',
             ],
-            'statuses' => ['Pending', 'Verified', 'Flagged', 'Inactive'],
+            'statuses' => ['Pending', 'Verified', 'Flagged','Duplicated'],
         ])->layout('layouts.app');
     }
 

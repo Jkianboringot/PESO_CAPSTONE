@@ -161,7 +161,8 @@
                             <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style="color:#64748b;">Middle Name <span class="text-slate-400 font-normal normal-case">(optional)</span></label>
                             <input wire:model="middle_name"
                                    placeholder="e.g. Santos"
-                                   class="field-input w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm transition-all">
+                                   class="field-input w-full px-4 py-2.5 rounded-lg border text-sm transition-all @error('middle_name') border-red-400 bg-red-50 @else border-slate-200 @enderror">
+                            @error('middle_name')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                         </div>
 
                         <div>
@@ -203,7 +204,7 @@
                                     <i class="fas fa-phone text-xs"></i>
                                 </span>
                                 <input wire:model.live="contact_number"
-                                type="number"
+                                       type="number"
                                        placeholder="09XXXXXXXXX"
                                        class="field-input w-full pl-9 pr-4 py-2.5 rounded-lg border text-sm transition-all @error('contact_number') border-red-400 bg-red-50 @else border-slate-200 @enderror">
                             </div>
@@ -289,17 +290,18 @@
                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                 @foreach(['Elementary','High School','Senior High School','Vocational/Technical','College Undergraduate','College Graduate','Post-Graduate'] as $level)
                                 <label class="relative cursor-pointer">
-    <input type="radio"
-           name="highest_level"
-           wire:model="highest_level"
-           value="{{ $level }}"
-           class="peer sr-only">
-    <div class="px-3 py-2.5 rounded-lg border text-xs font-medium text-center transition-all
-                peer-checked:border-[#1F4E79] peer-checked:bg-[#eff6ff] peer-checked:text-[#1F4E79]
-                border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50">
-        {{ $level }}
-    </div>
-</label>
+                                    <input type="radio"
+                                           name="highest_level"
+                                           wire:model="highest_level"
+                                           value="{{ $level }}"
+                                           class="peer sr-only">
+                                    <div class="px-3 py-2.5 rounded-lg border text-xs font-medium text-center transition-all
+                                                peer-checked:border-[#1F4E79] peer-checked:bg-[#eff6ff] peer-checked:text-[#1F4E79]
+                                                @error('highest_level') border-red-400 @else border-slate-200 @enderror
+                                                text-slate-500 hover:border-slate-300 hover:bg-slate-50">
+                                        {{ $level }}
+                                    </div>
+                                </label>
                                 @endforeach
                             </div>
                             @error('highest_level')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
@@ -309,7 +311,8 @@
                             <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style="color:#64748b;">Course / Program <span class="text-slate-400 font-normal normal-case">(optional)</span></label>
                             <input wire:model="course_program"
                                    placeholder="e.g. BS Information Technology"
-                                   class="field-input w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm transition-all">
+                                   class="field-input w-full px-4 py-2.5 rounded-lg border text-sm transition-all @error('course_program') border-red-400 bg-red-50 @else border-slate-200 @enderror">
+                            @error('course_program')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                         </div>
 
                         <div>
@@ -317,7 +320,8 @@
                             <input type="number" wire:model="year_graduated"
                                    min="1950" max="{{ date('Y') + 1 }}"
                                    placeholder="{{ date('Y') }}"
-                                   class="field-input w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm transition-all">
+                                   class="field-input w-full px-4 py-2.5 rounded-lg border text-sm transition-all @error('year_graduated') border-red-400 bg-red-50 @else border-slate-200 @enderror">
+                            @error('year_graduated')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                         </div>
 
                         <div class="sm:col-span-2">
@@ -326,8 +330,9 @@
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><i class="fas fa-school text-xs"></i></span>
                                 <input wire:model="school_name"
                                        placeholder="e.g. Catanduanes State University"
-                                       class="field-input w-full pl-9 pr-4 py-2.5 rounded-lg border border-slate-200 text-sm transition-all">
+                                       class="field-input w-full pl-9 pr-4 py-2.5 rounded-lg border text-sm transition-all @error('school_name') border-red-400 bg-red-50 @else border-slate-200 @enderror">
                             </div>
+                            @error('school_name')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                         </div>
 
                     </div>
@@ -345,11 +350,15 @@
                             @endif
                         </div>
 
-                        @error('selected_skills')
+                        {{-- Covers both "pick at least one" and an invalid individual skill id --}}
+                        @php
+                            $skillsError = $errors->first('selected_skills') ?: $errors->first('selected_skills.*');
+                        @endphp
+                        @if($skillsError)
                         <div class="flex items-center gap-2 px-4 py-3 rounded-lg mb-4 text-sm" style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626;">
-                            <i class="fas fa-triangle-exclamation text-xs"></i> {{ $message }}
+                            <i class="fas fa-triangle-exclamation text-xs"></i> {{ $skillsError }}
                         </div>
-                        @enderror
+                        @endif
 
                         <div class="space-y-6">
                             @foreach($skillCategories as $category)
@@ -386,8 +395,9 @@
                                         <div class="mt-2 ml-7">
                                             {{-- PREVIEW: was {{ 1 }} (every skill wrote to key 1). Now uses the skill id so the review shows the right level. --}}
                                             <select wire:model="skill_proficiencies.{{ $skill->id }}"
-                                                    class="w-full px-3 py-1.5 rounded-lg border border-[#1F4E79]/30 text-xs font-medium transition-all"
-                                                    style="color:#1F4E79; background:#fff;">
+                                                    class="w-full px-3 py-1.5 rounded-lg border text-xs font-medium transition-all
+                                                           @error('skill_proficiencies.' . $skill->id) border-red-400 bg-red-50 @else border-[#1F4E79]/30 @enderror"
+                                                    style="color:#1F4E79;">
 
                                                     <!-- value of select so anyseelcted one is teh value, i forgot how select work fuck thats why i dont understand
                                                      pretty much anything we select in option below will be send in backend as the 
@@ -399,6 +409,9 @@
                                                     <option>{{ $pl }}</option>
                                                 @endforeach
                                             </select>
+                                            @error('skill_proficiencies.' . $skill->id)
+                                                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                                            @enderror
                                         </div>
                                         @endif
                                     </div>
@@ -436,19 +449,19 @@
                         </div>
 
                         {{-- Consent checkbox --}}
-                       <div class="flex items-start gap-4 cursor-pointer" wire:click="$toggle('consent_given')">
-    <div class="flex-shrink-0 mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all"
-         style="{{ $consent_given ? 'background:#1F4E79; border-color:#1F4E79;' : 'border-color:#cbd5e1;' }}">
-        @if($consent_given)
-            <i class="fas fa-check" style="font-size:10px; color:#ffffff;"></i>
-        @endif
-    </div>
-    <span class="text-sm leading-relaxed" style="color:#1e293b;">
-        <strong>I have read and understood</strong> the above data privacy statement and I
-        <strong>voluntarily give my consent</strong> for the collection and processing of
-        my personal information by PESO Catanduanes Province.
-    </span>
-</div>
+                        <div class="flex items-start gap-4 cursor-pointer" wire:click="$toggle('consent_given')">
+                            <div class="flex-shrink-0 mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all"
+                                 style="{{ $consent_given ? 'background:#1F4E79; border-color:#1F4E79;' : ($errors->has('consent_given') ? 'border-color:#f87171;' : 'border-color:#cbd5e1;') }}">
+                                @if($consent_given)
+                                    <i class="fas fa-check" style="font-size:10px; color:#ffffff;"></i>
+                                @endif
+                            </div>
+                            <span class="text-sm leading-relaxed" style="color:#1e293b;">
+                                <strong>I have read and understood</strong> the above data privacy statement and I
+                                <strong>voluntarily give my consent</strong> for the collection and processing of
+                                my personal information by PESO Catanduanes Province.
+                            </span>
+                        </div>
                         @error('consent_given')
                         <p class="text-xs text-red-500 flex items-center gap-1.5 -mt-2">
                             <i class="fas fa-circle-exclamation"></i> {{ $message }}
@@ -465,7 +478,7 @@
 
                     {{-- PREVIEW: Previous is hidden while editing from the review screen --}}
                     @if($step > 1 && ! $returnToReview)
-                    <button wire:click="prevStep"
+                    <button type="button" wire:click="prevStep"
                             class="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-lg border transition-all"
                             style="border-color:#e2e8f0; color:#64748b;">
                         <i class="fas fa-arrow-left text-xs"></i> Previous
@@ -475,31 +488,30 @@
                     @endif
 
                     @if($step < $totalSteps)
-                    <button wire:click="nextStep"
+                    <button type="button" wire:click="nextStep"
                             class="flex items-center gap-2 text-sm font-bold px-6 py-2.5 rounded-lg text-white transition-all hover:opacity-90 active:scale-95"
                             style="background:#1F4E79;">
                         {{-- PREVIEW: label changes while editing from review --}}
                         {{ $returnToReview ? 'Save & back to review' : 'Continue' }} <i class="fas fa-arrow-right text-xs"></i>
                     </button>
                     @else
-          <form wire:submit.prevent="submit" class="bg-white rounded-2xl shadow-sm border border-slate-100">
-
-                    <button 
-                            class="flex items-center gap-2 text-sm font-bold px-6 py-2.5 rounded-lg text-white transition-all hover:opacity-90 active:scale-95"
-                            style="background:#2e7d32;">
-                        <span wire:loading wire:target="submit">
-                            <i class="fas fa-spinner fa-spin text-xs"></i> Submitting...
-                        </span>
-                        <span wire:loading.remove wire:target="submit">
-                            <i class="fas fa-paper-plane text-xs"></i> Submit Registration
-                        </span>
-                    </button>
-          </form>
+                    {{-- plain form: no card classes, otherwise it nests a second card inside the footer --}}
+                    <form wire:submit.prevent="submit">
+                        <button type="submit"
+                                class="flex items-center gap-2 text-sm font-bold px-6 py-2.5 rounded-lg text-white transition-all hover:opacity-90 active:scale-95"
+                                style="background:#2e7d32;">
+                            <span wire:loading wire:target="submit">
+                                <i class="fas fa-spinner fa-spin text-xs"></i> Submitting...
+                            </span>
+                            <span wire:loading.remove wire:target="submit">
+                                <i class="fas fa-paper-plane text-xs"></i> Submit Registration
+                            </span>
+                        </button>
+                    </form>
                     @endif
                 </div>
             </div>
 
-         
             @endif
         </div>
     </div>

@@ -56,4 +56,8 @@ class AuditLogService {
     public function logDeactivate($user): void {
         $this->log('APPLICANT_DEACTIVATED', $user);
     }
+
+     public function logVerify($user): void {
+        $this->log('APPLICANT_Verify', $user);
+    }
 }

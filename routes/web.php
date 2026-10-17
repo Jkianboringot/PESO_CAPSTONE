@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Applicant\Login as ApplicantLogin;
 use App\Livewire\ApplicantManagement;
 use App\Livewire\AuditLog;
 use App\Livewire\Dashboard;
@@ -14,6 +15,8 @@ use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('dashboard'));
@@ -34,6 +37,32 @@ Route::get('/qr/job-portal', function () {
 
     return response($svg, 200)->header('Content-Type', 'image/svg+xml');
 })->name('qr.job-portal');
+
+/*
+|--------------------------------------------------------------------------
+| Applicant portal (separate 'applicant' guard, NOT the staff/admin login)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('applicant')->name('applicant.')->group(function () {
+
+    Route::get('/login', ApplicantLogin::class)
+        ->middleware('guest:applicant')
+        ->name('login');
+
+    Route::middleware('auth:applicant')->group(function () {
+
+        // replace with your real applicant page / Livewire component
+        Route::view('/dashboard', 'applicant.dashboard')->name('dashboard');
+
+        Route::post('/logout', function (Request $request) {
+            Auth::guard('applicant')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('applicant.login');
+        })->name('logout');
+    });
+});
 
 /*
 |--------------------------------------------------------------------------
