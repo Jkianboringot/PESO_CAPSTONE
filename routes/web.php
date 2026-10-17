@@ -23,6 +23,7 @@ use App\Livewire\Applicant\ChangePassword;
 use App\Livewire\Applicant\EducationEmployment;
 use App\Livewire\Applicant\Profile;
 use App\Livewire\Applicant\Skills;
+use App\Livewire\Applicant\Credentials;
 
 Route::get('/', fn() => redirect()->route('dashboard'));
 
@@ -62,6 +63,8 @@ Route::prefix('applicant')->name('applicant.')->group(function () {
         Route::get('/skills', Skills::class)->name('skills');
         Route::get('/employment', EducationEmployment::class)->name('employment');
         Route::get('/password', ChangePassword::class)->name('password');
+
+        Route::get('/credentials', Credentials::class)->name('credentials');
     });
 
     // keep logout outside the role check so any logged-in applicant can always sign out

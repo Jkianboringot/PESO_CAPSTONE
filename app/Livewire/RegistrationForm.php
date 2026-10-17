@@ -13,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 
 class RegistrationForm extends Component {
     public int $step = 1;
-    public int $totalSteps = 5;
+    public int $totalSteps = 6;
 
     // PREVIEW: true while the applicant is editing one section from the review screen
     public bool $returnToReview = false;
@@ -45,14 +45,40 @@ class RegistrationForm extends Component {
     // Step 4: Skills
     public array $selected_skills      = [];
     public array $skill_proficiencies  = [];
+    public string $other_skills        = '';
 
-    // Step 5: Oath + Consent
+    // Step 5: Experience & Training (each row is an array, added/removed with addRow/removeRow)
+    public array $work_experiences = [];
+    public array $trainings        = [];
+    public array $seminars         = [];
+    public array $certifications   = [];
+
+    // Step 6: Oath + Consent
     public bool $oath_given    = false;
     public bool $consent_given = false;
 
     // Result
     public ?string $reference_id = null;
     public bool    $submitted    = false;
+
+    // readable names for the repeating rows in error messages
+    protected $validationAttributes = [
+        'other_skills'                    => 'other skills',
+        'work_experiences.*.company_name' => 'company / place of work',
+        'work_experiences.*.position'     => 'position',
+        'work_experiences.*.duration'     => 'duration',
+        'work_experiences.*.description'  => 'description',
+        'trainings.*.title'               => 'training title',
+        'trainings.*.provider'            => 'training provider',
+        'trainings.*.year'                => 'training year',
+        'seminars.*.title'                => 'seminar title',
+        'seminars.*.organizer'            => 'organizer',
+        'seminars.*.year'                 => 'seminar year',
+        'certifications.*.name'           => 'certification name',
+        'certifications.*.issuing_body'   => 'issuing body',
+        'certifications.*.year_issued'    => 'year issued',
+        'certifications.*.expiry_year'    => 'expiry year',
+    ];
 
     public function mount() {
         if ($this->municipality_id) $this->loadBarangays();
@@ -107,8 +133,29 @@ class RegistrationForm extends Component {
                 'selected_skills'       => 'required|array|min:1',
                 'selected_skills.*'     => 'exists:skills,id',
                 'skill_proficiencies.*' => 'nullable|in:Beginner,Intermediate,Advanced,Expert', // NEW
+                'other_skills'          => 'nullable|string|max:1000',
             ],
             5 => [
+                // everything here is optional; a row you add must have its required fields filled
+                'work_experiences.*.company_name' => 'required|string|max:150',
+                'work_experiences.*.position'     => 'required|string|max:100',
+                'work_experiences.*.duration'     => 'nullable|string|max:50',
+                'work_experiences.*.description'  => 'nullable|string|max:1000',
+
+                'trainings.*.title'    => 'required|string|max:150',
+                'trainings.*.provider' => 'nullable|string|max:150',
+                'trainings.*.year'     => 'nullable|integer|min:1950|max:'.(date('Y')+1),
+
+                'seminars.*.title'     => 'required|string|max:150',
+                'seminars.*.organizer' => 'nullable|string|max:150',
+                'seminars.*.year'      => 'nullable|integer|min:1950|max:'.(date('Y')+1),
+
+                'certifications.*.name'         => 'required|string|max:150',
+                'certifications.*.issuing_body' => 'nullable|string|max:150',
+                'certifications.*.year_issued'  => 'nullable|integer|min:1950|max:'.(date('Y')+1),
+                'certifications.*.expiry_year'  => 'nullable|integer|min:1950|max:'.(date('Y')+50),
+            ],
+            6 => [
                 'oath_given'    => 'accepted',
                 'consent_given' => 'accepted',
             ],
@@ -145,9 +192,45 @@ class RegistrationForm extends Component {
         return 1;
     }
 
+    // the four repeating sections of step 5 and the blank row each one starts with
+    private function rowTemplates(): array {
+        return [
+            'work_experiences' => ['company_name' => '', 'position' => '', 'duration' => '', 'description' => ''],
+            'trainings'        => ['title' => '', 'provider' => '', 'year' => ''],
+            'seminars'         => ['title' => '', 'organizer' => '', 'year' => ''],
+            'certifications'   => ['name' => '', 'issuing_body' => '', 'year_issued' => '', 'expiry_year' => ''],
+        ];
+    }
+
+    public function addRow(string $type) {
+        $templates = $this->rowTemplates();
+        if (! isset($templates[$type])) return; // only the four known sections
+
+        $this->{$type}[] = $templates[$type];
+    }
+
+    public function removeRow(string $type, int $index) {
+        if (! isset($this->rowTemplates()[$type])) return;
+
+        unset($this->{$type}[$index]);
+        $this->{$type} = array_values($this->{$type}); // re-number so wire:model keys stay 0,1,2...
+    }
+
+    // keeps only the given fields and turns empty strings into null (year columns are integers)
+    private function cleanRows(array $rows, array $fields): array {
+        return array_map(function ($row) use ($fields) {
+            $clean = [];
+            foreach ($fields as $field) {
+                $value = trim((string) ($row[$field] ?? ''));
+                $clean[$field] = $value === '' ? null : $value;
+            }
+            return $clean;
+        }, array_values($rows));
+    }
+
     public function nextStep() {
         $this->validate($this->rulesForStep());
-      
+
         // PREVIEW: editing from the review screen -> save, then go straight back to review
         if ($this->returnToReview) {
             $this->returnToReview = false;
@@ -208,6 +291,7 @@ try {
                 'password'         => Hash::make($this->password),
                 'address'          => $this->address,
                 'barangay_id'      => $this->barangay_id,
+                'other_skills'     => trim($this->other_skills) ?: null,
                 'oath_given'       => $this->oath_given,
                 'oath_given_at'    => $this->oath_given ? now() : null,
                 'consent_given'    => $this->consent_given, //CRITICAL they can skip process and go directly to submit so this is bad this need to be properly validated
@@ -223,6 +307,19 @@ try {
                 'school_name'   => $this->school_name ?: null,
                 'year_graduated'=> $this->year_graduated ?: null,
             ]);
+
+            $applicant->workExperiences()->createMany(
+                $this->cleanRows($this->work_experiences, ['company_name', 'position', 'duration', 'description'])
+            );
+            $applicant->trainings()->createMany(
+                $this->cleanRows($this->trainings, ['title', 'provider', 'year'])
+            );
+            $applicant->seminars()->createMany(
+                $this->cleanRows($this->seminars, ['title', 'organizer', 'year'])
+            );
+            $applicant->certifications()->createMany(
+                $this->cleanRows($this->certifications, ['name', 'issuing_body', 'year_issued', 'expiry_year'])
+            );
             
             $skillData = [];
             foreach ($this->selected_skills as $skillId) { //REVIEW skill category is not store since skill holds that as FK

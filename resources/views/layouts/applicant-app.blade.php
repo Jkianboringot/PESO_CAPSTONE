@@ -113,7 +113,7 @@
                 @if (Route::has('applicant.profile'))
                     <a href="{{ route('applicant.profile') }}"
                         class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
-                       {{ request()->routeIs('applicant.profile') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
+                           {{ request()->routeIs('applicant.profile') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
                         <i
                             class="fas fa-id-card w-4 text-center {{ request()->routeIs('applicant.profile') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
                         <span>My Registration</span>
@@ -123,7 +123,7 @@
                 @if (Route::has('applicant.skills'))
                     <a href="{{ route('applicant.skills') }}"
                         class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
-                       {{ request()->routeIs('applicant.skills') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
+                           {{ request()->routeIs('applicant.skills') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
                         <i
                             class="fas fa-screwdriver-wrench w-4 text-center {{ request()->routeIs('applicant.skills') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
                         <span>Skills</span>
@@ -133,20 +133,29 @@
                 @if (Route::has('applicant.employment'))
                     <a href="{{ route('applicant.employment') }}"
                         class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
-                       {{ request()->routeIs('applicant.employment') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
+                           {{ request()->routeIs('applicant.employment') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
                         <i
                             class="fas fa-briefcase w-4 text-center {{ request()->routeIs('applicant.employment') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
                         <span>Education &amp; Employment</span>
                     </a>
                 @endif
-
+                
+                @if (Route::has('applicant.credentials'))
+                            <a href="{{ route('applicant.credentials') }}"
+                                class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
+                       {{ request()->routeIs('applicant.credentials') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
+                                <i
+                                    class="fas fa-award w-4 text-center {{ request()->routeIs('applicant.credentials') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
+                                <span>Experience &amp; Credentials</span>
+                            </a>
+                @endif
                 <div class="my-3 border-t border-white/10"></div>
                 <p class="px-3 text-xs font-semibold uppercase tracking-widest mb-1" style="color:#475569;">Account</p>
 
                 @if (Route::has('applicant.password'))
                     <a href="{{ route('applicant.password') }}"
                         class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
-                       {{ request()->routeIs('applicant.password') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
+                           {{ request()->routeIs('applicant.password') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
                         <i
                             class="fas fa-key w-4 text-center {{ request()->routeIs('applicant.password') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
                         <span>Change Password</span>
@@ -164,7 +173,8 @@
                     <div class="flex-1 min-w-0">
                         <div class="text-xs font-medium text-white truncate">{{ $fullName }}</div>
                         <div class="text-xs truncate" style="color:#64748b;">
-                            {{ $applicant->reference_id ?? 'Applicant' }}</div>
+                            {{ $applicant->reference_id ?? 'Applicant' }}
+                        </div>
                     </div>
                 </div>
             </div>

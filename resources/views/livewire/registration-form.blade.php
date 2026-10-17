@@ -80,8 +80,8 @@
 
             {{-- ── STEP PROGRESS ──────────────────────────────── --}}
             @php
-                $stepLabels = ['Personal', 'Address', 'Education', 'Skills', 'Consent'];
-                $stepIcons  = ['fas fa-user', 'fas fa-location-dot', 'fas fa-graduation-cap', 'fas fa-wrench', 'fas fa-file-shield'];
+                $stepLabels = ['Personal', 'Address', 'Education', 'Skills', 'Experience', 'Consent'];
+                $stepIcons  = ['fas fa-user', 'fas fa-location-dot', 'fas fa-graduation-cap', 'fas fa-wrench', 'fas fa-briefcase', 'fas fa-file-shield'];
             @endphp
             <div class="mb-8">
                 <div class="flex items-start">
@@ -122,7 +122,7 @@
                 {{-- Card header --}}
                 <div class="px-7 pt-7 pb-5 border-b border-slate-50">
                     <h3 class="text-lg font-bold" style="color:#1e293b;">
-                        {{ ['Personal Information', 'Address & Location', 'Educational Background', 'Skills Profile', 'Review & Consent'][$step - 1] }}
+                        {{ ['Personal Information', 'Address & Location', 'Educational Background', 'Skills Profile', 'Experience & Training', 'Review & Consent'][$step - 1] }}
                     </h3>
                     <p class="text-xs mt-0.5" style="color:#94a3b8;">
                         {{-- PREVIEW: tell the applicant they are in edit mode --}}
@@ -453,11 +453,120 @@
                             </div>
                             @endforeach
                         </div>
+
+                        {{-- Skills that are not in the list above --}}
+                        <div class="mt-6">
+                            <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style="color:#64748b;">Other Skills <span class="text-slate-400 font-normal normal-case">(optional)</span></label>
+                            <p class="text-xs mb-2" style="color:#94a3b8;">Have a skill that is not in the list above? Describe it here.</p>
+                            <textarea wire:model="other_skills" rows="3"
+                                      placeholder="e.g. Motorcycle repair, cake decorating"
+                                      class="field-input w-full px-4 py-2.5 rounded-lg border text-sm transition-all @error('other_skills') border-red-400 bg-red-50 @else border-slate-200 @enderror"></textarea>
+                            @error('other_skills')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                        </div>
                     </div>
                     @endif
 
-                    {{-- ══ STEP 5: Review + Consent ═══════════════ --}}
+                    {{-- ══ STEP 5: Experience & Training ══════════ --}}
                     @if($step === 5)
+                    @php
+                        // [field, label, placeholder, input kind, required, grid span]
+                        $sections = [
+                            'work_experiences' => [
+                                'title'  => 'Work Experience / Job History',
+                                'add'    => 'Add job',
+                                'fields' => [
+                                    ['company_name', 'Company / Place of Work', 'e.g. Virac Public Market', 'text', true, 'sm:col-span-2'],
+                                    ['position', 'Position', 'e.g. Cashier', 'text', true, ''],
+                                    ['duration', 'How Long', 'e.g. 2 years 3 months', 'text', false, ''],
+                                    ['description', 'Description', 'What did you do in this job?', 'textarea', false, 'sm:col-span-2'],
+                                ],
+                            ],
+                            'trainings' => [
+                                'title'  => 'Trainings',
+                                'add'    => 'Add training',
+                                'fields' => [
+                                    ['title', 'Training Title', 'e.g. Basic Welding', 'text', true, 'sm:col-span-2'],
+                                    ['provider', 'Provider', 'e.g. TESDA', 'text', false, ''],
+                                    ['year', 'Year', date('Y'), 'number', false, ''],
+                                ],
+                            ],
+                            'seminars' => [
+                                'title'  => 'Seminars',
+                                'add'    => 'Add seminar',
+                                'fields' => [
+                                    ['title', 'Seminar Title', 'e.g. Financial Literacy Seminar', 'text', true, 'sm:col-span-2'],
+                                    ['organizer', 'Organizer', 'e.g. DOLE', 'text', false, ''],
+                                    ['year', 'Year', date('Y'), 'number', false, ''],
+                                ],
+                            ],
+                            'certifications' => [
+                                'title'  => 'Certifications / Licenses',
+                                'add'    => 'Add certification',
+                                'fields' => [
+                                    ['name', 'Certification Name', 'e.g. NC II Welding', 'text', true, 'sm:col-span-2'],
+                                    ['issuing_body', 'Issued By', 'e.g. TESDA', 'text', false, 'sm:col-span-2'],
+                                    ['year_issued', 'Year Issued', date('Y'), 'number', false, ''],
+                                    ['expiry_year', 'Expiry Year', 'Leave empty if none', 'number', false, ''],
+                                ],
+                            ],
+                        ];
+                    @endphp
+
+                    <div class="space-y-8">
+                        <p class="text-xs" style="color:#64748b;">Everything on this page is optional. Add only what applies to you.</p>
+
+                        @foreach($sections as $type => $sec)
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-xs font-bold uppercase tracking-widest" style="color:#94a3b8;">{{ $sec['title'] }}</span>
+                                <div class="flex-1 h-px" style="background:#f1f5f9;"></div>
+                                <button type="button" wire:click="addRow('{{ $type }}')"
+                                        class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all hover:bg-slate-50"
+                                        style="border-color:#1F4E79; color:#1F4E79;">
+                                    <i class="fas fa-plus text-[10px]"></i> {{ $sec['add'] }}
+                                </button>
+                            </div>
+
+                            @if(empty($this->{$type}))
+                                <p class="text-xs italic" style="color:#94a3b8;">None added.</p>
+                            @endif
+
+                            @foreach($this->{$type} as $i => $row)
+                            <div class="rounded-xl border border-slate-200 p-4 mb-3" wire:key="{{ $type }}-{{ $i }}">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    @foreach($sec['fields'] as [$key, $label, $placeholder, $kind, $required, $span])
+                                    <div class="{{ $span }}">
+                                        <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style="color:#64748b;">
+                                            {{ $label }} @if($required)<span class="text-red-500">*</span>@endif
+                                        </label>
+                                        @if($kind === 'textarea')
+                                            <textarea wire:model="{{ $type }}.{{ $i }}.{{ $key }}" rows="2"
+                                                      placeholder="{{ $placeholder }}"
+                                                      class="field-input w-full px-4 py-2.5 rounded-lg border text-sm transition-all @error($type . '.' . $i . '.' . $key) border-red-400 bg-red-50 @else border-slate-200 @enderror"></textarea>
+                                        @else
+                                            <input type="{{ $kind }}" wire:model="{{ $type }}.{{ $i }}.{{ $key }}"
+                                                   placeholder="{{ $placeholder }}"
+                                                   class="field-input w-full px-4 py-2.5 rounded-lg border text-sm transition-all @error($type . '.' . $i . '.' . $key) border-red-400 bg-red-50 @else border-slate-200 @enderror">
+                                        @endif
+                                        @error($type . '.' . $i . '.' . $key)<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                                    </div>
+                                    @endforeach
+                                </div>
+                                <div class="flex justify-end mt-3">
+                                    <button type="button" wire:click="removeRow('{{ $type }}', {{ $i }})"
+                                            class="text-xs font-semibold transition-colors hover:text-red-600" style="color:#94a3b8;">
+                                        <i class="fas fa-trash-can mr-1"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
+
+                    {{-- ══ STEP 6: Review + Consent ═══════════════ --}}
+                    @if($step === 6)
                     <div class="space-y-5">
 
                         {{-- PREVIEW: full review with Edit buttons (replaces the old small summary box) --}}
