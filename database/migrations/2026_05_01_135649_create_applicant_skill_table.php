@@ -11,19 +11,20 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('applicant_skill', function (Blueprint $table) {
-            
+
             $table->foreignId('applicant_id')
                 ->constrained('applicants')
                 ->cascadeOnDelete();
             $table->foreignId('skill_id')
-                ->constrained('skills')
+                ->constrained('skills')->nullable()
                 ->restrictOnDelete();
             $table->enum(
                 'proficiency_level',
                 ['Beginner', 'Intermediate', 'Advanced', 'Expert']
             )
                 ->default('Beginner');
-            $table->primary(['applicant_id', 'skill_id']); 
+            $table->string('other_skills', 150)->nullable();
+            $table->primary(['applicant_id', 'skill_id']);
         });
     }
 

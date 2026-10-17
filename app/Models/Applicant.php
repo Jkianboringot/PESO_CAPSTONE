@@ -57,6 +57,23 @@ class Applicant extends Authenticatable
         });
     }
 
+
+    public function workExperiences()
+    {
+        return $this->hasMany(WorkExperience::class);
+    }
+    public function trainings()
+    {
+        return $this->hasMany(Training::class);
+    }
+    public function seminars()
+    {
+        return $this->hasMany(Seminar::class);
+    }
+    public function certifications()
+    {
+        return $this->hasMany(Certification::class);
+    }
     // Relationships
     public function barangay()
     {
