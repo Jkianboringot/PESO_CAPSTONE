@@ -6,6 +6,7 @@ use App\Services\DuplicateDetectionService;
 use App\Services\AuditLogService;
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -26,6 +27,8 @@ class RegistrationForm extends Component {
     public string $civil_status  = '';
     public string $contact_number = '';
     public string $email         = '';
+    public string $password              = '';
+    public string $password_confirmation = '';
 
     // Step 2: Geographic
     public string $address          = '';
@@ -43,7 +46,8 @@ class RegistrationForm extends Component {
     public array $selected_skills      = [];
     public array $skill_proficiencies  = [];
 
-    // Step 5: Consent
+    // Step 5: Oath + Consent
+    public bool $oath_given    = false;
     public bool $consent_given = false;
 
     // Result
@@ -86,6 +90,7 @@ class RegistrationForm extends Component {
                 'civil_status'   => 'required|in:Single,Married,Widowed,Separated',
                 'contact_number' => 'required|regex:/^[0-9+\s\-]{10,15}$/|min:11|max:11',
                 'email'          => 'nullable|email|max:150',
+                'password'       => 'required|string|min:8|confirmed',
             ],
             2 => [
                 'address'         => 'required|string|max:255',
@@ -103,7 +108,10 @@ class RegistrationForm extends Component {
                 'selected_skills.*'     => 'exists:skills,id',
                 'skill_proficiencies.*' => 'nullable|in:Beginner,Intermediate,Advanced,Expert', // NEW
             ],
-            5 => ['consent_given' => 'accepted'],
+            5 => [
+                'oath_given'    => 'accepted',
+                'consent_given' => 'accepted',
+            ],
             default => [],
         };
     }
@@ -139,7 +147,7 @@ class RegistrationForm extends Component {
 
     public function nextStep() {
         $this->validate($this->rulesForStep());
-
+      
         // PREVIEW: editing from the review screen -> save, then go straight back to review
         if ($this->returnToReview) {
             $this->returnToReview = false;
@@ -197,8 +205,11 @@ try {
                 'civil_status'     => $this->civil_status,
                 'contact_number'   => $this->contact_number,
                 'email'            => $this->email ?: null,
+                'password'         => Hash::make($this->password),
                 'address'          => $this->address,
                 'barangay_id'      => $this->barangay_id,
+                'oath_given'       => $this->oath_given,
+                'oath_given_at'    => $this->oath_given ? now() : null,
                 'consent_given'    => $this->consent_given, //CRITICAL they can skip process and go directly to submit so this is bad this need to be properly validated
                 // FIXED: allRules() above now enforces consent_given = accepted, and we save the real value instead of hardcoded true
                 'consent_given_at' => $this->consent_given ? now() : null, //should only be now() if consent is true, the proper way
@@ -233,6 +244,7 @@ try {
 
         $this->submitted = true;//CRITICAL they can skip process and go directly to submit so this is bad this need to be properly validated
         // FIXED: only reached after allRules() passed and the transaction did not throw
+        $this->reset(['password', 'password_confirmation']);
     } catch (\Throwable $th) {
         //REVIEW - do i even need to log this, like is this important enough to log, imean error here will be db error so maybe
             Log::error($th); //TODO-LATER make sure all has this, logging

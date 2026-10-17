@@ -224,6 +224,39 @@
                             @error('email')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                         </div>
 
+                        <div>
+                            <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style="color:#64748b;">Create Password <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><i class="fas fa-lock text-xs"></i></span>
+                                <input type="password" wire:model="password" autocomplete="new-password"
+                                       placeholder="At least 8 characters"
+                                       class="field-input w-full pl-9 pr-10 py-2.5 rounded-lg border text-sm transition-all @error('password') border-red-400 bg-red-50 @else border-slate-200 @enderror">
+                                <button type="button"
+                                        onclick="const i = this.parentElement.querySelector('input'); const show = i.type === 'password'; i.type = show ? 'text' : 'password'; this.querySelector('i').className = 'fas text-xs ' + (show ? 'fa-eye-slash' : 'fa-eye');"
+                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                        aria-label="Show or hide password">
+                                    <i class="fas fa-eye text-xs"></i>
+                                </button>
+                            </div>
+                            @error('password')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style="color:#64748b;">Confirm Password <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><i class="fas fa-lock text-xs"></i></span>
+                                <input type="password" wire:model="password_confirmation" autocomplete="new-password"
+                                       placeholder="Re-enter password"
+                                       class="field-input w-full pl-9 pr-10 py-2.5 rounded-lg border text-sm transition-all border-slate-200">
+                                <button type="button"
+                                        onclick="const i = this.parentElement.querySelector('input'); const show = i.type === 'password'; i.type = show ? 'text' : 'password'; this.querySelector('i').className = 'fas text-xs ' + (show ? 'fa-eye-slash' : 'fa-eye');"
+                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                        aria-label="Show or hide password">
+                                    <i class="fas fa-eye text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
                     </div>
                     @endif
 
@@ -429,6 +462,36 @@
 
                         {{-- PREVIEW: full review with Edit buttons (replaces the old small summary box) --}}
                         @include('livewire.partials.review-summary')
+
+                        {{-- Applicant's declaration (oath) --}}
+                        <div class="rounded-xl p-5 text-sm leading-relaxed" style="background:#f8fafc; border:1px solid #e2e8f0; color:#475569;">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i class="fas fa-file-signature" style="color:#1F4E79;"></i>
+                                <span class="font-bold text-xs uppercase tracking-widest" style="color:#1F4E79;">Applicant's Declaration</span>
+                            </div>
+                            <p>
+                                I hereby certify that the information I provided is true and correct. I authorize
+                                <strong>PESO Catanduanes Province</strong> to use my information for employment referral,
+                                livelihood and training programs, and for reporting to the Department of Labor and Employment (DOLE).
+                            </p>
+                        </div>
+
+                        <div class="flex items-start gap-4 cursor-pointer" wire:click="$toggle('oath_given')">
+                            <div class="flex-shrink-0 mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all"
+                                 style="{{ $oath_given ? 'background:#1F4E79; border-color:#1F4E79;' : ($errors->has('oath_given') ? 'border-color:#f87171;' : 'border-color:#cbd5e1;') }}">
+                                @if($oath_given)
+                                    <i class="fas fa-check" style="font-size:10px; color:#ffffff;"></i>
+                                @endif
+                            </div>
+                            <span class="text-sm leading-relaxed" style="color:#1e293b;">
+                                <strong>I certify and authorize</strong> the above declaration.
+                            </span>
+                        </div>
+                        @error('oath_given')
+                        <p class="text-xs text-red-500 flex items-center gap-1.5 -mt-2">
+                            <i class="fas fa-circle-exclamation"></i> {{ $message }}
+                        </p>
+                        @enderror
 
                         <div class="rounded-xl p-5 text-sm leading-relaxed" style="background:#f8fafc; border:1px solid #e2e8f0; color:#475569;">
                             <div class="flex items-center gap-2 mb-3">

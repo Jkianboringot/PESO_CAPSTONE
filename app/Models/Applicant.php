@@ -30,12 +30,18 @@ class Applicant extends Authenticatable
         'consent_given',
         'consent_given_at',
         'last_name_metaphone',
+        'oath_given',
+        'oath_given_at',
+        'password',
+
     ];
     protected $hidden = [
         'password',
         'remember_token',
     ];
     protected $casts = [
+        'oath_given' => 'boolean',
+        'oath_given_at' => 'datetime',
         'birthdate' => 'date',
         'consent_given' => 'boolean',
         'is_active' => 'boolean',
@@ -105,12 +111,12 @@ class Applicant extends Authenticatable
         return trim("{$this->last_name}, {$this->first_name} {$this->middle_name}");
     }
 
-protected static function booted(): void
-{
-    static::created(function (Applicant $applicant) {
-        Role::findOrCreate('applicant', 'applicant');
-        $applicant->assignRole('applicant');
-    });
-}
+    protected static function booted(): void
+    {
+        static::created(function (Applicant $applicant) {
+            Role::findOrCreate('applicant', 'applicant');
+            $applicant->assignRole('applicant');
+        });
+    }
 
 }

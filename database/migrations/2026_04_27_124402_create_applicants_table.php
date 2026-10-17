@@ -33,7 +33,8 @@ return new class extends Migration {
 
             $table->string('last_name_metaphone')->nullable()->index();
             $table->timestamps();
-
+            $table->boolean('oath_given')->default(false);
+            $table->timestamp('oath_given_at')->nullable();
 
             $table->index(['birthdate']);
             $table->index(['sex']);
