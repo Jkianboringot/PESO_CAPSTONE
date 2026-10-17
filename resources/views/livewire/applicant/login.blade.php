@@ -29,7 +29,7 @@
                 <i class="fas fa-circle text-[6px]"></i> APPLICANT PORTAL
             </span>
 
-            <h2 class="text-3xl font-extrabold mb-1" style="color:#064e3b;">Hello, jobseeker! 👋</h2>
+            <h2 class="text-3xl font-extrabold mb-1" style="color:#064e3b;">Hello, jobseeker!</h2>
             <p class="text-sm mb-8" style="color:#6b7280;">
                 Sign in to view and update your PESO registration.
             </p>

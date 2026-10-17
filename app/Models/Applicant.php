@@ -33,6 +33,7 @@ class Applicant extends Authenticatable
         'oath_given',
         'oath_given_at',
         'password',
+        'disabilities',
 
     ];
     protected $hidden = [
@@ -40,6 +41,7 @@ class Applicant extends Authenticatable
         'remember_token',
     ];
     protected $casts = [
+         'disabilities' => 'array',
         'oath_given' => 'boolean',
         'oath_given_at' => 'datetime',
         'birthdate' => 'date',

@@ -55,7 +55,7 @@
                 </div>
             </div>
 
-            <button type="submit" wire:loading.attr="disabled"
+            <button type="submit" wire:loading.attr="disabled" wire:target="save"
                     class="mt-6 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60"
                     style="background:linear-gradient(90deg,#059669,#0d9488);">
                 <span wire:loading.remove wire:target="save">Save changes</span>
@@ -63,4 +63,32 @@
             </button>
         </form>
     </div>
+
+    {{-- PWD information --}}
+    <form wire:submit="saveDisabilities" class="bg-white rounded-xl border border-slate-100 p-6 mt-6">
+        <h6 class="text-sm font-bold" style="color:#1e293b;">
+            <i class="fas fa-wheelchair mr-1" style="color:#059669;"></i> Person with disability (PWD)
+        </h6>
+        <p class="text-xs mt-1 mb-4" style="color:#64748b;">
+            Optional. Tick all that apply to you. Leave everything unchecked if none apply.
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            @foreach ($disabilityOptions as $d)
+                <label class="flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-700 cursor-pointer hover:bg-emerald-50">
+                    <input type="checkbox" wire:model="disabilities" value="{{ $d }}"
+                           class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                    <span>{{ $d }}</span>
+                </label>
+            @endforeach
+        </div>
+        @error('disabilities.*') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+
+        <button type="submit" wire:loading.attr="disabled" wire:target="saveDisabilities"
+                class="mt-6 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60"
+                style="background:linear-gradient(90deg,#059669,#0d9488);">
+            <span wire:loading.remove wire:target="saveDisabilities">Save PWD information</span>
+            <span wire:loading wire:target="saveDisabilities">Saving...</span>
+        </button>
+    </form>
 </div>

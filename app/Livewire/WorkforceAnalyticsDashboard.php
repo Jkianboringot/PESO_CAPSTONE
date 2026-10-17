@@ -2,28 +2,43 @@
 namespace App\Livewire;
 
 use App\Models\{Applicant, SkillCategory, Barangay};
+use Livewire\Attributes\Computed;
 use Livewire\Component;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class WorkforceAnalyticsDashboard extends Component {
     public string $filterCategory = '';
     public string $filterBarangay = '';
     public string $filterEdLevel  = '';
-    // public string $filterFrom     = '';
-    // public string $filterTo       = '';
+    public string $filterFrom     = '';
+    public string $filterTo       = '';
     public string $filterSex      = '';
 
-    public function updated() {
-        $this->dispatch('refresh-charts', charts: $this->buildChartData());
-    }
+    // No updated() hook on purpose: filters are only applied when the
+    // Filter button is clicked (see applyFilters below).
 
     private function baseQuery() {
+        [$from, $to] = $this->dateRange();
+
         return Applicant::active()
-            // ->byDateRange($this->filterFrom, $this->filterTo)
+            ->byDateRange($from, $to)
             ->byBarangay($this->filterBarangay)
             ->byEducation($this->filterEdLevel)
             ->bySkillCategory($this->filterCategory)
             ->when($this->filterSex, fn($q) => $q->where('sex', $this->filterSex));
+    }
+
+    // Returns [from, to], swapping them if the user entered them backwards
+    private function dateRange(): array {
+        $from = $this->filterFrom ?: null;
+        $to   = $this->filterTo ?: null;
+
+        if ($from && $to && $from > $to) {
+            [$from, $to] = [$to, $from];
+        }
+
+        return [$from, $to];
     }
 
     // ── Demographics helpers ─────────────────────────────────────────────
@@ -71,9 +86,49 @@ class WorkforceAnalyticsDashboard extends Component {
         return ['labels' => $labels, 'data' => $data];
     }
 
+    // Registrations per month. Defaults to the last 12 months when no range is set.
+    private function registrationTrend(): array {
+        [$from, $to] = $this->dateRange();
+
+        $end   = $to ? Carbon::parse($to)->endOfMonth() : now()->endOfMonth();
+        $start = $from
+            ? Carbon::parse($from)->startOfMonth()
+            : $end->copy()->subMonths(11)->startOfMonth();
+
+        // Safety cap so a huge range doesn't produce an unreadable chart
+        if ($start->diffInMonths($end) > 59) {
+            $start = $end->copy()->subMonths(59)->startOfMonth();
+        }
+
+        $monthExpr = match (DB::connection()->getDriverName()) {
+            'sqlite' => "strftime('%Y-%m', created_at)",
+            'pgsql'  => "to_char(created_at, 'YYYY-MM')",
+            default  => "DATE_FORMAT(created_at, '%Y-%m')",   // MySQL / MariaDB
+        };
+
+        $rows = $this->baseQuery()
+            ->whereBetween('created_at', [$start, $end])
+            ->selectRaw("$monthExpr as ym, COUNT(*) as total")
+            ->groupBy('ym')
+            ->pluck('total', 'ym');
+
+        // Fill months with no registrations with 0 so the line has no gaps
+        $labels = [];
+        $data   = [];
+        for ($m = $start->copy(); $m->lte($end); $m->addMonth()) {
+            $labels[] = $m->format('M Y');
+            $data[]   = (int) ($rows[$m->format('Y-m')] ?? 0);
+        }
+
+        return ['labels' => $labels, 'data' => $data];
+    }
+
     // ─────────────────────────────────────────────────────────────────────
 
-    public function buildChartData(): array {
+    // Computed = cached for the length of one request, so the queries run
+    // once even though both the dispatch and render() use the result.
+    #[Computed]
+    public function chartData(): array {
         // Chart 1: Top 10 skills by applicant count
         $skillsData = DB::table('applicant_skill')
             ->join('skills',           'skills.id',           '=', 'applicant_skill.skill_id')
@@ -93,7 +148,7 @@ class WorkforceAnalyticsDashboard extends Component {
             ->orderByDesc('total')
             ->get();
 
-        // Chart 3: Applicants by barangay (top 20)
+        // Chart 3: Applicants by barangay (top 20) - not affected by filters
         $barangayData = DB::table('applicants')
             ->join('barangays', 'barangays.id', '=', 'applicants.barangay_id')
             ->where('applicants.is_active', true)
@@ -113,6 +168,9 @@ class WorkforceAnalyticsDashboard extends Component {
             'civilStatus' => $this->countBy('civil_status'),
             'ageGroups'   => $this->ageGroups(),
 
+            // Registration trend (per month)
+            'trend'       => $this->registrationTrend(),
+
             'totals'      => [
                 'total'     => $this->baseQuery()->count(),
                 'thisMonth' => $this->baseQuery()->whereMonth('created_at', now()->month)->count(),
@@ -121,10 +179,10 @@ class WorkforceAnalyticsDashboard extends Component {
     }
 
     public function render() {
-    //CACHE - cache this as it is use available alot, but think about this am not an expert in cache
+        //CACHE - cache this as it is use available alot, but think about this am not an expert in cache
 
         return view('livewire.workforce-analytics-dashboard', [
-            'chartData'      => $this->buildChartData(),
+            'chartData'      => $this->chartData,
             'categories'     => SkillCategory::orderBy('name')->pluck('name','id'),
             'barangays'      => Barangay::orderBy('name')->pluck('name','id'),
             'educationLevels'=> [
@@ -135,14 +193,16 @@ class WorkforceAnalyticsDashboard extends Component {
         ])->layout('layouts.app');
     }
 
+    // Runs when the Filter button is clicked. By this point Livewire has
+    // already synced the form values, so we just redraw the charts.
     public function applyFilters()
     {
-        $this->dispatch('refresh-charts', charts: $this->buildChartData()); // your existing call
+        $this->dispatch('refresh-charts', charts: $this->chartData);
     }
 
     public function clearFilters()
     {
-        $this->reset(['filterCategory', 'filterBarangay', 'filterEdLevel', 'filterSex']);
-        $this->dispatch('refresh-charts', charts: $this->buildChartData());
+        $this->reset(['filterCategory', 'filterBarangay', 'filterEdLevel', 'filterSex', 'filterFrom', 'filterTo']);
+        $this->dispatch('refresh-charts', charts: $this->chartData);
     }
 }

@@ -24,10 +24,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // remove temporary 
-        DB::prohibitDestructiveCommands(app()->environment('production'));
-        if (env('APP_ENV') === 'production') {
-            \URL::forceScheme('https');
-        }
+        // DB::prohibitDestructiveCommands(app()->environment('production'));
+        // if (env('APP_ENV') === 'production') {
+        //     \URL::forceScheme('https');
+        // }
         Event::listen(Login::class, \App\Listeners\LogSuccessfulLogin::class);
         Event::listen(Failed::class, \App\Listeners\LogFailedLogin::class);
     }

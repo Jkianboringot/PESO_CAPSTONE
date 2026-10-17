@@ -1,6 +1,7 @@
 <?php
 namespace App\Livewire;
 
+use App\Livewire\Applicant\Profile; // NEW: PWD (reuses the same disability list as the portal)
 use App\Models\{Applicant, Education, Barangay, Municipality, Skill, SkillCategory};
 use App\Services\DuplicateDetectionService;
 use App\Services\AuditLogService;
@@ -9,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule; // NEW: PWD
 use Illuminate\Validation\ValidationException;
 
 class RegistrationForm extends Component {
@@ -27,6 +29,7 @@ class RegistrationForm extends Component {
     public string $civil_status  = '';
     public string $contact_number = '';
     public string $email         = '';
+    public array  $disabilities  = []; // NEW: PWD (multiple checkboxes, optional)
     public string $password              = '';
     public string $password_confirmation = '';
 
@@ -116,6 +119,8 @@ class RegistrationForm extends Component {
                 'civil_status'   => 'required|in:Single,Married,Widowed,Separated',
                 'contact_number' => 'required|regex:/^[0-9+\s\-]{10,15}$/|min:11|max:11',
                 'email'          => 'nullable|email|max:150',
+                'disabilities'   => ['array'],                                  // NEW: PWD
+                'disabilities.*' => [Rule::in(Profile::DISABILITIES)],          // NEW: PWD
                 'password'       => 'required|string|min:8|confirmed',
             ],
             2 => [
@@ -286,6 +291,8 @@ try {
                 'birthdate'        => $this->birthdate,
                 'sex'              => $this->sex,
                 'civil_status'     => $this->civil_status,
+                // NEW: PWD - keep the list in a fixed order, drop anything unexpected, none ticked = NULL
+                'disabilities'     => array_values(array_intersect(Profile::DISABILITIES, $this->disabilities)) ?: null,
                 'contact_number'   => $this->contact_number,
                 'email'            => $this->email ?: null,
                 'password'         => Hash::make($this->password),
@@ -354,6 +361,7 @@ try {
             'municipalities'   => Municipality::orderBy('name')->pluck('name', 'id'),
             'skillCategories'  => SkillCategory::with('skills')->orderBy('name')->get(),
             'proficiencyLevels'=> ['Beginner','Intermediate','Advanced','Expert'],
+            'disabilityOptions'=> Profile::DISABILITIES, // NEW: PWD
         ])->layout('layouts.registration');
     }
 }

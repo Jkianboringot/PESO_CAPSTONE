@@ -224,6 +224,28 @@
                             @error('email')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                         </div>
 
+                        {{-- NEW: PWD — optional, multiple checkboxes --}}
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style="color:#64748b;">
+                                Person with Disability (PWD) <span class="text-slate-400 font-normal normal-case">(optional)</span>
+                            </label>
+                            <p class="text-xs mb-2" style="color:#94a3b8;">Tick all that apply. Leave unchecked if none.</p>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                @foreach($disabilityOptions as $d)
+                                <label class="flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm cursor-pointer transition-all
+                                    {{ in_array($d, $disabilities) ? 'border-[#1F4E79] bg-[#eff6ff]' : 'border-slate-200 bg-white hover:border-slate-300' }}"
+                                    style="color:#1e293b;">
+                                    <input type="checkbox" wire:model.live="disabilities" value="{{ $d }}"
+                                           class="rounded border-slate-300" style="accent-color:#1F4E79;">
+                                    <span>{{ $d }}</span>
+                                </label>
+                                @endforeach
+                            </div>
+                            @error('disabilities')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                            @error('disabilities.*')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                        </div>
+
                         <div>
                             <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style="color:#64748b;">Create Password <span class="text-red-500">*</span></label>
                             <div class="relative">

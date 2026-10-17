@@ -25,6 +25,8 @@
                 'Civil Status'   => $civil_status,
                 'Contact Number' => $contact_number,
                 'Email'          => $email,
+                // NEW: PWD - the ticked disabilities, or "None" when nothing is checked
+                'PWD'            => !empty($disabilities) ? implode(', ', $disabilities) : 'None',
             ],
         ],
         2 => [

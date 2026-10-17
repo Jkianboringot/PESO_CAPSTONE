@@ -36,7 +36,7 @@ return new class extends Migration {
             $table->boolean('oath_given')->default(false);
             $table->timestamp('oath_given_at')->nullable();
             $table->string('other_skills', 150)->nullable();
-
+            $table->json('disabilities')->nullable();
             $table->index(['birthdate']);
             $table->index(['sex']);
             $table->index(['civil_status']);
