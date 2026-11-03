@@ -24,49 +24,59 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
+        /* Hide Alpine elements until Alpine is ready (stops submenu flash) */
+        [x-cloak] { display: none !important; }
+
         /* Custom scrollbar for sidebar */
-        #sidebar::-webkit-scrollbar {
-            width: 4px;
-        }
+        #sidebar { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.15) transparent; }
+        #sidebar::-webkit-scrollbar { width: 4px; }
+        #sidebar::-webkit-scrollbar-track { background: transparent; }
+        #sidebar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
 
-        #sidebar::-webkit-scrollbar-track {
-            background: transparent;
+        /* Nav link: same box on every state, so nothing shifts or jumps.
+           Active marker is an inset shadow (no extra border width). */
+        .nav-link-item {
+            transition: background-color .15s ease, color .15s ease;
         }
-
-        #sidebar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 4px;
-        }
-
-        /* Sidebar active nav highlight gradient */
-        .nav-link-active {
-            background: linear-gradient(90deg, rgba(37, 99, 235, 0.25) 0%, rgba(37, 99, 235, 0.05) 100%);
-            border-left: 3px solid #3b82f6;
-        }
-
-        /* Sidebar hover */
         .nav-link-item:hover {
             background: rgba(255, 255, 255, 0.06);
         }
-
-        /* Smooth sidebar collapse */
-        .sidebar-submenu {
-            overflow: hidden;
-            transition: max-height 0.3s ease;
+        .nav-link-active {
+            background: linear-gradient(90deg, rgba(37, 99, 235, 0.25) 0%, rgba(37, 99, 235, 0.05) 100%);
+            box-shadow: inset 3px 0 0 #3b82f6;
         }
     </style>
 </head>
 
 <body class="font-sans antialiased" style="font-family: 'Inter', sans-serif; background: #f0f2f5;">
 
+    @php
+        $mainNav = [
+            ['route' => 'dashboard',  'icon' => 'fa-chart-pie',  'label' => 'Dashboard'],
+            ['route' => 'applicants', 'icon' => 'fa-users',      'label' => 'Applicant Management'],
+            ['route' => 'analytics',  'icon' => 'fa-chart-bar',  'label' => 'Workforce Analytics'],
+            ['route' => 'reports',    'icon' => 'fa-file-alt',   'label' => 'Report Generation'],
+            ['route' => 'duplicates', 'icon' => 'fa-copy',       'label' => 'Duplicate Review'],
+            ['route' => 'skills-gap', 'icon' => 'fa-search',     'label' => 'Skills Gap Analysis'],
+        ];
+
+        $adminNav = [
+            ['route' => 'admin.audit-logs',       'icon' => 'fa-file-alt',        'label' => 'Audit logs'],
+            ['route' => 'admin.geographical',     'icon' => 'fa-map-marked-alt',  'label' => 'Geographical Management'],
+            ['route' => 'admin.municipalities',   'icon' => 'fa-city',            'label' => 'Municipality Management'],
+            ['route' => 'admin.skill-categories', 'icon' => 'fa-layer-group',     'label' => 'Skill Categories'],
+            ['route' => 'admin.skills',           'icon' => 'fa-tools',           'label' => 'Skills'],
+        ];
+    @endphp
+
     <div class="flex h-screen overflow-hidden">
 
         <!-- ===================== SIDEBAR ===================== -->
-        <aside id="sidebar" class="flex-shrink-0 w-64 flex flex-col overflow-y-auto"
-            style="background: #1a2035; min-height: 100vh;">
+        <aside id="sidebar" class="flex-shrink-0 w-64 flex flex-col overflow-y-auto h-full"
+            style="background: #1a2035;">
 
             <!-- Logo / System Name -->
-            <div class="flex items-center gap-3 px-5 py-5 border-b border-white/10">
+            <div class="flex items-center gap-3 px-5 py-5 border-b border-white/10 flex-shrink-0">
                 <div class="flex items-center justify-center w-9 h-9 rounded-lg overflow-hidden bg-white">
                     <img src="{{ asset('pesoLogo.ico') }}" alt="PESO CONNECT" class="w-full h-full object-contain p-1">
                 </div>
@@ -75,67 +85,19 @@
                     <div class="text-xs" style="color: #94a3b8;">Catanduanes </div>
                 </div>
             </div>
+
             <!-- Navigation -->
             <nav class="flex-1 px-3 py-4 space-y-0.5">
 
-                <!-- Dashboard -->
-                <a href="{{ route('dashboard') }}"
-                    class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
-                      {{ request()->routeIs('dashboard') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
-                    <i
-                        class="fas fa-chart-pie w-4 text-center {{ request()->routeIs('dashboard') ? 'text-blue-400' : 'text-slate-400' }}"></i>
-                    <span>Dashboard</span>
-                </a>
-
-                <!-- Applicants -->
-                <a href="{{ route('applicants') }}"
-                    class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
-                      {{ request()->routeIs('applicants') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
-                    <i
-                        class="fas fa-users w-4 text-center {{ request()->routeIs('applicants') ? 'text-blue-400' : 'text-slate-400' }}"></i>
-                    <span>Applicant Management</span>
-                </a>
-
-                <!-- Analytics -->
-                <a href="{{ route('analytics') }}"
-                    class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
-                      {{ request()->routeIs('analytics') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
-                    <i
-                        class="fas fa-chart-bar w-4 text-center {{ request()->routeIs('analytics') ? 'text-blue-400' : 'text-slate-400' }}"></i>
-                    <span>Workforce Analytics</span>
-                </a>
-
-                <!-- Reports -->
-                <a href="{{ route('reports') }}"
-                    class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
-                      {{ request()->routeIs('reports') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
-                    <i
-                        class="fas fa-file-alt w-4 text-center {{ request()->routeIs('reports') ? 'text-blue-400' : 'text-slate-400' }}"></i>
-                    <span>Report Generation</span>
-                </a>
-
-                <!-- Duplicates -->
-                <a href="{{ route('duplicates') }}"
-                    class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
-                      {{ request()->routeIs('duplicates') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
-                    <i
-                        class="fas fa-copy w-4 text-center {{ request()->routeIs('duplicates') ? 'text-blue-400' : 'text-slate-400' }}"></i>
-                    <span>Duplicate Review</span>
-                </a>
-
-
-
-                <!-- Skills Gap -->
-                <a href="{{ route('skills-gap') }}"
-                    class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
-                      {{ request()->routeIs('skills-gap') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
-                    <i
-                        class="fas fa-search w-4 text-center {{ request()->routeIs('skills-gap') ? 'text-blue-400' : 'text-slate-400' }}"></i>
-                    <span>Skills Gap Analysis</span>
-                </a>
-
-
-
+                @foreach ($mainNav as $item)
+                    @php $active = request()->routeIs($item['route']); @endphp
+                    <a href="{{ route($item['route']) }}"
+                        class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm
+                          {{ $active ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
+                        <i class="fas {{ $item['icon'] }} w-4 text-center {{ $active ? 'text-blue-400' : 'text-slate-400' }}"></i>
+                        <span>{{ $item['label'] }}</span>
+                    </a>
+                @endforeach
 
                 @role('admin')
 
@@ -147,68 +109,38 @@
                 <!-- User Management (collapsible) -->
                 <div x-data="{ open: {{ request()->routeIs('admin.users*') ? 'true' : 'false' }} }">
                     <button @click="open = !open"
-                        class="nav-link-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
+                        class="nav-link-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm
                                {{ request()->routeIs('admin.users*') ? 'text-white font-medium' : 'text-slate-300 hover:text-white' }}">
                         <i class="fas fa-user-cog w-4 text-center text-slate-400"></i>
                         <span class="flex-1 text-left">User Management</span>
-                        <i class="fas fa-chevron-down text-xs text-slate-500 transition-transform"
+                        <i class="fas fa-chevron-down text-xs text-slate-500 transition-transform duration-150"
                             :class="open ? 'rotate-180' : ''"></i>
                     </button>
-                    <div class="sidebar-submenu pl-10 space-y-0.5 mt-0.5"
-                        :style="open ? 'max-height:200px' : 'max-height:0'">
+                    <div x-show="open" x-cloak class="pl-10 space-y-0.5 mt-0.5">
                         <a href="{{ route('admin.users') }}"
-                            class="nav-link-item flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all
+                            class="nav-link-item flex items-center gap-2 px-3 py-2 rounded-lg text-xs
                               {{ request()->routeIs('admin.users') ? 'text-white font-medium' : 'text-slate-400 hover:text-white' }}">
                             <i class="fas fa-circle-user text-slate-500"></i> Staff Accounts
                         </a>
                     </div>
                 </div>
 
+                @foreach ($adminNav as $item)
+                    @php $active = request()->routeIs($item['route']); @endphp
+                    <a href="{{ route($item['route']) }}"
+                        class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm
+                          {{ $active ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
+                        <i class="fas {{ $item['icon'] }} w-4 text-center {{ $active ? 'text-blue-400' : 'text-slate-400' }}"></i>
+                        <span>{{ $item['label'] }}</span>
+                    </a>
+                @endforeach
 
-                <a href="{{  route('admin.audit-logs') }}"
-                    class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
-                      {{ request()->routeIs('admin.audit-logs') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
-                    <i
-                        class="fas fa-file-alt w-4 text-center {{ request()->routeIs('admin.audit-logs') ? 'text-blue-400' : 'text-slate-400' }}"></i>
-                    <span>Audit logs</span>
-                </a>
-
-                <a href="{{ route('admin.geographical') }}"
-                    class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
-      {{ request()->routeIs('admin.geographical') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
-                    <i
-                        class="fas fa-map-marked-alt w-4 text-center {{ request()->routeIs('admin.geographical') ? 'text-blue-400' : 'text-slate-400' }}"></i>
-                    <span>Geographical Management</span>
-                </a>
-
-                <a href="{{ route('admin.municipalities') }}"
-    class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
-      {{ request()->routeIs('admin.municipalities') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
-    <i
-        class="fas fa-city w-4 text-center {{ request()->routeIs('admin.municipalities') ? 'text-blue-400' : 'text-slate-400' }}"></i>
-    <span>Municipality Management</span>
-</a>
-
-<a href="{{ route('admin.skill-categories') }}"
-    class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
-      {{ request()->routeIs('admin.skill-categories') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
-    <i class="fas fa-layer-group w-4 text-center {{ request()->routeIs('admin.skill-categories') ? 'text-blue-400' : 'text-slate-400' }}"></i>
-    <span>Skill Categories</span>
-</a>
-
-<a href="{{ route('admin.skills') }}"
-    class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
-      {{ request()->routeIs('admin.skills') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
-    <i class="fas fa-tools w-4 text-center {{ request()->routeIs('admin.skills') ? 'text-blue-400' : 'text-slate-400' }}"></i>
-    <span>Skills</span>
-</a>
-
-                @endrole()
+                @endrole
 
             </nav>
 
             <!-- Sidebar Footer -->
-            <div class="px-4 py-4 border-t border-white/10">
+            <div class="px-4 py-4 border-t border-white/10 flex-shrink-0">
                 <div class="flex items-center gap-2">
                     <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
                         style="background: #2563eb;">
@@ -222,6 +154,19 @@
                 </div>
             </div>
         </aside>
+
+        {{-- Keep sidebar scroll position between page loads (this was the "bounce to top") --}}
+        <script>
+            (function () {
+                var s = document.getElementById('sidebar');
+                if (!s) return;
+                var y = sessionStorage.getItem('sidebarScroll');
+                if (y !== null) s.scrollTop = parseInt(y, 10);
+                s.addEventListener('scroll', function () {
+                    sessionStorage.setItem('sidebarScroll', s.scrollTop);
+                }, { passive: true });
+            })();
+        </script>
 
         <!-- ===================== MAIN AREA ===================== -->
         <div class="flex-1 flex flex-col overflow-hidden">
