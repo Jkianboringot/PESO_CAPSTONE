@@ -20,7 +20,7 @@
             <span wire:loading.remove wire:target="scanForDuplicates">
                 <i class="fas fa-search mr-1.5"></i> Scan Active Applicants
             </span>
-            <span wire:loading wire:target="scanForDuplicates">
+            <span wire:loading wire:target="scanForDuplicates" style="display: none;">
                 <i class="fas fa-spinner fa-spin mr-1.5"></i> Scanning…
             </span>
         </button>

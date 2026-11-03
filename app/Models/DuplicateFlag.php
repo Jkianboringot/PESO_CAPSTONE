@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class DuplicateFlag extends Model
 {
+     use HasFactory;
     protected $fillable = [
         'applicant_id_new','applicant_id_existing',
         'matched_phonetic','matched_birthdate','matched_contact',

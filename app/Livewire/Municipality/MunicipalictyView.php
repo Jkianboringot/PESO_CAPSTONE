@@ -1,7 +1,6 @@
 <?php
-declare(strict_types=1);
 
-namespace App\Livewire;
+namespace App\Livewire\Municipality;
 
 use App\Models\Barangay;
 use App\Models\Municipality;

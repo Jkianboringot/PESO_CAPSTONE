@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Models\Role;
@@ -10,7 +11,8 @@ use Spatie\Permission\Traits\HasRoles;
 
 class Applicant extends Authenticatable
 {
-    use Notifiable, HasRoles;
+      use HasFactory, Notifiable, HasRoles;
+
 
     protected $guard_name = 'applicant';
     protected $fillable = [
