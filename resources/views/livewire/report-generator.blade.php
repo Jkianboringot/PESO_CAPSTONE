@@ -97,6 +97,7 @@
                             style="border-color: #d1d5db;">
                         <option value="xlsx">Excel (.xlsx)</option>
                         <option value="csv">CSV (.csv)</option>
+                        <option value="pdf">PDF (.pdf)</option>
                     </select>
                 </div>
 

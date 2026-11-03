@@ -12,15 +12,16 @@ class LogFailedLogin
         //
     }
 
-    public function handle(\Illuminate\Auth\Events\Login $event): void
+    // app/Listeners/LogSuccessfulLogin.php// app/Listeners/LogFailedLogin.php
+    public function handle(Failed $event): void
     {
         if ($event->guard === 'applicant') {
-            return; // applicants aren't rows in `users`
+            return;
         }
 
         ActivityLog::create([
-            'user_id' => $event->user->id,
-            'event' => 'login_success',
+            'user_id' => $event->user?->id,
+            'event' => 'login_failed',
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
         ]);

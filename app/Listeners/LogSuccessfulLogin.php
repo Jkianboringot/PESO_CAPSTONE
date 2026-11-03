@@ -12,10 +12,11 @@ class LogSuccessfulLogin
         //
     }
 
-    public function handle(\Illuminate\Auth\Events\Login $event): void
+    // app/Listeners/LogSuccessfulLogin.php
+    public function handle(Login $event): void
     {
         if ($event->guard === 'applicant') {
-            return; // applicants aren't rows in `users`
+            return;
         }
 
         ActivityLog::create([

@@ -16,55 +16,183 @@ class ApplicantSeeder extends Seeder
     private string $passwordHash = '';
 
     private array $lastNames = [
-        'Reyes', 'Cruz', 'Ocampo', 'Flores', 'Ramos', 'Lopez',
-        'Hernandez', 'Gonzales', 'Perez', 'Castillo', 'Morales',
-        'Soriano', 'Tolentino', 'Magno', 'Abad', 'Aguilar',
-        'Arellano', 'Balmaceda', 'Baltazar', 'Basilio',
-        'Buenaventura', 'Cabrales', 'Capili', 'Castañeda',
-        'Catacutan', 'Cervantes', 'Concepcion', 'Corpuz',
-        'Dimaano', 'Dizon', 'Estrada', 'Fajardo', 'Galvez',
-        'Guerrero', 'Guevara', 'Ignacio', 'Lazaro', 'Luna',
-        'Manansala', 'Navarro', 'Pangilinan', 'Resurrecion',
-        'Salazar', 'Tagala', 'Valdez', 'Zamora',
+        'Reyes',
+        'Cruz',
+        'Ocampo',
+        'Flores',
+        'Ramos',
+        'Lopez',
+        'Hernandez',
+        'Gonzales',
+        'Perez',
+        'Castillo',
+        'Morales',
+        'Soriano',
+        'Tolentino',
+        'Magno',
+        'Abad',
+        'Aguilar',
+        'Arellano',
+        'Balmaceda',
+        'Baltazar',
+        'Basilio',
+        'Buenaventura',
+        'Cabrales',
+        'Capili',
+        'Castañeda',
+        'Catacutan',
+        'Cervantes',
+        'Concepcion',
+        'Corpuz',
+        'Dimaano',
+        'Dizon',
+        'Estrada',
+        'Fajardo',
+        'Galvez',
+        'Guerrero',
+        'Guevara',
+        'Ignacio',
+        'Lazaro',
+        'Luna',
+        'Manansala',
+        'Navarro',
+        'Pangilinan',
+        'Resurrecion',
+        'Salazar',
+        'Tagala',
+        'Valdez',
+        'Zamora',
     ];
 
     private array $firstNamesMale = [
-        'Juan', 'Jose', 'Antonio', 'Manuel', 'Francisco',
-        'Miguel', 'Luis', 'Pedro', 'Ricardo', 'Roberto',
-        'Eduardo', 'Fernando', 'Alfredo', 'Rodrigo', 'Noel',
-        'Christian', 'Mark', 'John', 'Michael', 'Ryan',
-        'Jerome', 'Jayson', 'Julius', 'Kenneth', 'Kevin',
-        'Lester', 'Marlon', 'Nathan', 'Patrick', 'Rafael',
+        'Juan',
+        'Jose',
+        'Antonio',
+        'Manuel',
+        'Francisco',
+        'Miguel',
+        'Luis',
+        'Pedro',
+        'Ricardo',
+        'Roberto',
+        'Eduardo',
+        'Fernando',
+        'Alfredo',
+        'Rodrigo',
+        'Noel',
+        'Christian',
+        'Mark',
+        'John',
+        'Michael',
+        'Ryan',
+        'Jerome',
+        'Jayson',
+        'Julius',
+        'Kenneth',
+        'Kevin',
+        'Lester',
+        'Marlon',
+        'Nathan',
+        'Patrick',
+        'Rafael',
     ];
 
     private array $firstNamesFemale = [
-        'Ana', 'Rosa', 'Carmen', 'Luz', 'Gloria', 'Pilar',
-        'Lourdes', 'Angelica', 'Beatriz', 'Bernadette', 'Carla',
-        'Cecilia', 'Cherry', 'Christine', 'Corazon', 'Cristina',
-        'Daisy', 'Diana', 'Eden', 'Grace', 'Hazel', 'Irene',
-        'Jasmine', 'Joyce', 'Karen', 'Leah', 'Marites', 'Nina',
-        'Rhea', 'Sheila',
+        'Ana',
+        'Rosa',
+        'Carmen',
+        'Luz',
+        'Gloria',
+        'Pilar',
+        'Lourdes',
+        'Angelica',
+        'Beatriz',
+        'Bernadette',
+        'Carla',
+        'Cecilia',
+        'Cherry',
+        'Christine',
+        'Corazon',
+        'Cristina',
+        'Daisy',
+        'Diana',
+        'Eden',
+        'Grace',
+        'Hazel',
+        'Irene',
+        'Jasmine',
+        'Joyce',
+        'Karen',
+        'Leah',
+        'Marites',
+        'Nina',
+        'Rhea',
+        'Sheila',
     ];
 
     private array $middleNames = [
-        'A.', 'B.', 'C.', 'D.', 'E.', 'G.', 'L.', 'M.', 'P.',
-        'R.', 'S.', 'T.', 'Santos', 'Reyes', 'Cruz', 'Garcia',
-        'Ramos', 'Flores', 'Lopez', 'Morales',
+        'A.',
+        'B.',
+        'C.',
+        'D.',
+        'E.',
+        'G.',
+        'L.',
+        'M.',
+        'P.',
+        'R.',
+        'S.',
+        'T.',
+        'Santos',
+        'Reyes',
+        'Cruz',
+        'Garcia',
+        'Ramos',
+        'Flores',
+        'Lopez',
+        'Morales',
     ];
 
     private array $streets = [
-        'Purok 1', 'Purok 2', 'Purok 3', 'Purok 4',
-        'Sitio Bagong Buhay', 'Sitio Mabini', 'Sitio Rizal',
-        'Sitio Pag-asa', 'Blk 1 Lot 5', 'Blk 2 Lot 12',
-        'National Highway', 'Barangay Road', 'Coastal Road',
-        'Near the Church', 'Near the School', 'Near the Market',
+        'Purok 1',
+        'Purok 2',
+        'Purok 3',
+        'Purok 4',
+        'Sitio Bagong Buhay',
+        'Sitio Mabini',
+        'Sitio Rizal',
+        'Sitio Pag-asa',
+        'Blk 1 Lot 5',
+        'Blk 2 Lot 12',
+        'National Highway',
+        'Barangay Road',
+        'Coastal Road',
+        'Near the Church',
+        'Near the School',
+        'Near the Market',
     ];
 
     private array $contactPrefixes = [
-        '0917', '0918', '0919', '0920', '0921', '0926',
-        '0927', '0928', '0929', '0930', '0935', '0936',
-        '0939', '0946', '0947', '0955', '0956', '0961',
-        '0975', '0995',
+        '0917',
+        '0918',
+        '0919',
+        '0920',
+        '0921',
+        '0926',
+        '0927',
+        '0928',
+        '0929',
+        '0930',
+        '0935',
+        '0936',
+        '0939',
+        '0946',
+        '0947',
+        '0955',
+        '0956',
+        '0961',
+        '0975',
+        '0995',
     ];
 
     private array $educationLevels = [
@@ -703,7 +831,7 @@ class ApplicantSeeder extends Seeder
 
             $score = $flagged
                 ? max(array_map(
-                    fn ($flag) => $flag->match_score,
+                    fn($flag) => $flag->match_score,
                     $flags
                 ))
                 : 0;
@@ -772,13 +900,13 @@ class ApplicantSeeder extends Seeder
                 . rand(1, 100),
             'email' => $this->rand() < 0.45
                 ? strtolower($firstName) . '.'
-                    . strtolower(str_replace(' ', '', $lastName))
-                    . rand(1, 999) . '@'
-                    . $this->pick([
-                        'gmail.com',
-                        'yahoo.com',
-                        'outlook.com',
-                    ])
+                . strtolower(str_replace(' ', '', $lastName))
+                . rand(1, 999) . '@'
+                . $this->pick([
+                    'gmail.com',
+                    'yahoo.com',
+                    'outlook.com',
+                ])
                 : null,
             'password' => $this->passwordHash,
             'address' => $this->pick($this->streets)
@@ -851,4 +979,10 @@ class ApplicantSeeder extends Seeder
 
         return rand(56, 65);
     }
+
+    //     Name: Maria Santos
+// Sex: Female
+// Birthdate: 1995-03-14
+// Contact number: 09171110001
+// Password: 123
 }
