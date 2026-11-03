@@ -26,6 +26,11 @@ use App\Livewire\Applicant\Skills;
 use App\Livewire\Applicant\Credentials;
 use App\Livewire\GeographicalManagement;
 use App\Livewire\MunicipalityManagement;
+use App\Livewire\SkillCategoryManagement;
+use App\Livewire\SkillManagement;
+
+
+
 
 Route::get('/', fn() => redirect()->route('dashboard'));
 
@@ -102,6 +107,11 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {
 
         Route::get('/municipalities', MunicipalityManagement::class)->name('admin.municipalities');
 
+
+
+        Route::get('/skill-categories', SkillCategoryManagement::class)->name('admin.skill-categories');
+
+        Route::get('/skills', SkillManagement::class)->name('admin.skills');
 
         Route::get('/activity-stats', function () {
             $jobPortalViews = ActivityLog::where('event', 'job_portal_view');

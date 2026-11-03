@@ -189,6 +189,20 @@
     <span>Municipality Management</span>
 </a>
 
+<a href="{{ route('admin.skill-categories') }}"
+    class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
+      {{ request()->routeIs('admin.skill-categories') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
+    <i class="fas fa-layer-group w-4 text-center {{ request()->routeIs('admin.skill-categories') ? 'text-blue-400' : 'text-slate-400' }}"></i>
+    <span>Skill Categories</span>
+</a>
+
+<a href="{{ route('admin.skills') }}"
+    class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
+      {{ request()->routeIs('admin.skills') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
+    <i class="fas fa-tools w-4 text-center {{ request()->routeIs('admin.skills') ? 'text-blue-400' : 'text-slate-400' }}"></i>
+    <span>Skills</span>
+</a>
+
                 @endrole()
 
             </nav>
