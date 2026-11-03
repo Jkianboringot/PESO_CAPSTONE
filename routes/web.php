@@ -24,6 +24,8 @@ use App\Livewire\Applicant\EducationEmployment;
 use App\Livewire\Applicant\Profile;
 use App\Livewire\Applicant\Skills;
 use App\Livewire\Applicant\Credentials;
+use App\Livewire\GeographicalManagement;
+use App\Livewire\MunicipalityManagement;
 
 Route::get('/', fn() => redirect()->route('dashboard'));
 
@@ -94,6 +96,12 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {
     Route::middleware('role:admin')->prefix('admin')->group(function () {
         Route::get('/users', UserManagement::class)->name('admin.users');
         Route::get('/audit-logs', AuditLog::class)->name('admin.audit-logs');
+
+        Route::get('/geographical', GeographicalManagement::class)->name('admin.geographical');
+
+
+        Route::get('/municipalities', MunicipalityManagement::class)->name('admin.municipalities');
+
 
         Route::get('/activity-stats', function () {
             $jobPortalViews = ActivityLog::where('event', 'job_portal_view');

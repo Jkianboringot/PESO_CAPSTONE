@@ -54,7 +54,7 @@
                             style="color: #64748b; font-size: 10px;">Barangay</th>
                         <th class="px-4 py-3 text-left font-semibold uppercase tracking-wide"
                             style="color: #64748b; font-size: 10px;">Municipality</th>
-                        <th class="px-4 py-3 text-left font-semibold uppercase tracking-wide"
+                        <th class="px-4 py-3 text-le    ft font-semibold uppercase tracking-wide"
                             style="color: #64748b; font-size: 10px;">Province</th>
                     </tr>
                 </thead>
