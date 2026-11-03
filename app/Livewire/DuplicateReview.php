@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\DuplicateFlag;
 use App\Services\AuditLogService;
+use App\Services\DuplicateDetectionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -183,6 +184,27 @@ class DuplicateReview extends Component
         }
 
         $this->notify('success', "Flag resolved: {$action}.");
+    }
+
+    public function scanForDuplicates(DuplicateDetectionService $detector): void
+    {
+        if (!$this->canReview()) {
+            $this->notify('error', 'You are not allowed to run duplicate scans.');
+            return;
+        }
+
+        try {
+            $result = $detector->scanPending();
+        } catch (\Throwable $e) {
+            report($e);
+            $this->notify('error', 'The scan failed. Please try again.');
+            return;
+        }
+
+        $this->notify(
+            'success',
+            "Scan complete: {$result['scanned']} active applicant(s) checked, {$result['flagged']} new flag(s)."
+        );
     }
 
     public function render()

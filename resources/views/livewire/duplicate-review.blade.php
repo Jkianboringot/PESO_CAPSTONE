@@ -11,6 +11,19 @@
                 Duplicate Review Queue
             </h1>
         </div>
+
+        <button wire:click="scanForDuplicates"
+                wire:confirm="Scan all active applicants against the whole database? This may take a moment."
+                wire:loading.attr="disabled" wire:target="scanForDuplicates"
+                class="text-xs font-semibold px-4 py-2.5 rounded-lg text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                style="background: #1a2035;">
+            <span wire:loading.remove wire:target="scanForDuplicates">
+                <i class="fas fa-search mr-1.5"></i> Scan Active Applicants
+            </span>
+            <span wire:loading wire:target="scanForDuplicates">
+                <i class="fas fa-spinner fa-spin mr-1.5"></i> Scanning…
+            </span>
+        </button>
     </div>
 
     @if(!$activeFlag)
