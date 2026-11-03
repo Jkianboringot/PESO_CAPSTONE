@@ -9,7 +9,7 @@ use Livewire\Component;
 
 // strict
 
-class BaranagayView extends Component
+class BarangayView  extends Component
 {
 
     
