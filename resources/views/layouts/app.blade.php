@@ -181,6 +181,13 @@
                     <span>Geographical Management</span>
                 </a>
 
+                <a href="{{ route('admin.municipalities') }}"
+    class="nav-link-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
+      {{ request()->routeIs('admin.municipalities') ? 'nav-link-active text-white font-medium' : 'text-slate-300 hover:text-white' }}">
+    <i
+        class="fas fa-city w-4 text-center {{ request()->routeIs('admin.municipalities') ? 'text-blue-400' : 'text-slate-400' }}"></i>
+    <span>Municipality Management</span>
+</a>
 
                 @endrole()
 
