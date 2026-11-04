@@ -59,7 +59,7 @@
                     class="mt-6 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60"
                     style="background:linear-gradient(90deg,#059669,#0d9488);">
                 <span wire:loading.remove wire:target="save">Save changes</span>
-                <span wire:loading wire:target="save">Saving...</span>
+                <span wire:loading wire:target="save"  style="display:none" >Saving...</span>
             </button>
         </form>
     </div>
@@ -88,7 +88,7 @@
                 class="mt-6 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60"
                 style="background:linear-gradient(90deg,#059669,#0d9488);">
             <span wire:loading.remove wire:target="saveDisabilities">Save PWD information</span>
-            <span wire:loading wire:target="saveDisabilities">Saving...</span>
+            <span wire:loading wire:target="saveDisabilities"  style="display:none">Saving...</span>
         </button>
     </form>
 </div>
