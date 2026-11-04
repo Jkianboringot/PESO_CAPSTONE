@@ -344,3 +344,4 @@ class ApplicantManagementTest extends TestCase
         );
     }
 }
+

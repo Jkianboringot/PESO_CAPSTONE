@@ -3,7 +3,7 @@
 namespace Tests\Feature\Concerns;
 
 use App\Models\AuditLog;
-use App\Models\Role;
+use Spatie\Permission\Models\Role;
 use App\Models\User;
 
 /**

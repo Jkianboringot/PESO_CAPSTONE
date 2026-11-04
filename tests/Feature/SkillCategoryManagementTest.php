@@ -6,6 +6,7 @@ use App\Livewire\SkillCategoryManagement;
 use App\Models\Skill;
 use App\Models\SkillCategory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Livewire;
 use Tests\Feature\Concerns\SetsUpAdminAndStaff;
 use Tests\TestCase;
@@ -32,7 +33,7 @@ class SkillCategoryManagementTest extends TestCase
         return SkillCategory::create(['name' => $name, 'pqf_level' => $pqf, 'description' => $description]);
     }
 
-    private function component()
+    private function adminPage()
     {
         return Livewire::actingAs($this->admin)->test(SkillCategoryManagement::class);
     }
@@ -67,7 +68,7 @@ class SkillCategoryManagementTest extends TestCase
         Skill::create(['name' => 'Arc Welding', 'skill_category_id' => $c->id]);
         Skill::create(['name' => 'MIG Welding', 'skill_category_id' => $c->id]);
 
-        $this->component()->assertSee('Welding')->assertSee('Level 3')->assertSee('2');
+        $this->adminPage()->assertSee('Welding')->assertSee('Level 3')->assertSee('2');
     }
 
     public function test_search_by_category_name(): void
@@ -75,7 +76,7 @@ class SkillCategoryManagementTest extends TestCase
         $this->makeCategory('Welding');
         $this->makeCategory('Cooking');
 
-        $this->component()
+        $this->adminPage()
             ->set('search', 'Welding')
             ->assertSee('Welding')
             ->assertDontSee('Cooking');
@@ -86,7 +87,7 @@ class SkillCategoryManagementTest extends TestCase
         $this->makeCategory('Welding', 'Level 3');
         $this->makeCategory('Cooking', 'Level 2');
 
-        $this->component()
+        $this->adminPage()
             ->set('search', 'Level 3')
             ->assertSee('Welding')
             ->assertDontSee('Cooking');
@@ -96,7 +97,7 @@ class SkillCategoryManagementTest extends TestCase
     {
         $this->makeCategory('Welding');
 
-        $this->component()->set('search', 'zzzz-nothing')->assertSee('No category found');
+        $this->adminPage()->set('search', 'zzzz-nothing')->assertSee('No category found');
     }
 
     public function test_changing_search_resets_pagination_to_page_one(): void
@@ -105,7 +106,7 @@ class SkillCategoryManagementTest extends TestCase
             $this->makeCategory(sprintf('Category %02d', $i));
         }
 
-        $this->component()
+        $this->adminPage()
             ->call('gotoPage', 2)
             ->assertSet('paginators.page', 2)
             ->set('search', 'Category 1')
@@ -116,7 +117,7 @@ class SkillCategoryManagementTest extends TestCase
 
     public function test_open_create_shows_empty_modal(): void
     {
-        $this->component()
+        $this->adminPage()
             ->call('openCreate')
             ->assertSet('showModal', true)
             ->assertSet('editingId', null)
@@ -129,7 +130,7 @@ class SkillCategoryManagementTest extends TestCase
     {
         $c = $this->makeCategory('Welding', 'Level 3', 'desc');
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $c->id)
             ->call('openCreate')
             ->assertSet('editingId', null)
@@ -140,7 +141,7 @@ class SkillCategoryManagementTest extends TestCase
 
     public function test_create_saves_all_fields_closes_modal_and_notifies(): void
     {
-        $this->component()
+        $this->adminPage()
             ->call('openCreate')
             ->set('name', '  Welding  ')
             ->set('pqf_level', 'Level 3')
@@ -158,7 +159,7 @@ class SkillCategoryManagementTest extends TestCase
     /** Blank optional fields must be stored as NULL, not empty strings. */
     public function test_blank_optional_fields_are_stored_as_null(): void
     {
-        $this->component()->set('name', 'Welding')->call('save')->assertHasNoErrors();
+        $this->adminPage()->set('name', 'Welding')->call('save')->assertHasNoErrors();
 
         $this->assertDatabaseHas('skill_categories', [
             'name' => 'Welding', 'pqf_level' => null, 'description' => null,
@@ -167,14 +168,14 @@ class SkillCategoryManagementTest extends TestCase
 
     public function test_create_writes_audit_log(): void
     {
-        $this->component()->set('name', 'Welding')->call('save');
+        $this->adminPage()->set('name', 'Welding')->call('save');
 
         $this->assertAudited('SKILL_CATEGORY_CREATED', SkillCategory::where('name', 'Welding')->value('id'));
     }
 
     public function test_create_requires_name(): void
     {
-        $this->component()
+        $this->adminPage()
             ->call('openCreate')
             ->call('save')
             ->assertHasErrors(['name' => 'required'])
@@ -186,7 +187,7 @@ class SkillCategoryManagementTest extends TestCase
 
     public function test_create_rejects_overlong_fields(): void
     {
-        $this->component()
+        $this->adminPage()
             ->set('name', str_repeat('a', 256))
             ->set('pqf_level', str_repeat('a', 256))
             ->set('description', str_repeat('a', 2001))
@@ -199,7 +200,7 @@ class SkillCategoryManagementTest extends TestCase
     {
         $this->makeCategory('Welding');
 
-        $this->component()
+        $this->adminPage()
             ->set('name', 'Welding')
             ->call('save')
             ->assertHasErrors(['name' => 'unique']);
@@ -213,7 +214,7 @@ class SkillCategoryManagementTest extends TestCase
     {
         $c = $this->makeCategory('Welding', 'Level 3', 'Metal joining');
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $c->id)
             ->assertSet('showModal', true)
             ->assertSet('editingId', $c->id)
@@ -226,7 +227,7 @@ class SkillCategoryManagementTest extends TestCase
     {
         $c = $this->makeCategory('Welding');
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $c->id)
             ->assertSet('pqf_level', '')
             ->assertSet('description', '');
@@ -237,7 +238,7 @@ class SkillCategoryManagementTest extends TestCase
         $target = $this->makeCategory('Welding', 'Level 3');
         $other  = $this->makeCategory('Cooking', 'Level 2');
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $target->id)
             ->set('name', 'Advanced Welding')
             ->set('pqf_level', 'Level 4')
@@ -253,7 +254,7 @@ class SkillCategoryManagementTest extends TestCase
     {
         $c = $this->makeCategory('Welding');
 
-        $this->component()->call('openEdit', $c->id)->set('name', 'Welding 2')->call('save');
+        $this->adminPage()->call('openEdit', $c->id)->set('name', 'Welding 2')->call('save');
 
         $this->assertAudited('SKILL_CATEGORY_UPDATED', $c->id);
     }
@@ -262,7 +263,7 @@ class SkillCategoryManagementTest extends TestCase
     {
         $c = $this->makeCategory('Welding');
 
-        $this->component()->call('openEdit', $c->id)->call('save')->assertHasNoErrors();
+        $this->adminPage()->call('openEdit', $c->id)->call('save')->assertHasNoErrors();
     }
 
     public function test_edit_cannot_rename_into_an_existing_category(): void
@@ -270,7 +271,7 @@ class SkillCategoryManagementTest extends TestCase
         $this->makeCategory('Welding');
         $cooking = $this->makeCategory('Cooking');
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $cooking->id)
             ->set('name', 'Welding')
             ->call('save')
@@ -283,7 +284,7 @@ class SkillCategoryManagementTest extends TestCase
     {
         $c = $this->makeCategory('Welding', 'Level 3');
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $c->id)
             ->set('name', '')
             ->call('save')
@@ -294,7 +295,9 @@ class SkillCategoryManagementTest extends TestCase
 
     public function test_open_edit_on_missing_record_returns_404(): void
     {
-        $this->component()->call('openEdit', 99999)->assertNotFound();
+        $this->expectException(ModelNotFoundException::class);
+
+        $this->adminPage()->call('openEdit', 99999);
     }
 
     // ── DELETE ───────────────────────────────────────────────────────
@@ -303,7 +306,7 @@ class SkillCategoryManagementTest extends TestCase
     {
         $c = $this->makeCategory('Welding');
 
-        $this->component()->call('delete', $c->id)->assertDispatched('notify', type: 'success');
+        $this->adminPage()->call('delete', $c->id)->assertDispatched('notify', type: 'success');
 
         $this->assertDatabaseMissing('skill_categories', ['id' => $c->id]);
         $this->assertAudited('SKILL_CATEGORY_DELETED', $c->id);
@@ -314,7 +317,7 @@ class SkillCategoryManagementTest extends TestCase
         $c = $this->makeCategory('Welding');
         Skill::create(['name' => 'Arc Welding', 'skill_category_id' => $c->id]);
 
-        $this->component()->call('delete', $c->id)->assertDispatched('notify', type: 'error');
+        $this->adminPage()->call('delete', $c->id)->assertDispatched('notify', type: 'error');
 
         $this->assertDatabaseHas('skill_categories', ['id' => $c->id]);
         $this->assertDatabaseHas('skills', ['name' => 'Arc Welding']);
@@ -325,7 +328,7 @@ class SkillCategoryManagementTest extends TestCase
         $gone = $this->makeCategory('Welding');
         $kept = $this->makeCategory('Cooking');
 
-        $this->component()->call('delete', $gone->id);
+        $this->adminPage()->call('delete', $gone->id);
 
         $this->assertDatabaseMissing('skill_categories', ['id' => $gone->id]);
         $this->assertDatabaseHas('skill_categories', ['id' => $kept->id]);

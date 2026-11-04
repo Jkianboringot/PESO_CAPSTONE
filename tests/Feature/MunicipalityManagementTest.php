@@ -6,6 +6,7 @@ use App\Livewire\MunicipalityManagement;
 use App\Models\Barangay;
 use App\Models\Municipality;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Livewire;
 use Tests\Feature\Concerns\SetsUpAdminAndStaff;
 use Tests\TestCase;
@@ -28,10 +29,10 @@ class MunicipalityManagementTest extends TestCase
 
     private function makeMunicipality(string $name, string $province = 'Catanduanes'): Municipality
     {
-        return Municipality::factory()->create(['name' => $name, 'province' => $province]);
+        return Municipality::create(['name' => $name, 'province' => $province]);
     }
 
-    private function component()
+    private function adminPage()
     {
         return Livewire::actingAs($this->admin)->test(MunicipalityManagement::class);
     }
@@ -63,9 +64,11 @@ class MunicipalityManagementTest extends TestCase
     public function test_lists_municipalities_with_province_and_barangay_count(): void
     {
         $virac = $this->makeMunicipality('Virac');
-        Barangay::factory()->count(3)->create(['municipality_id' => $virac->id]);
+        foreach (['Brgy A', 'Brgy B', 'Brgy C'] as $name) {
+            Barangay::create(['name' => $name, 'municipality_id' => $virac->id]);
+        }
 
-        $this->component()->assertSee('Virac')->assertSee('Catanduanes')->assertSee('3');
+        $this->adminPage()->assertSee('Virac')->assertSee('Catanduanes')->assertSee('3');
     }
 
     public function test_search_by_municipality_name(): void
@@ -73,7 +76,7 @@ class MunicipalityManagementTest extends TestCase
         $this->makeMunicipality('Virac');
         $this->makeMunicipality('Bato');
 
-        $this->component()
+        $this->adminPage()
             ->set('search', 'Virac')
             ->assertSee('Virac')
             ->assertDontSee('Bato');
@@ -84,7 +87,7 @@ class MunicipalityManagementTest extends TestCase
         $this->makeMunicipality('Virac', 'Catanduanes');
         $this->makeMunicipality('Legazpi', 'Albay');
 
-        $this->component()
+        $this->adminPage()
             ->set('search', 'Albay')
             ->assertSee('Legazpi')
             ->assertDontSee('Virac');
@@ -94,7 +97,7 @@ class MunicipalityManagementTest extends TestCase
     {
         $this->makeMunicipality('Virac');
 
-        $this->component()->set('search', 'zzzz-nothing')->assertSee('No municipality found');
+        $this->adminPage()->set('search', 'zzzz-nothing')->assertSee('No municipality found');
     }
 
     public function test_changing_search_resets_pagination_to_page_one(): void
@@ -103,7 +106,7 @@ class MunicipalityManagementTest extends TestCase
             $this->makeMunicipality(sprintf('Town %02d', $i));
         }
 
-        $this->component()
+        $this->adminPage()
             ->call('gotoPage', 2)
             ->assertSet('paginators.page', 2)
             ->set('search', 'Town 1')
@@ -114,7 +117,7 @@ class MunicipalityManagementTest extends TestCase
 
     public function test_open_create_defaults_province_to_catanduanes(): void
     {
-        $this->component()
+        $this->adminPage()
             ->call('openCreate')
             ->assertSet('showModal', true)
             ->assertSet('editingId', null)
@@ -126,7 +129,7 @@ class MunicipalityManagementTest extends TestCase
     {
         $m = $this->makeMunicipality('Virac', 'Albay');
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $m->id)
             ->call('openCreate')
             ->assertSet('editingId', null)
@@ -136,7 +139,7 @@ class MunicipalityManagementTest extends TestCase
 
     public function test_create_saves_closes_modal_and_notifies(): void
     {
-        $this->component()
+        $this->adminPage()
             ->call('openCreate')
             ->set('municipalityName', '  Pandan  ')
             ->call('save')
@@ -149,14 +152,14 @@ class MunicipalityManagementTest extends TestCase
 
     public function test_create_writes_audit_log(): void
     {
-        $this->component()->set('municipalityName', 'Pandan')->call('save');
+        $this->adminPage()->set('municipalityName', 'Pandan')->call('save');
 
         $this->assertAudited('MUNICIPALITY_CREATED', Municipality::where('name', 'Pandan')->value('id'));
     }
 
     public function test_create_requires_name_and_province(): void
     {
-        $this->component()
+        $this->adminPage()
             ->set('municipalityName', '')
             ->set('province', '')
             ->call('save')
@@ -168,7 +171,7 @@ class MunicipalityManagementTest extends TestCase
 
     public function test_create_rejects_name_longer_than_100_chars(): void
     {
-        $this->component()
+        $this->adminPage()
             ->set('municipalityName', str_repeat('a', 101))
             ->call('save')
             ->assertHasErrors(['municipalityName' => 'max']);
@@ -178,7 +181,7 @@ class MunicipalityManagementTest extends TestCase
     {
         $this->makeMunicipality('Virac', 'Catanduanes');
 
-        $this->component()
+        $this->adminPage()
             ->set('municipalityName', 'Virac')
             ->set('province', 'Catanduanes')
             ->call('save')
@@ -191,7 +194,7 @@ class MunicipalityManagementTest extends TestCase
     {
         $this->makeMunicipality('San Miguel', 'Catanduanes');
 
-        $this->component()
+        $this->adminPage()
             ->set('municipalityName', 'San Miguel')
             ->set('province', 'Albay')
             ->call('save')
@@ -206,7 +209,7 @@ class MunicipalityManagementTest extends TestCase
     {
         $m = $this->makeMunicipality('Virac', 'Catanduanes');
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $m->id)
             ->assertSet('showModal', true)
             ->assertSet('editingId', $m->id)
@@ -219,7 +222,7 @@ class MunicipalityManagementTest extends TestCase
         $target = $this->makeMunicipality('Virac');
         $other  = $this->makeMunicipality('Bato');
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $target->id)
             ->set('municipalityName', 'Virac City')
             ->call('save')
@@ -234,7 +237,7 @@ class MunicipalityManagementTest extends TestCase
     {
         $m = $this->makeMunicipality('Virac');
 
-        $this->component()->call('openEdit', $m->id)->set('municipalityName', 'Virac 2')->call('save');
+        $this->adminPage()->call('openEdit', $m->id)->set('municipalityName', 'Virac 2')->call('save');
 
         $this->assertAudited('MUNICIPALITY_UPDATED', $m->id);
     }
@@ -243,7 +246,7 @@ class MunicipalityManagementTest extends TestCase
     {
         $m = $this->makeMunicipality('Virac');
 
-        $this->component()->call('openEdit', $m->id)->call('save')->assertHasNoErrors();
+        $this->adminPage()->call('openEdit', $m->id)->call('save')->assertHasNoErrors();
     }
 
     public function test_edit_cannot_rename_into_an_existing_municipality(): void
@@ -251,7 +254,7 @@ class MunicipalityManagementTest extends TestCase
         $this->makeMunicipality('Virac');
         $bato = $this->makeMunicipality('Bato');
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $bato->id)
             ->set('municipalityName', 'Virac')
             ->call('save')
@@ -264,7 +267,7 @@ class MunicipalityManagementTest extends TestCase
     {
         $m = $this->makeMunicipality('Virac');
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $m->id)
             ->set('municipalityName', '')
             ->call('save')
@@ -275,7 +278,9 @@ class MunicipalityManagementTest extends TestCase
 
     public function test_open_edit_on_missing_record_returns_404(): void
     {
-        $this->component()->call('openEdit', 99999)->assertNotFound();
+        $this->expectException(ModelNotFoundException::class);
+
+        $this->adminPage()->call('openEdit', 99999);
     }
 
     // ── DELETE ───────────────────────────────────────────────────────
@@ -284,7 +289,7 @@ class MunicipalityManagementTest extends TestCase
     {
         $m = $this->makeMunicipality('Virac');
 
-        $this->component()->call('delete', $m->id)->assertDispatched('notify', type: 'success');
+        $this->adminPage()->call('delete', $m->id)->assertDispatched('notify', type: 'success');
 
         $this->assertDatabaseMissing('municipalities', ['id' => $m->id]);
         $this->assertAudited('MUNICIPALITY_DELETED', $m->id);
@@ -294,9 +299,9 @@ class MunicipalityManagementTest extends TestCase
     public function test_delete_is_blocked_when_it_still_has_barangays(): void
     {
         $m = $this->makeMunicipality('Virac');
-        Barangay::factory()->create(['municipality_id' => $m->id]);
+        Barangay::create(['name' => 'San Jose', 'municipality_id' => $m->id]);
 
-        $this->component()->call('delete', $m->id)->assertDispatched('notify', type: 'error');
+        $this->adminPage()->call('delete', $m->id)->assertDispatched('notify', type: 'error');
 
         $this->assertDatabaseHas('municipalities', ['id' => $m->id]);
     }
@@ -306,7 +311,7 @@ class MunicipalityManagementTest extends TestCase
         $gone = $this->makeMunicipality('Virac');
         $kept = $this->makeMunicipality('Bato');
 
-        $this->component()->call('delete', $gone->id);
+        $this->adminPage()->call('delete', $gone->id);
 
         $this->assertDatabaseMissing('municipalities', ['id' => $gone->id]);
         $this->assertDatabaseHas('municipalities', ['id' => $kept->id]);

@@ -11,6 +11,11 @@ use Livewire\Component;
 #[Title('Experience & Credentials')]
 class Credentials extends Component
 {
+    public const MAX_WORK         = 10;
+    public const MAX_TRAININGS    = 15;
+    public const MAX_SEMINARS     = 15;
+    public const MAX_CERTS        = 15;
+
     public array $work     = ['company_name' => '', 'position' => '', 'duration' => '', 'description' => ''];
     public array $training = ['title' => '', 'provider' => '', 'year' => ''];
     public array $seminar  = ['title' => '', 'organizer' => '', 'year' => ''];
@@ -32,6 +37,19 @@ class Credentials extends Component
         return 'nullable|integer|between:1950,' . now()->year;
     }
 
+    /** Returns false and sets an error on $field when the limit is reached. */
+    private function underLimit(string $relation, int $max, string $field, string $label): bool
+    {
+        $count = $this->applicant()->{$relation}()->count();
+
+        if ($count >= $max) {
+            $this->addError($field, "You can add up to {$max} {$label}.");
+            return false;
+        }
+
+        return true;
+    }
+
     /* ---------------- Work experience ---------------- */
 
     public function addWork(): void
@@ -45,6 +63,10 @@ class Credentials extends Component
             'work.company_name.required' => 'Please enter the company name.',
             'work.position.required'     => 'Please enter your position.',
         ]);
+
+        if (! $this->underLimit('workExperiences', self::MAX_WORK, 'work.company_name', 'work experiences')) {
+            return;
+        }
 
         $this->applicant()->workExperiences()->create($this->clean($this->work));
 
@@ -68,6 +90,10 @@ class Credentials extends Component
             'training.year'     => $this->yearRule(),
         ], ['training.title.required' => 'Please enter the training title.']);
 
+        if (! $this->underLimit('trainings', self::MAX_TRAININGS, 'training.title', 'trainings')) {
+            return;
+        }
+
         $this->applicant()->trainings()->create($this->clean($this->training));
 
         $this->reset('training');
@@ -89,6 +115,10 @@ class Credentials extends Component
             'seminar.organizer' => 'nullable|string|max:255',
             'seminar.year'      => $this->yearRule(),
         ], ['seminar.title.required' => 'Please enter the seminar title.']);
+
+        if (! $this->underLimit('seminars', self::MAX_SEMINARS, 'seminar.title', 'seminars')) {
+            return;
+        }
 
         $this->applicant()->seminars()->create($this->clean($this->seminar));
 
@@ -118,6 +148,10 @@ class Credentials extends Component
             && (int) $this->cert['expiry_year'] < (int) $this->cert['year_issued']
         ) {
             $this->addError('cert.expiry_year', 'Expiry year cannot be earlier than the year issued.');
+            return;
+        }
+
+        if (! $this->underLimit('certifications', self::MAX_CERTS, 'cert.name', 'certifications')) {
             return;
         }
 

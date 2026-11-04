@@ -14,6 +14,7 @@ use Livewire\Component;
 class Skills extends Component
 {
     public const LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
+    public const MAX_SKILLS = 15;
 
     public string $category_id = '';
     public string $skill_id = '';
@@ -34,6 +35,15 @@ class Skills extends Component
         ]);
 
         $applicantId = Auth::guard('applicant')->id();
+
+        $count = DB::table('applicant_skill')
+            ->where('applicant_id', $applicantId)
+            ->count();
+
+        if ($count >= self::MAX_SKILLS) {
+            $this->addError('skill_id', 'You can add up to ' . self::MAX_SKILLS . ' skills.');
+            return;
+        }
 
         $exists = DB::table('applicant_skill')
             ->where('applicant_id', $applicantId)

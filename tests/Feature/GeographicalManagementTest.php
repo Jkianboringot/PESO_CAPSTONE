@@ -7,6 +7,7 @@ use App\Models\Applicant;
 use App\Models\Barangay;
 use App\Models\Municipality;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Livewire;
 use Tests\Feature\Concerns\SetsUpAdminAndStaff;
 use Tests\TestCase;
@@ -30,19 +31,19 @@ class GeographicalManagementTest extends TestCase
         parent::setUp();
         $this->setUpUsers();
 
-        $this->virac = Municipality::factory()->create(['name' => 'Virac', 'province' => 'Catanduanes']);
-        $this->bato  = Municipality::factory()->create(['name' => 'Bato', 'province' => 'Catanduanes']);
+        $this->virac = Municipality::create(['name' => 'Virac', 'province' => 'Catanduanes']);
+        $this->bato  = Municipality::create(['name' => 'Bato', 'province' => 'Catanduanes']);
     }
 
     private function makeBarangay(string $name, ?Municipality $municipality = null): Barangay
     {
-        return Barangay::factory()->create([
+        return Barangay::create([
             'name'            => $name,
             'municipality_id' => ($municipality ?? $this->virac)->id,
         ]);
     }
 
-    private function component()
+    private function adminPage()
     {
         return Livewire::actingAs($this->admin)->test(GeographicalManagement::class);
     }
@@ -76,7 +77,7 @@ class GeographicalManagementTest extends TestCase
     {
         $this->makeBarangay('San Jose');
 
-        $this->component()->assertSee('San Jose')->assertSee('Virac');
+        $this->adminPage()->assertSee('San Jose')->assertSee('Virac');
     }
 
     public function test_search_by_barangay_name(): void
@@ -84,7 +85,7 @@ class GeographicalManagementTest extends TestCase
         $this->makeBarangay('San Jose');
         $this->makeBarangay('Calatagan');
 
-        $this->component()
+        $this->adminPage()
             ->set('search', 'San Jose')
             ->assertSee('San Jose')
             ->assertDontSee('Calatagan');
@@ -95,7 +96,7 @@ class GeographicalManagementTest extends TestCase
         $this->makeBarangay('San Jose', $this->virac);
         $this->makeBarangay('Poblacion Bato', $this->bato);
 
-        $this->component()
+        $this->adminPage()
             ->set('search', 'Bato')
             ->assertSee('Poblacion Bato')
             ->assertDontSee('San Jose');
@@ -105,7 +106,7 @@ class GeographicalManagementTest extends TestCase
     {
         $this->makeBarangay('San Jose');
 
-        $this->component()
+        $this->adminPage()
             ->set('search', 'zzzz-nothing')
             ->assertSee('No barangay found');
     }
@@ -117,7 +118,7 @@ class GeographicalManagementTest extends TestCase
             $this->makeBarangay(sprintf('Barangay %02d', $i));
         }
 
-        $this->component()
+        $this->adminPage()
             ->call('gotoPage', 2)
             ->assertSet('paginators.page', 2)
             ->set('search', 'Barangay 1')
@@ -128,7 +129,7 @@ class GeographicalManagementTest extends TestCase
 
     public function test_open_create_shows_empty_modal(): void
     {
-        $this->component()
+        $this->adminPage()
             ->call('openCreate')
             ->assertSet('showModal', true)
             ->assertSet('editingId', null)
@@ -140,7 +141,7 @@ class GeographicalManagementTest extends TestCase
     {
         $existing = $this->makeBarangay('San Jose');
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $existing->id)
             ->call('openCreate')
             ->assertSet('editingId', null)
@@ -149,7 +150,7 @@ class GeographicalManagementTest extends TestCase
 
     public function test_create_saves_barangay_closes_modal_and_notifies(): void
     {
-        $this->component()
+        $this->adminPage()
             ->call('openCreate')
             ->set('barangayName', '  San Isidro  ')
             ->set('municipalityID', (string) $this->virac->id)
@@ -167,7 +168,7 @@ class GeographicalManagementTest extends TestCase
 
     public function test_create_writes_audit_log(): void
     {
-        $this->component()
+        $this->adminPage()
             ->set('barangayName', 'San Isidro')
             ->set('municipalityID', (string) $this->virac->id)
             ->call('save');
@@ -177,7 +178,7 @@ class GeographicalManagementTest extends TestCase
 
     public function test_create_requires_name_and_municipality(): void
     {
-        $this->component()
+        $this->adminPage()
             ->call('openCreate')
             ->call('save')
             ->assertHasErrors(['barangayName' => 'required', 'municipalityID' => 'required'])
@@ -189,7 +190,7 @@ class GeographicalManagementTest extends TestCase
 
     public function test_create_rejects_unknown_municipality(): void
     {
-        $this->component()
+        $this->adminPage()
             ->set('barangayName', 'Ghost')
             ->set('municipalityID', '99999')
             ->call('save')
@@ -198,7 +199,7 @@ class GeographicalManagementTest extends TestCase
 
     public function test_create_rejects_name_longer_than_100_chars(): void
     {
-        $this->component()
+        $this->adminPage()
             ->set('barangayName', str_repeat('a', 101))
             ->set('municipalityID', (string) $this->virac->id)
             ->call('save')
@@ -209,7 +210,7 @@ class GeographicalManagementTest extends TestCase
     {
         $this->makeBarangay('San Jose', $this->virac);
 
-        $this->component()
+        $this->adminPage()
             ->set('barangayName', 'San Jose')
             ->set('municipalityID', (string) $this->virac->id)
             ->call('save')
@@ -223,7 +224,7 @@ class GeographicalManagementTest extends TestCase
     {
         $this->makeBarangay('San Jose', $this->virac);
 
-        $this->component()
+        $this->adminPage()
             ->set('barangayName', 'San Jose')
             ->set('municipalityID', (string) $this->bato->id)
             ->call('save')
@@ -238,7 +239,7 @@ class GeographicalManagementTest extends TestCase
     {
         $b = $this->makeBarangay('San Jose', $this->bato);
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $b->id)
             ->assertSet('showModal', true)
             ->assertSet('editingId', $b->id)
@@ -251,7 +252,7 @@ class GeographicalManagementTest extends TestCase
         $target = $this->makeBarangay('San Jose', $this->virac);
         $other  = $this->makeBarangay('Calatagan', $this->virac);
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $target->id)
             ->set('barangayName', 'San Jose Renamed')
             ->set('municipalityID', (string) $this->bato->id)
@@ -271,7 +272,7 @@ class GeographicalManagementTest extends TestCase
     {
         $b = $this->makeBarangay('San Jose');
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $b->id)
             ->set('barangayName', 'San Jose 2')
             ->call('save');
@@ -284,7 +285,7 @@ class GeographicalManagementTest extends TestCase
     {
         $b = $this->makeBarangay('San Jose');
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $b->id)
             ->call('save')
             ->assertHasNoErrors();
@@ -295,7 +296,7 @@ class GeographicalManagementTest extends TestCase
         $this->makeBarangay('San Jose');
         $other = $this->makeBarangay('Calatagan');
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $other->id)
             ->set('barangayName', 'San Jose')
             ->call('save')
@@ -308,7 +309,7 @@ class GeographicalManagementTest extends TestCase
     {
         $b = $this->makeBarangay('San Jose');
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $b->id)
             ->set('barangayName', '')
             ->call('save')
@@ -319,12 +320,14 @@ class GeographicalManagementTest extends TestCase
 
     public function test_open_edit_on_missing_record_returns_404(): void
     {
-        $this->component()->call('openEdit', 99999)->assertNotFound();
+        $this->expectException(ModelNotFoundException::class);
+
+        $this->adminPage()->call('openEdit', 99999);
     }
 
     public function test_close_modal_hides_it_and_clears_errors(): void
     {
-        $this->component()
+        $this->adminPage()
             ->call('openCreate')
             ->call('save')
             ->assertHasErrors()
@@ -339,7 +342,7 @@ class GeographicalManagementTest extends TestCase
     {
         $b = $this->makeBarangay('San Jose');
 
-        $this->component()
+        $this->adminPage()
             ->call('delete', $b->id)
             ->assertDispatched('notify', type: 'success');
 
@@ -351,9 +354,9 @@ class GeographicalManagementTest extends TestCase
     public function test_delete_is_blocked_when_applicants_belong_to_it(): void
     {
         $b = $this->makeBarangay('San Jose');
-        Applicant::factory()->create(['barangay_id' => $b->id]);
+        Applicant::factory()->create(['barangay_id' => $b->id, 'password' => bcrypt('password')]);
 
-        $this->component()
+        $this->adminPage()
             ->call('delete', $b->id)
             ->assertDispatched('notify', type: 'error');
 
@@ -365,7 +368,7 @@ class GeographicalManagementTest extends TestCase
         $gone = $this->makeBarangay('San Jose');
         $kept = $this->makeBarangay('Calatagan');
 
-        $this->component()->call('delete', $gone->id);
+        $this->adminPage()->call('delete', $gone->id);
 
         $this->assertDatabaseMissing('barangays', ['id' => $gone->id]);
         $this->assertDatabaseHas('barangays', ['id' => $kept->id]);

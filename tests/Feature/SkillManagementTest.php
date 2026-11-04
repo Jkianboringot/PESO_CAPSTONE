@@ -4,9 +4,12 @@ namespace Tests\Feature;
 
 use App\Livewire\SkillManagement;
 use App\Models\Applicant;
+use App\Models\Barangay;
+use App\Models\Municipality;
 use App\Models\Skill;
 use App\Models\SkillCategory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Livewire;
 use Tests\Feature\Concerns\SetsUpAdminAndStaff;
 use Tests\TestCase;
@@ -39,7 +42,7 @@ class SkillManagementTest extends TestCase
         return Skill::create(['name' => $name, 'skill_category_id' => ($category ?? $this->welding)->id]);
     }
 
-    private function component()
+    private function adminPage()
     {
         return Livewire::actingAs($this->admin)->test(SkillManagement::class);
     }
@@ -72,7 +75,7 @@ class SkillManagementTest extends TestCase
     {
         $this->makeSkill('Arc Welding');
 
-        $this->component()->assertSee('Arc Welding')->assertSee('Welding')->assertSee('Level 3');
+        $this->adminPage()->assertSee('Arc Welding')->assertSee('Welding')->assertSee('Level 3');
     }
 
     public function test_search_by_skill_name(): void
@@ -80,7 +83,7 @@ class SkillManagementTest extends TestCase
         $this->makeSkill('Arc Welding');
         $this->makeSkill('Baking Bread', $this->cooking);
 
-        $this->component()
+        $this->adminPage()
             ->set('search', 'Arc')
             ->assertSee('Arc Welding')
             ->assertDontSee('Baking Bread');
@@ -91,7 +94,7 @@ class SkillManagementTest extends TestCase
         $this->makeSkill('Arc Welding', $this->welding);
         $this->makeSkill('Baking Bread', $this->cooking);
 
-        $this->component()
+        $this->adminPage()
             ->set('categoryFilter', (string) $this->cooking->id)
             ->assertSee('Baking Bread')
             ->assertDontSee('Arc Welding');
@@ -103,7 +106,7 @@ class SkillManagementTest extends TestCase
         $this->makeSkill('MIG Welding', $this->welding);
         $this->makeSkill('Arc Cooking', $this->cooking);
 
-        $this->component()
+        $this->adminPage()
             ->set('categoryFilter', (string) $this->welding->id)
             ->set('search', 'Arc')
             ->assertSee('Arc Welding')
@@ -116,7 +119,7 @@ class SkillManagementTest extends TestCase
         $this->makeSkill('Arc Welding', $this->welding);
         $this->makeSkill('Baking Bread', $this->cooking);
 
-        $this->component()
+        $this->adminPage()
             ->set('categoryFilter', (string) $this->cooking->id)
             ->set('categoryFilter', '')
             ->assertSee('Arc Welding')
@@ -127,7 +130,7 @@ class SkillManagementTest extends TestCase
     {
         $this->makeSkill('Arc Welding');
 
-        $this->component()->set('search', 'zzzz-nothing')->assertSee('No skill found');
+        $this->adminPage()->set('search', 'zzzz-nothing')->assertSee('No skill found');
     }
 
     public function test_changing_search_resets_pagination_to_page_one(): void
@@ -136,7 +139,7 @@ class SkillManagementTest extends TestCase
             $this->makeSkill(sprintf('Skill %02d', $i));
         }
 
-        $this->component()
+        $this->adminPage()
             ->call('gotoPage', 2)
             ->assertSet('paginators.page', 2)
             ->set('search', 'Skill 1')
@@ -149,7 +152,7 @@ class SkillManagementTest extends TestCase
             $this->makeSkill(sprintf('Skill %02d', $i));
         }
 
-        $this->component()
+        $this->adminPage()
             ->call('gotoPage', 2)
             ->assertSet('paginators.page', 2)
             ->set('categoryFilter', (string) $this->welding->id)
@@ -160,7 +163,7 @@ class SkillManagementTest extends TestCase
 
     public function test_open_create_shows_empty_modal(): void
     {
-        $this->component()
+        $this->adminPage()
             ->call('openCreate')
             ->assertSet('showModal', true)
             ->assertSet('editingId', null)
@@ -172,7 +175,7 @@ class SkillManagementTest extends TestCase
     {
         $s = $this->makeSkill('Arc Welding');
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $s->id)
             ->call('openCreate')
             ->assertSet('editingId', null)
@@ -182,7 +185,7 @@ class SkillManagementTest extends TestCase
 
     public function test_create_saves_closes_modal_and_notifies(): void
     {
-        $this->component()
+        $this->adminPage()
             ->call('openCreate')
             ->set('name', '  Arc Welding  ')
             ->set('skill_category_id', (string) $this->welding->id)
@@ -198,7 +201,7 @@ class SkillManagementTest extends TestCase
 
     public function test_create_writes_audit_log(): void
     {
-        $this->component()
+        $this->adminPage()
             ->set('name', 'Arc Welding')
             ->set('skill_category_id', (string) $this->welding->id)
             ->call('save');
@@ -208,7 +211,7 @@ class SkillManagementTest extends TestCase
 
     public function test_create_requires_name_and_category(): void
     {
-        $this->component()
+        $this->adminPage()
             ->call('openCreate')
             ->call('save')
             ->assertHasErrors(['name' => 'required', 'skill_category_id' => 'required'])
@@ -220,7 +223,7 @@ class SkillManagementTest extends TestCase
 
     public function test_create_rejects_unknown_category(): void
     {
-        $this->component()
+        $this->adminPage()
             ->set('name', 'Ghost Skill')
             ->set('skill_category_id', '99999')
             ->call('save')
@@ -229,7 +232,7 @@ class SkillManagementTest extends TestCase
 
     public function test_create_rejects_name_longer_than_255_chars(): void
     {
-        $this->component()
+        $this->adminPage()
             ->set('name', str_repeat('a', 256))
             ->set('skill_category_id', (string) $this->welding->id)
             ->call('save')
@@ -240,7 +243,7 @@ class SkillManagementTest extends TestCase
     {
         $this->makeSkill('Arc Welding', $this->welding);
 
-        $this->component()
+        $this->adminPage()
             ->set('name', 'Arc Welding')
             ->set('skill_category_id', (string) $this->welding->id)
             ->call('save')
@@ -253,7 +256,7 @@ class SkillManagementTest extends TestCase
     {
         $this->makeSkill('Safety Training', $this->welding);
 
-        $this->component()
+        $this->adminPage()
             ->set('name', 'Safety Training')
             ->set('skill_category_id', (string) $this->cooking->id)
             ->call('save')
@@ -268,7 +271,7 @@ class SkillManagementTest extends TestCase
     {
         $s = $this->makeSkill('Baking Bread', $this->cooking);
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $s->id)
             ->assertSet('showModal', true)
             ->assertSet('editingId', $s->id)
@@ -281,7 +284,7 @@ class SkillManagementTest extends TestCase
         $target = $this->makeSkill('Arc Welding', $this->welding);
         $other  = $this->makeSkill('Baking Bread', $this->cooking);
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $target->id)
             ->set('name', 'Arc Welding (Advanced)')
             ->set('skill_category_id', (string) $this->cooking->id)
@@ -301,7 +304,7 @@ class SkillManagementTest extends TestCase
     {
         $s = $this->makeSkill('Arc Welding');
 
-        $this->component()->call('openEdit', $s->id)->set('name', 'Arc Welding 2')->call('save');
+        $this->adminPage()->call('openEdit', $s->id)->set('name', 'Arc Welding 2')->call('save');
 
         $this->assertAudited('SKILL_UPDATED', $s->id);
     }
@@ -310,7 +313,7 @@ class SkillManagementTest extends TestCase
     {
         $s = $this->makeSkill('Arc Welding');
 
-        $this->component()->call('openEdit', $s->id)->call('save')->assertHasNoErrors();
+        $this->adminPage()->call('openEdit', $s->id)->call('save')->assertHasNoErrors();
     }
 
     public function test_edit_cannot_rename_into_an_existing_skill_in_same_category(): void
@@ -318,7 +321,7 @@ class SkillManagementTest extends TestCase
         $this->makeSkill('Arc Welding');
         $mig = $this->makeSkill('MIG Welding');
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $mig->id)
             ->set('name', 'Arc Welding')
             ->call('save')
@@ -331,7 +334,7 @@ class SkillManagementTest extends TestCase
     {
         $s = $this->makeSkill('Arc Welding');
 
-        $this->component()
+        $this->adminPage()
             ->call('openEdit', $s->id)
             ->set('name', '')
             ->call('save')
@@ -342,7 +345,9 @@ class SkillManagementTest extends TestCase
 
     public function test_open_edit_on_missing_record_returns_404(): void
     {
-        $this->component()->call('openEdit', 99999)->assertNotFound();
+        $this->expectException(ModelNotFoundException::class);
+
+        $this->adminPage()->call('openEdit', 99999);
     }
 
     // ── DELETE ───────────────────────────────────────────────────────
@@ -351,7 +356,7 @@ class SkillManagementTest extends TestCase
     {
         $s = $this->makeSkill('Arc Welding');
 
-        $this->component()->call('delete', $s->id)->assertDispatched('notify', type: 'success');
+        $this->adminPage()->call('delete', $s->id)->assertDispatched('notify', type: 'success');
 
         $this->assertDatabaseMissing('skills', ['id' => $s->id]);
         $this->assertAudited('SKILL_DELETED', $s->id);
@@ -364,10 +369,15 @@ class SkillManagementTest extends TestCase
     public function test_delete_is_blocked_when_applicants_have_the_skill(): void
     {
         $s = $this->makeSkill('Arc Welding');
-        $applicant = Applicant::factory()->create();
+        $municipality = Municipality::create(['name' => 'Virac', 'province' => 'Catanduanes']);
+        $barangay     = Barangay::create(['name' => 'San Jose', 'municipality_id' => $municipality->id]);
+        $applicant    = Applicant::factory()->create([
+            'barangay_id' => $barangay->id,
+            'password'    => bcrypt('password'),
+        ]);
         $s->applicants()->attach($applicant->id, ['proficiency_level' => 'Intermediate']);
 
-        $this->component()->call('delete', $s->id)->assertDispatched('notify', type: 'error');
+        $this->adminPage()->call('delete', $s->id)->assertDispatched('notify', type: 'error');
 
         $this->assertDatabaseHas('skills', ['id' => $s->id]);
         $this->assertDatabaseHas('applicant_skill', ['skill_id' => $s->id, 'applicant_id' => $applicant->id]);
@@ -378,7 +388,7 @@ class SkillManagementTest extends TestCase
         $gone = $this->makeSkill('Arc Welding');
         $kept = $this->makeSkill('MIG Welding');
 
-        $this->component()->call('delete', $gone->id);
+        $this->adminPage()->call('delete', $gone->id);
 
         $this->assertDatabaseMissing('skills', ['id' => $gone->id]);
         $this->assertDatabaseHas('skills', ['id' => $kept->id]);
