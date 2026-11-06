@@ -18,9 +18,10 @@ namespace Database\Factories;
 use App\Models\Barangay;
 use App\Models\Municipality;
 use Illuminate\Database\Eloquent\Factories\Factory;
-
+use Illuminate\Support\Facades\Hash;
 class ApplicantFactory extends Factory
 {
+    protected static ?string $password;
     public function definition(): array
     {
         $sex = fake()->randomElement(['Male', 'Female']);
@@ -60,7 +61,7 @@ class ApplicantFactory extends Factory
             'is_active'           => true,
             'consent_given'       => true,
             'consent_given_at'    => now(),
-
+'password' => static::$password ??= Hash::make('123'),
             // null so boot() auto-generates from last_name
             'last_name_metaphone' => null,
         ];
