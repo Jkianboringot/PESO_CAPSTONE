@@ -45,8 +45,16 @@
 
                 <div class="mt-4">
                     <x-input-label for="password" value="Password" />
-                    <x-text-input id="password" wire:model="password" class="block mt-1 w-full rounded-xl"
-                                  type="password" required autocomplete="current-password" />
+                    <div class="relative">
+                        <x-text-input id="password" wire:model="password" class="block mt-1 w-full rounded-xl pr-10"
+                                      type="password" required autocomplete="current-password" />
+                        <button type="button"
+                                onclick="const i = this.parentElement.querySelector('input'); const show = i.type === 'password'; i.type = show ? 'text' : 'password'; this.querySelector('i').className = 'fas text-xs ' + (show ? 'fa-eye-slash' : 'fa-eye');"
+                                class="absolute right-3.5 top-1/2 -translate-y-1/2 mt-0.5 text-gray-400 hover:text-gray-600"
+                                aria-label="Show or hide password">
+                            <i class="fas fa-eye text-xs"></i>
+                        </button>
+                    </div>
                     <x-input-error :messages="$errors->get('password')" class="mt-2" />
                 </div>
 

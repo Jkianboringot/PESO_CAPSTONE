@@ -97,6 +97,15 @@
                     Keep this ID for your records. Present it when visiting the PESO office for referrals or inquiries.
                 </p>
 
+                {{-- How to log in --}}
+                <div class="max-w-sm mx-auto mt-6 rounded-2xl p-4 text-left flex items-start gap-3" style="background:#eff6ff; border:1px solid #bfdbfe;">
+                    <i class="fas fa-circle-info text-sm mt-0.5 flex-shrink-0" style="color:#1F4E79;"></i>
+                    <div class="text-sm leading-relaxed" style="color:#1e40af;">
+                        <p class="font-semibold mb-1">How to log in</p>
+                        <p>Use your <strong>contact number</strong> or <strong>email</strong> as your username, then enter the password you created.</p>
+                    </div>
+                </div>
+
                 {{-- Link to applicant login --}}
                 <a href="{{ route('applicant.login') }}"
                    class="inline-flex items-center gap-2 mt-6 text-sm font-bold px-6 py-2.5 rounded-xl text-white transition-all hover:-translate-y-0.5 active:scale-95"
