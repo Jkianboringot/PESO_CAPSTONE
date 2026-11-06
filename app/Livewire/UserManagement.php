@@ -84,8 +84,8 @@ class UserManagement extends Component
             'email' => 'required|email|unique:users,email' . ($this->editingId ? ",{$this->editingId}" : ''),//REVIEW
             'role_id' => 'required|exists:roles,id',
         ];
-        if (!$this->editingId) { //if we are not in editing form we require password
-            $rules['password'] = 'required|min:8';
+        if (!$this->editingId) { // optional on create; falls back to email if blank
+            $rules['password'] = 'nullable|min:8';
         }
 
         try {
@@ -116,17 +116,14 @@ class UserManagement extends Component
                     $role = Role::findOrFail($this->role_id);
                     $user->syncRoles($role->name);
 
-                    $data = ['name' => $this->name, 'email' => $this->email];
-                    if ($this->password)
-                        $data['password'] = Hash::make($this->password);
-                    $user->update($data);
+                    $user->update(['name' => $this->name, 'email' => $this->email]);
 
                     $audit->log('USER_UPDATED', $user);
                 } else {
                     $user = User::create([
                         'name' => $this->name,
                         'email' => $this->email,
-                        'password' => Hash::make($this->password),
+                        'password' => Hash::make(filled($this->password) ? $this->password : $this->email),
                     ]);
                     $role = Role::findOrFail($this->role_id);
                     $user->syncRoles($role->name);

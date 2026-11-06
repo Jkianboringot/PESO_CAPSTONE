@@ -96,6 +96,13 @@
                 <p class="text-sm max-w-sm mx-auto" style="color:#64748b;">
                     Keep this ID for your records. Present it when visiting the PESO office for referrals or inquiries.
                 </p>
+
+                {{-- Link to applicant login --}}
+                <a href="{{ route('applicant.login') }}"
+                   class="inline-flex items-center gap-2 mt-6 text-sm font-bold px-6 py-2.5 rounded-xl text-white transition-all hover:-translate-y-0.5 active:scale-95"
+                   style="background:linear-gradient(90deg,#1F4E79,#2a6199); box-shadow:0 8px 20px -8px rgba(31,78,121,.6);">
+                    <i class="fas fa-right-to-bracket text-xs"></i> Go to Applicant Login
+                </a>
             </div>
             @else
 

@@ -80,10 +80,7 @@
                 </a>
             </div>
 
-            <p class="text-xs mt-6" style="color:#9ca3af;">
-                Forgot your password? Contact the PESO office.
-                <a href="{{ route('login') }}" class="underline ms-1" style="color:#6b7280;">Staff? Sign in here</a>
-            </p>
+           
         </div>
 
         <!-- RIGHT: BRANDING -->

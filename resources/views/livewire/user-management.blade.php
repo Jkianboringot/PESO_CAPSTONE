@@ -53,16 +53,18 @@
                     </select>
                     @error('role_id')<p class="text-xs mt-1" style="color: #dc2626;">{{ $message }}</p>@enderror
                 </div>
+                @if(! $editingId)
                 <div>
                     <label class="block text-xs font-bold mb-1.5 uppercase tracking-wide" style="color: #374151;">
-                        Password {{ $editingId ? '(leave blank to keep)' : '*' }}
+                        Password (optional)
                     </label>
                     <input type="password" wire:model="password"
                            class="w-full text-sm px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none @error('password') border-red-400 @enderror"
                            style="border-color: #d1d5db;"
-                           placeholder="{{ $editingId ? 'Leave blank to keep current' : 'Min. 8 characters' }}">
+                           placeholder="Leave blank to use email as password">
                     @error('password')<p class="text-xs mt-1" style="color: #dc2626;">{{ $message }}</p>@enderror
                 </div>
+                @endif
             </div>
         </div>
         <div class="flex items-center gap-3 px-5 py-4 border-t" style="border-color: #e2e8f0; background: #f8fafc;">
