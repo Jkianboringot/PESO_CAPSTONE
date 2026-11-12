@@ -114,8 +114,17 @@
                 </a>
             </div>
             @else
-
+@if($step === 1 && ! $returnToReview)
+<div class="mb-4 flex items-center justify-between rounded-2xl border border-slate-100 bg-white px-5 py-3 text-sm"
+     style="box-shadow:0 10px 30px -18px rgba(31,78,121,.3);">
+    <span style="color:#64748b;">Already registered?</span>
+    <a href="{{ route('applicant.login') }}" class="font-bold underline underline-offset-2" style="color:#1F4E79;">
+        <i class="fas fa-right-to-bracket text-xs mr-1"></i> Log in
+    </a>
+</div>
+@endif
             {{-- ── STEP PROGRESS ──────────────────────────────── --}}
+            
             @php
                 $stepLabels = ['Personal', 'Address', 'Education', 'Skills', 'Experience', 'Consent'];
                 $stepIcons  = ['fas fa-user', 'fas fa-location-dot', 'fas fa-graduation-cap', 'fas fa-wrench', 'fas fa-briefcase', 'fas fa-file-shield'];

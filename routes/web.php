@@ -29,24 +29,22 @@ use App\Livewire\MunicipalityManagement;
 use App\Livewire\SkillCategoryManagement;
 use App\Livewire\SkillManagement;
 
-
-
-
-Route::get('/', fn() => redirect()->route('dashboard'));
-
 /*
 |--------------------------------------------------------------------------
-| Public: job portal + QR
+| Public: applicant registration (base URL) + QR
 |--------------------------------------------------------------------------
 */
 // Add 'throttle:60,1' here later if the public form gets abused.
-Route::middleware(['log.jobportal'])->group(function () {
-    Route::get('/job-portal', RegistrationForm::class)->name('job-portal.register');
+Route::middleware(['guest', 'log.jobportal'])->group(function () {
+    Route::get('/', RegistrationForm::class)->name('job-portal.register');
 });
+
+// Old links and already-printed QR codes that still use /job-portal
+Route::redirect('/job-portal', '/');
 
 Route::get('/qr/job-portal', function () {
     $renderer = new ImageRenderer(new RendererStyle(300, 1), new SvgImageBackEnd());
-    $svg = (new Writer($renderer))->writeString(url('/job-portal'));
+    $svg = (new Writer($renderer))->writeString(url('/'));
 
     return response($svg, 200)->header('Content-Type', 'image/svg+xml');
 })->name('qr.job-portal');
@@ -84,7 +82,11 @@ Route::prefix('applicant')->name('applicant.')->group(function () {
     })->middleware('auth:applicant')->name('logout');
 });
 
-
+/*
+|--------------------------------------------------------------------------
+| Staff / admin system (login is /login, defined in auth.php)
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'throttle:60,1'])->group(function () {
 
     // ── Admin AND staff ──────────────────────────────────────────────
@@ -103,14 +105,8 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {
         Route::get('/audit-logs', AuditLog::class)->name('admin.audit-logs');
 
         Route::get('/geographical', GeographicalManagement::class)->name('admin.geographical');
-
-
         Route::get('/municipalities', MunicipalityManagement::class)->name('admin.municipalities');
-
-
-
         Route::get('/skill-categories', SkillCategoryManagement::class)->name('admin.skill-categories');
-
         Route::get('/skills', SkillManagement::class)->name('admin.skills');
 
         Route::get('/activity-stats', function () {

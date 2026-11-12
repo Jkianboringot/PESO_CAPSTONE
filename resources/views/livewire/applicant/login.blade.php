@@ -81,7 +81,7 @@
                     <div class="text-sm font-bold" style="color:#92400e;">New here?</div>
                     <div class="text-xs" style="color:#b45309;">Create your PESO applicant record.</div>
                 </div>
-                <a href="{{ url('/job-portal') }}"
+                <a href="{{ route('job-portal.register') }}"
                    class="shrink-0 px-4 py-2 rounded-full text-xs font-bold text-white transition hover:opacity-90"
                    style="background:#f59e0b;">
                     <i class="fas fa-user-plus me-1"></i> Register
