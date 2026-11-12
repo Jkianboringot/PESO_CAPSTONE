@@ -1,0 +1,1103 @@
+=================== app/Http/Middleware/LogJobPortalVisit.php ===================
+<?php
+
+namespace App\Http\Middleware;
+
+use App\Models\ActivityLog;
+use Closure;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+class LogJobPortalVisit
+{
+    public function handle(Request $request, Closure $next)
+    {
+        ActivityLog::create([
+            'user_id'    => auth()->id(),
+            'event'      => 'job_portal_view',
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'url'        => $request->fullUrl(),
+        ]);
+
+        return $next($request);
+    }
+}
+
+=================== bootstrap/app.php ===================
+<?php
+
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Spatie\Permission\Middleware\PermissionMiddleware;
+use Spatie\Permission\Middleware\RoleMiddleware;
+use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
+
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        web: __DIR__ . '/../routes/web.php',
+        commands: __DIR__ . '/../routes/console.php',
+        health: '/up',
+    )
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->trustProxies(at: '*');
+        //     $middleware->alias([ use spatie for now
+        //     'role' => \App\Http\Middleware\CheckRole::class,
+        // ]);
+    
+       $middleware->redirectGuestsTo(fn ($request) =>
+           $request->is('applicant/*') ? route('applicant.login') : route('login'));
+           
+        $middleware->redirectUsersTo(fn(Request $request) =>
+            $request->routeIs('applicant.*') ? route('applicant.profile') : route('dashboard'));
+
+        $middleware->alias([
+            'role' => RoleMiddleware::class,
+            'permission' => PermissionMiddleware::class,
+            'role_or_permission' => RoleOrPermissionMiddleware::class,
+            'log.jobportal' => \App\Http\Middleware\LogJobPortalVisit::class,
+        ]);
+    })
+    ->withExceptions(function (Exceptions $exceptions) {
+        //
+    })->create();
+
+=================== resources/views/auth/login.blade.php ===================
+<x-guest-layout>
+    <div class="min-h-screen flex items-center justify-center px-4 py-10 relative overflow-hidden"
+         style="background: linear-gradient(135deg, #f0f2f5 0%, #dbeafe 100%);">
+
+        <!-- Background blobs -->
+        <div class="absolute -top-24 -left-24 w-80 h-80 rounded-full pointer-events-none"
+             style="background:#93c5fd; opacity:.45; filter:blur(60px);"></div>
+        <div class="absolute -bottom-24 -right-24 w-96 h-96 rounded-full pointer-events-none"
+             style="background:#1a2035; opacity:.25; filter:blur(70px);"></div>
+
+        <div class="relative w-full max-w-5xl bg-white rounded-3xl overflow-hidden flex flex-col lg:flex-row"
+             style="box-shadow:0 25px 60px -15px rgba(26,32,53,.4);">
+
+            <!-- ===================== LEFT: FORM ===================== -->
+            <div class="w-full lg:w-1/2 px-8 sm:px-12 py-12 flex flex-col justify-center">
+
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="w-14 h-14 rounded-2xl flex items-center justify-center p-2"
+                         style="background:#f0f2f5; border:2px solid #cbd5e1;">
+                        <img src="{{ asset('pesoLogoLogin.png') }}" alt="PESO Connect"
+                             class="w-full h-full object-contain">
+                    </div>
+                    <div class="leading-tight">
+                        <div class="font-bold text-sm" style="color:#1a2035;">PESO Catanduanes</div>
+                        <div class="text-xs" style="color:#64748b;">Skills Registry</div>
+                    </div>
+                </div>
+
+                <span class="inline-flex items-center gap-2 self-start rounded-full px-3 py-1 text-[11px] font-bold tracking-widest mb-4"
+                      style="background:#dbeafe; color:#1e40af;">
+                    <i class="fas fa-circle text-[6px]"></i> STAFF PORTAL
+                </span>
+
+                <h2 class="text-3xl font-extrabold mb-1" style="color:#1a2035;">Welcome back!</h2>
+                <p class="text-sm mb-8" style="color:#64748b;">
+                    Enter your credentials to access the dashboard.
+                </p>
+
+                <!-- Session Status -->
+                <x-auth-session-status class="mb-4" :status="session('status')" />
+
+                <form method="POST" action="{{ route('login') }}">
+                    @csrf
+
+                    <!-- Email Address -->
+                    <div>
+                        <x-input-label for="email" :value="__('Email')" />
+                        <x-text-input id="email" class="block mt-1 w-full rounded-xl" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
+                        <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                    </div>
+
+                    <!-- Password -->
+                    <div class="mt-4">
+                        <x-input-label for="password" :value="__('Password')" />
+
+                        <div class="relative">
+                            <x-text-input id="password" class="block mt-1 w-full rounded-xl pr-10"
+                                          type="password"
+                                          name="password"
+                                          required autocomplete="current-password" />
+
+                            <button type="button"
+                                    onclick="const i = this.parentElement.querySelector('input'); const show = i.type === 'password'; i.type = show ? 'text' : 'password'; this.querySelector('i').className = 'fas text-xs ' + (show ? 'fa-eye-slash' : 'fa-eye');"
+                                    class="absolute right-3.5 top-1/2 -translate-y-1/2 mt-0.5 text-gray-400 hover:text-gray-600"
+                                    aria-label="Show or hide password">
+                                <i class="fas fa-eye text-xs"></i>
+                            </button>
+                        </div>
+
+                        <x-input-error :messages="$errors->get('password')" class="mt-2" />
+                    </div>
+
+                    <!-- Remember Me + Forgot -->
+                    <div class="flex items-center justify-between mt-4">
+                        <label for="remember_me" class="inline-flex items-center">
+                            <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
+                            <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
+                        </label>
+
+                        @if (Route::has('password.request'))
+                            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
+                                {{ __('Forgot your password?') }}
+                            </a>
+                        @endif
+                    </div>
+
+                    <button type="submit"
+                            class="mt-6 w-full px-4 py-3 rounded-xl text-sm font-bold text-white transition hover:-translate-y-0.5"
+                            style="background: linear-gradient(90deg,#1a2035,#2d3a5f); box-shadow:0 8px 20px -6px rgba(26,32,53,.6);">
+                        {{ __('Log in') }} <i class="fas fa-arrow-right ms-1 text-xs"></i>
+                    </button>
+                </form>
+
+                <!-- Applicant links -->
+                <div class="mt-6 pt-6 text-center text-sm space-y-2" style="border-top:1px solid #e2e8f0; color:#64748b;">
+                    <div>
+                        Are you an applicant?
+                        <a href="{{ route('applicant.login') }}" class="font-bold hover:underline" style="color:#1e40af;">
+                            Applicant Login
+                        </a>
+                    </div>
+                    <div>
+                        New here?
+                        <a href="{{ route('job-portal.register') }}" class="font-bold hover:underline" style="color:#1e40af;">
+                            Register as an Applicant
+                        </a>
+                    </div>
+                </div>
+
+                <div class="mt-8 rounded-2xl p-4 flex items-center gap-3"
+                     style="background:#f1f5f9; border:1px dashed #94a3b8;">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:#60a5fa;">
+                        <i class="fas fa-headset" style="color:#1a2035;"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-bold" style="color:#1a2035;">Trouble signing in?</div>
+                        <div class="text-xs" style="color:#64748b;">Contact your PESO system administrator.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===================== RIGHT: BRANDING ===================== -->
+            <div class="hidden lg:flex w-1/2 flex-col justify-between p-12 relative overflow-hidden text-white"
+                 style="background: linear-gradient(160deg,#1a2035 0%,#232c4a 60%,#2d3a5f 100%);">
+
+                <div class="absolute -top-16 -right-16 w-64 h-64 rounded-full" style="background:rgba(255,255,255,.06);"></div>
+                <div class="absolute bottom-10 -left-20 w-72 h-72 rounded-full" style="background:rgba(255,255,255,.04);"></div>
+                <div class="absolute inset-0 opacity-[0.04] pointer-events-none"
+                     style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 18px 18px;"></div>
+
+                <div class="relative">
+                    <div class="text-xs font-semibold uppercase tracking-widest" style="color:#94a3b8;">Catanduanes Province</div>
+                    <h1 class="text-3xl font-extrabold leading-snug mt-3 mb-3">
+                        Manage the<br>
+                        <span style="color:#60a5fa;">workforce registry.</span>
+                    </h1>
+                    <p class="text-sm leading-relaxed" style="color:#cbd5e1;">
+                        Sign in to review applicants, generate reports, and manage the Public Employment
+                        Service Office labor market database.
+                    </p>
+                </div>
+
+                <div class="relative space-y-3">
+                    <div class="flex items-center gap-4 rounded-2xl p-4" style="background:rgba(255,255,255,.08);">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:#60a5fa;">
+                            <i class="fas fa-shield-halved" style="color:#1a2035;"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-bold">Data Privacy Protected</div>
+                            <div class="text-xs" style="color:#94a3b8;">Access is logged and secured under RA 10173</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 rounded-2xl p-4" style="background:rgba(255,255,255,.08);">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:#60a5fa;">
+                            <i class="fas fa-users" style="color:#1a2035;"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-bold">Applicant Management</div>
+                            <div class="text-xs" style="color:#94a3b8;">Search, verify, and update registrant records</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 rounded-2xl p-4" style="background:rgba(255,255,255,.08);">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:#60a5fa;">
+                            <i class="fas fa-chart-bar" style="color:#1a2035;"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-bold">Workforce Analytics</div>
+                            <div class="text-xs" style="color:#94a3b8;">Track skills gaps and employment trends</div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="relative text-xs" style="color:#64748b;">© {{ date('Y') }} PESO Catanduanes. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</x-guest-layout>
+=================== resources/views/auth/register.blade.php ===================
+<x-guest-layout>
+    <div class="min-h-screen flex items-center justify-center px-4 py-10 relative overflow-hidden"
+         style="background: linear-gradient(135deg, #f0f2f5 0%, #dbeafe 100%);">
+
+        <!-- Background blobs -->
+        <div class="absolute -top-24 -left-24 w-80 h-80 rounded-full pointer-events-none"
+             style="background:#93c5fd; opacity:.45; filter:blur(60px);"></div>
+        <div class="absolute -bottom-24 -right-24 w-96 h-96 rounded-full pointer-events-none"
+             style="background:#1a2035; opacity:.25; filter:blur(70px);"></div>
+
+        <div class="relative w-full max-w-5xl bg-white rounded-3xl overflow-hidden flex flex-col lg:flex-row"
+             style="box-shadow:0 25px 60px -15px rgba(26,32,53,.4);">
+
+            <!-- ===================== LEFT: FORM ===================== -->
+            <div class="w-full lg:w-1/2 px-8 sm:px-12 py-12 flex flex-col justify-center">
+
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="w-14 h-14 rounded-2xl flex items-center justify-center p-2"
+                         style="background:#f0f2f5; border:2px solid #cbd5e1;">
+                        <img src="{{ asset('pesoLogoLogin.png') }}" alt="PESO Connect"
+                             class="w-full h-full object-contain">
+                    </div>
+                    <div class="leading-tight">
+                        <div class="font-bold text-sm" style="color:#1a2035;">PESO Catanduanes</div>
+                        <div class="text-xs" style="color:#64748b;">Skills Registry</div>
+                    </div>
+                </div>
+
+                <span class="inline-flex items-center gap-2 self-start rounded-full px-3 py-1 text-[11px] font-bold tracking-widest mb-4"
+                      style="background:#dbeafe; color:#1e40af;">
+                    <i class="fas fa-circle text-[6px]"></i> STAFF PORTAL
+                </span>
+
+                <h2 class="text-3xl font-extrabold mb-1" style="color:#1a2035;">Create account</h2>
+                <p class="text-sm mb-8" style="color:#64748b;">
+                    Fill in your details to register.
+                </p>
+
+                <form method="POST" action="{{ route('job-portal.register') }}">
+                    @csrf
+
+                    <!-- Name -->
+                    <div>
+                        <x-input-label for="name" :value="__('Name')" />
+                        <x-text-input id="name" class="block mt-1 w-full rounded-xl" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
+                        <x-input-error :messages="$errors->get('name')" class="mt-2" />
+                    </div>
+
+                    <!-- Email Address -->
+                    <div class="mt-4">
+                        <x-input-label for="email" :value="__('Email')" />
+                        <x-text-input id="email" class="block mt-1 w-full rounded-xl" type="email" name="email" :value="old('email')" required autocomplete="username" />
+                        <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                    </div>
+
+                    <!-- Password -->
+                    <div class="mt-4">
+                        <x-input-label for="password" :value="__('Password')" />
+                        <x-text-input id="password" class="block mt-1 w-full rounded-xl"
+                                      type="password"
+                                      name="password"
+                                      required autocomplete="new-password" />
+                        <x-input-error :messages="$errors->get('password')" class="mt-2" />
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div class="mt-4">
+                        <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
+                        <x-text-input id="password_confirmation" class="block mt-1 w-full rounded-xl"
+                                      type="password"
+                                      name="password_confirmation" required autocomplete="new-password" />
+                        <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
+                    </div>
+
+                    <button type="submit"
+                            class="mt-6 w-full px-4 py-3 rounded-xl text-sm font-bold text-white transition hover:-translate-y-0.5"
+                            style="background: linear-gradient(90deg,#1a2035,#2d3a5f); box-shadow:0 8px 20px -6px rgba(26,32,53,.6);">
+                        {{ __('Register') }} <i class="fas fa-arrow-right ms-1 text-xs"></i>
+                    </button>
+
+                    <div class="mt-4 text-center">
+                        <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}">
+                            {{ __('Already registered?') }}
+                        </a>
+                    </div>
+                </form>
+
+                <div class="mt-8 rounded-2xl p-4 flex items-center gap-3"
+                     style="background:#f1f5f9; border:1px dashed #94a3b8;">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:#60a5fa;">
+                        <i class="fas fa-headset" style="color:#1a2035;"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-bold" style="color:#1a2035;">Trouble signing in?</div>
+                        <div class="text-xs" style="color:#64748b;">Contact your PESO system administrator.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===================== RIGHT: BRANDING ===================== -->
+            <div class="hidden lg:flex w-1/2 flex-col justify-between p-12 relative overflow-hidden text-white"
+                 style="background: linear-gradient(160deg,#1a2035 0%,#232c4a 60%,#2d3a5f 100%);">
+
+                <div class="absolute -top-16 -right-16 w-64 h-64 rounded-full" style="background:rgba(255,255,255,.06);"></div>
+                <div class="absolute bottom-10 -left-20 w-72 h-72 rounded-full" style="background:rgba(255,255,255,.04);"></div>
+                <div class="absolute inset-0 opacity-[0.04] pointer-events-none"
+                     style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 18px 18px;"></div>
+
+                <div class="relative">
+                    <div class="text-xs font-semibold uppercase tracking-widest" style="color:#94a3b8;">Catanduanes Province</div>
+                    <h1 class="text-3xl font-extrabold leading-snug mt-3 mb-3">
+                        Manage the<br>
+                        <span style="color:#60a5fa;">workforce registry.</span>
+                    </h1>
+                    <p class="text-sm leading-relaxed" style="color:#cbd5e1;">
+                        Sign in to review applicants, generate reports, and manage the Public Employment
+                        Service Office labor market database.
+                    </p>
+                </div>
+
+                <div class="relative space-y-3">
+                    <div class="flex items-center gap-4 rounded-2xl p-4" style="background:rgba(255,255,255,.08);">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:#60a5fa;">
+                            <i class="fas fa-shield-halved" style="color:#1a2035;"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-bold">Data Privacy Protected</div>
+                            <div class="text-xs" style="color:#94a3b8;">Access is logged and secured under RA 10173</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 rounded-2xl p-4" style="background:rgba(255,255,255,.08);">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:#60a5fa;">
+                            <i class="fas fa-users" style="color:#1a2035;"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-bold">Applicant Management</div>
+                            <div class="text-xs" style="color:#94a3b8;">Search, verify, and update registrant records</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 rounded-2xl p-4" style="background:rgba(255,255,255,.08);">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:#60a5fa;">
+                            <i class="fas fa-chart-bar" style="color:#1a2035;"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-bold">Workforce Analytics</div>
+                            <div class="text-xs" style="color:#94a3b8;">Track skills gaps and employment trends</div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="relative text-xs" style="color:#64748b;">© {{ date('Y') }} PESO Catanduanes. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</x-guest-layout>
+=================== resources/views/livewire/applicant/applicant-dashboard.blade.php ===================
+<div>
+    <x-slot name="title">Dashboard</x-slot>
+
+    {{-- Page Header --}}
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-xl font-bold" style="color: #1e293b;">
+                <i class="fas fa-chart-pie mr-2" style="color: #2563eb;"></i>
+                Dashboard Overview
+            </h1>
+            <!-- <p class="text-xs mt-0.5" style="color: #64748b;">Public Employment Service Office — Catanduanes Province
+            </p> -->
+        </div>
+        <!-- <div class="text-xs px-3 py-1.5 rounded-lg"
+            style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">
+            <i class="fas fa-clock mr-1"></i>
+            Last updated: {{ now()->format('M d, Y h:i A') }}
+        </div> -->
+    </div>
+
+    {{-- ===================== STAT CARDS ===================== --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+
+        {{-- Card 1: Total Applicants — Navy Blue --}}
+        <div class="rounded-xl p-5 text-white relative overflow-hidden" style="background: #1F4E79;">
+            <div class="relative z-10">
+                <p class="text-xs font-semibold uppercase tracking-wider opacity-80 mb-1">Total Registered Applicants
+                </p>
+                <p class="text-4xl font-bold leading-none mb-1">{{ $stats['total_applicants'] ?? '0' }}</p>
+                <p class="text-xs opacity-70">All-time registrations</p>
+            </div>
+            <div class="absolute right-4 top-4 opacity-10 text-6xl">
+                <i class="fas fa-users"></i>
+            </div>
+        </div>
+
+        {{-- Card 2: This Month — Green --}}
+        <div class="rounded-xl p-5 text-white relative overflow-hidden" style="background: #2e7d32;">
+            <div class="relative z-10">
+                <p class="text-xs font-semibold uppercase tracking-wider opacity-80 mb-1">Registrations This Month</p>
+                <p class="text-4xl font-bold leading-none mb-1">{{ $stats['this_month'] ?? '0' }}</p>
+                <p class="text-xs opacity-70">Current month intake</p>
+            </div>
+            <div class="absolute right-4 top-4 opacity-10 text-6xl">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+        </div>
+
+        {{-- Card 3: Pending Duplicates — Teal --}}
+        <div class="rounded-xl p-5 text-white relative overflow-hidden" style="background: #00796b;">
+            <div class="relative z-10">
+                <p class="text-xs font-semibold uppercase tracking-wider opacity-80 mb-1">Pending Duplicate Flags</p>
+                <p class="text-4xl font-bold leading-none mb-1">{{ $stats['pending_duplicates'] ?? '0' }}</p>
+                <p class="text-xs opacity-70">Awaiting review</p>
+            </div>
+            <div class="absolute right-4 top-4 opacity-10 text-6xl">
+                <i class="fas fa-copy"></i>
+            </div>
+        </div>
+
+        {{-- Card 4: Flagged — Orange --}}
+        <div class="rounded-xl p-5 text-white relative overflow-hidden" style="background: #e65100;">
+            <div class="relative z-10">
+                <p class="text-xs font-semibold uppercase tracking-wider opacity-80 mb-1">Flagged Applicants</p>
+                <p class="text-4xl font-bold leading-none mb-1">{{ $stats['flagged'] ?? '0' }}</p>
+                <p class="text-xs opacity-70">Requires attention</p>
+            </div>
+            <div class="absolute right-4 top-4 opacity-10 text-6xl">
+                <i class="fas fa-flag"></i>
+            </div>
+        </div>
+
+    </div>
+
+    {{-- ===================== QUICK LINKS ===================== --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-2" x-data="{ showQr: false }">
+
+        <a href="{{ route('applicants') }}"
+            class="group block bg-white rounded-xl p-4 border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all">
+            <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style="background: #eff6ff;">
+                    <i class="fas fa-users text-sm" style="color: #1F4E79;"></i>
+                </div>
+                <div>
+                    <h6 class="text-sm font-bold mb-0.5 group-hover:text-blue-700 transition-colors"
+                        style="color: #1e293b;">Applicant Management</h6>
+                    <p class="text-xs" style="color: #64748b;">Search, filter, edit, and manage all registered
+                        applicants.</p>
+                </div>
+            </div>
+        </a>
+
+        <a href="{{ route('analytics') }}"
+            class="group block bg-white rounded-xl p-4 border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all">
+            <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style="background: #f0fdf4;">
+                    <i class="fas fa-chart-bar text-sm" style="color: #2e7d32;"></i>
+                </div>
+                <div>
+                    <h6 class="text-sm font-bold mb-0.5 group-hover:text-blue-700 transition-colors"
+                        style="color: #1e293b;">Workforce Analytics</h6>
+                    <p class="text-xs" style="color: #64748b;">Interactive charts for skills, education, barangay and
+                        trends.</p>
+                </div>
+            </div>
+        </a>
+        {{--
+        <a href="{{ route('reports') }}"
+            class="group block bg-white rounded-xl p-4 border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all">
+            <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style="background: #fff7ed;">
+                    <i class="fas fa-file-alt text-sm" style="color: #e65100;"></i>
+                </div>
+                <div>
+                    <h6 class="text-sm font-bold mb-0.5 group-hover:text-blue-700 transition-colors"
+                        style="color: #1e293b;">Report Generation</h6>
+                    <p class="text-xs" style="color: #64748b;">Export DOLE BLE-compliant CSV/Excel reports with filters.
+                    </p>
+                </div>
+            </div>
+        </a>
+        --}}
+        <a href="{{ route('duplicates') }}"
+            class="group block bg-white rounded-xl p-4 border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all">
+            <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style="background: #fefce8;">
+                    <i class="fas fa-exclamation-triangle text-sm" style="color: #ca8a04;"></i>
+                </div>
+                <div>
+                    <h6 class="text-sm font-bold mb-0.5 group-hover:text-blue-700 transition-colors"
+                        style="color: #1e293b;">Duplicate Review</h6>
+                    <p class="text-xs" style="color: #64748b;">Review and resolve flagged duplicate registrations.</p>
+                </div>
+            </div>
+        </a>
+
+        <a href="{{ route('skills-gap') }}"
+            class="group block bg-white rounded-xl p-4 border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all">
+            <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style="background: #f0fdfa;">
+                    <i class="fas fa-search text-sm" style="color: #00796b;"></i>
+                </div>
+                <div>
+                    <h6 class="text-sm font-bold mb-0.5 group-hover:text-blue-700 transition-colors"
+                        style="color: #1e293b;">Skills Gap Analysis</h6>
+                    <p class="text-xs" style="color: #64748b;">Identify underrepresented PQF skill clusters in
+                        Catanduanes.</p>
+                </div>
+            </div>
+        </a>
+
+        {{-- QR Code — Job Portal --}}
+        <button type="button" @click="showQr = true"
+            class="group text-left bg-white rounded-xl p-4 border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all">
+            <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style="background: #f5f3ff;">
+                    <i class="fas fa-qrcode text-sm" style="color: #6d28d9;"></i>
+                </div>
+                <div>
+                    <h6 class="text-sm font-bold mb-0.5 group-hover:text-blue-700 transition-colors"
+                        style="color: #1e293b;">Job Portal QR Code</h6>
+                    <p class="text-xs" style="color: #64748b;">Show or download the QR applicants scan to register.</p>
+                </div>
+            </div>
+        </button>
+
+        {{-- ===================== QR MODAL ===================== --}}
+        <div x-show="showQr" x-cloak
+            class="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style="background: rgba(0,0,0,0.5);"
+            @click.self="showQr = false">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
+
+                <div class="flex items-center justify-between px-6 py-4" style="background: #1a2035;">
+                    <h5 class="text-sm font-bold text-white">
+                        <i class="fas fa-qrcode mr-2 opacity-70"></i> Job Portal QR Code
+                    </h5>
+                    <button @click="showQr = false" class="text-white opacity-60 hover:opacity-100 transition-opacity">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="p-6 text-center">
+                    <img src="{{ route('qr.job-portal') }}" alt="Job Portal QR Code" class="mx-auto w-56 h-56 rounded-lg border" style="border-color:#e2e8f0;">
+                    <p class="text-xs mt-4" style="color:#64748b;">
+                        Scan to open the applicant registration form.
+                    </p>
+                    <a href="{{ route('qr.job-portal') }}" download="peso-job-portal-qr.png"
+                        class="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-lg text-white mt-4 transition-opacity hover:opacity-90"
+                        style="background: #1a2035;">
+                        <i class="fas fa-download"></i> Download QR
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    {{-- Footer Note --}}
+    <!-- <div class="mt-6 text-center">
+        <p class="text-xs italic" style="color: #94a3b8;">Design Pattern: Shneiderman's Information-Seeking Mantra</p>
+    </div> -->
+
+</div>
+=================== resources/views/livewire/applicant/login.blade.php ===================
+<div class="min-h-screen flex items-center justify-center px-4 py-10 relative overflow-hidden"
+     style="background: linear-gradient(135deg, #ecfdf5 0%, #fef3c7 100%);">
+
+    <div class="absolute -top-24 -left-24 w-80 h-80 rounded-full pointer-events-none"
+         style="background:#a7f3d0; opacity:.5; filter:blur(60px);"></div>
+    <div class="absolute -bottom-24 -right-24 w-96 h-96 rounded-full pointer-events-none"
+         style="background:#fcd34d; opacity:.35; filter:blur(70px);"></div>
+
+    <div class="relative w-full max-w-5xl bg-white rounded-3xl overflow-hidden flex flex-col lg:flex-row"
+         style="box-shadow:0 25px 60px -15px rgba(5,150,105,.35);">
+
+        <!-- LEFT: FORM -->
+        <div class="w-full lg:w-1/2 px-8 sm:px-12 py-12 flex flex-col justify-center">
+
+            <div class="flex items-center gap-3 mb-8">
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center p-2"
+                     style="background:#ecfdf5; border:2px solid #a7f3d0;">
+                    <img src="{{ asset('images/pesoLogoLogin.png') }}" alt="PESO Connect"
+                         class="w-full h-full object-contain">
+                </div>
+                <div class="leading-tight">
+                    <div class="font-bold text-sm" style="color:#064e3b;">PESO Catanduanes</div>
+                    <div class="text-xs" style="color:#6b7280;">Skills Registry</div>
+                </div>
+            </div>
+
+            <span class="inline-flex items-center gap-2 self-start rounded-full px-3 py-1 text-[11px] font-bold tracking-widest mb-4"
+                  style="background:#d1fae5; color:#047857;">
+                <i class="fas fa-circle text-[6px]"></i> APPLICANT PORTAL
+            </span>
+
+            <h2 class="text-3xl font-extrabold mb-1" style="color:#064e3b;">Hello, jobseeker!</h2>
+            <p class="text-sm mb-8" style="color:#6b7280;">
+                Sign in to view and update your PESO registration.
+            </p>
+
+            <form wire:submit="authenticate">
+
+                <div>
+                    <x-input-label for="login" value="Reference ID, contact number or email" />
+                    <x-text-input id="login" wire:model="login" class="block mt-1 w-full rounded-xl"
+                                  type="text" required autofocus autocomplete="username" />
+                    <x-input-error :messages="$errors->get('login')" class="mt-2" />
+                </div>
+
+                <div class="mt-4">
+                    <x-input-label for="password" value="Password" />
+                    <div class="relative">
+                        <x-text-input id="password" wire:model="password" class="block mt-1 w-full rounded-xl pr-10"
+                                      type="password" required autocomplete="current-password" />
+                        <button type="button"
+                                onclick="const i = this.parentElement.querySelector('input'); const show = i.type === 'password'; i.type = show ? 'text' : 'password'; this.querySelector('i').className = 'fas text-xs ' + (show ? 'fa-eye-slash' : 'fa-eye');"
+                                class="absolute right-3.5 top-1/2 -translate-y-1/2 mt-0.5 text-gray-400 hover:text-gray-600"
+                                aria-label="Show or hide password">
+                            <i class="fas fa-eye text-xs"></i>
+                        </button>
+                    </div>
+                    <x-input-error :messages="$errors->get('password')" class="mt-2" />
+                </div>
+
+                <div class="block mt-4">
+                    <label for="remember" class="inline-flex items-center">
+                        <input id="remember" wire:model="remember" type="checkbox"
+                               class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
+                        <span class="ms-2 text-sm text-gray-600">Remember me</span>
+                    </label>
+                </div>
+
+                <button type="submit"
+                        wire:loading.attr="disabled"
+                        class="mt-6 w-full px-4 py-3 rounded-xl text-sm font-bold text-white transition hover:-translate-y-0.5 disabled:opacity-60"
+                        style="background: linear-gradient(90deg,#059669,#0d9488); box-shadow:0 8px 20px -6px rgba(5,150,105,.6);">
+                    <span wire:loading.remove wire:target="authenticate">Sign in <i class="fas fa-arrow-right ms-1 text-xs"></i></span>
+                    <span wire:loading wire:target="authenticate">Signing in...</span>
+                </button>
+            </form>
+
+            <div class="mt-8 rounded-2xl p-4 flex items-center justify-between gap-3"
+                 style="background:#fffbeb; border:1px dashed #fcd34d;">
+                <div>
+                    <div class="text-sm font-bold" style="color:#92400e;">New here?</div>
+                    <div class="text-xs" style="color:#b45309;">Create your PESO applicant record.</div>
+                </div>
+                <a href="{{ url('/job-portal') }}"
+                   class="shrink-0 px-4 py-2 rounded-full text-xs font-bold text-white transition hover:opacity-90"
+                   style="background:#f59e0b;">
+                    <i class="fas fa-user-plus me-1"></i> Register
+                </a>
+            </div>
+
+           
+        </div>
+
+        <!-- RIGHT: BRANDING -->
+        <div class="hidden lg:flex w-1/2 flex-col justify-between p-12 relative overflow-hidden text-white"
+             style="background: linear-gradient(160deg,#059669 0%,#0f766e 60%,#115e59 100%);">
+
+            <div class="absolute -top-16 -right-16 w-64 h-64 rounded-full" style="background:rgba(255,255,255,.08);"></div>
+            <div class="absolute bottom-10 -left-20 w-72 h-72 rounded-full" style="background:rgba(255,255,255,.06);"></div>
+
+            <div class="relative">
+                <div class="text-xs font-semibold uppercase tracking-widest" style="color:#a7f3d0;">Catanduanes Province</div>
+                <h1 class="text-3xl font-extrabold leading-snug mt-3 mb-3">
+                    Your career,<br>
+                    <span style="color:#fcd34d;">your records.</span>
+                </h1>
+                <p class="text-sm leading-relaxed" style="color:#d1fae5;">
+                    Use the reference ID you received when you registered to keep your
+                    Public Employment Service Office profile up to date.
+                </p>
+            </div>
+
+            <div class="relative space-y-3">
+                <div class="flex items-center gap-4 rounded-2xl p-4" style="background:rgba(255,255,255,.12);">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:#fcd34d;">
+                        <i class="fas fa-shield-halved" style="color:#92400e;"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-bold">Data Privacy Protected</div>
+                        <div class="text-xs" style="color:#a7f3d0;">Secured under RA 10173</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 rounded-2xl p-4" style="background:rgba(255,255,255,.12);">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:#fcd34d;">
+                        <i class="fas fa-id-card" style="color:#92400e;"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-bold">Your Registration</div>
+                        <div class="text-xs" style="color:#a7f3d0;">Review what you submitted to PESO</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 rounded-2xl p-4" style="background:rgba(255,255,255,.12);">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:#fcd34d;">
+                        <i class="fas fa-briefcase" style="color:#92400e;"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-bold">Skills &amp; Employment</div>
+                        <div class="text-xs" style="color:#a7f3d0;">Keep your work profile current</div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="relative text-xs" style="color:#99f6e4;">© {{ date('Y') }} PESO Catanduanes. All rights reserved.</p>
+        </div>
+    </div>
+</div>
+=================== resources/views/livewire/dashboard.blade.php ===================
+<div>
+    <x-slot name="title">Dashboard</x-slot>
+
+    {{-- Page Header --}}
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-xl font-bold" style="color: #1e293b;">
+                <i class="fas fa-chart-pie mr-2" style="color: #2563eb;"></i>
+                Dashboard Overview
+            </h1>
+            <!-- <p class="text-xs mt-0.5" style="color: #64748b;">Public Employment Service Office — Catanduanes Province
+            </p> -->
+        </div>
+        <!-- <div class="text-xs px-3 py-1.5 rounded-lg"
+            style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">
+            <i class="fas fa-clock mr-1"></i>
+            Last updated: {{ now()->format('M d, Y h:i A') }}
+        </div> -->
+    </div>
+
+    {{-- ===================== STAT CARDS ===================== --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+
+        {{-- Card 1: Total Applicants — Navy Blue --}}
+        <div class="rounded-xl p-5 text-white relative overflow-hidden" style="background: #1F4E79;">
+            <div class="relative z-10">
+                <p class="text-xs font-semibold uppercase tracking-wider opacity-80 mb-1">Total Registered Applicants
+                </p>
+                <p class="text-4xl font-bold leading-none mb-1">{{ $stats['total_applicants'] ?? '0' }}</p>
+                <p class="text-xs opacity-70">All-time registrations</p>
+            </div>
+            <div class="absolute right-4 top-4 opacity-10 text-6xl">
+                <i class="fas fa-users"></i>
+            </div>
+        </div>
+
+        {{-- Card 2: This Month — Green --}}
+        <div class="rounded-xl p-5 text-white relative overflow-hidden" style="background: #2e7d32;">
+            <div class="relative z-10">
+                <p class="text-xs font-semibold uppercase tracking-wider opacity-80 mb-1">Registrations This Month</p>
+                <p class="text-4xl font-bold leading-none mb-1">{{ $stats['this_month'] ?? '0' }}</p>
+                <p class="text-xs opacity-70">Current month intake</p>
+            </div>
+            <div class="absolute right-4 top-4 opacity-10 text-6xl">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+        </div>
+
+        {{-- Card 3: Pending Duplicates — Teal --}}
+        <div class="rounded-xl p-5 text-white relative overflow-hidden" style="background: #00796b;">
+            <div class="relative z-10">
+                <p class="text-xs font-semibold uppercase tracking-wider opacity-80 mb-1">Pending Duplicate Flags</p>
+                <p class="text-4xl font-bold leading-none mb-1">{{ $stats['pending_duplicates'] ?? '0' }}</p>
+                <p class="text-xs opacity-70">Awaiting review</p>
+            </div>
+            <div class="absolute right-4 top-4 opacity-10 text-6xl">
+                <i class="fas fa-copy"></i>
+            </div>
+        </div>
+
+        {{-- Card 4: Flagged — Orange --}}
+        <div class="rounded-xl p-5 text-white relative overflow-hidden" style="background: #e65100;">
+            <div class="relative z-10">
+                <p class="text-xs font-semibold uppercase tracking-wider opacity-80 mb-1">Flagged Applicants</p>
+                <p class="text-4xl font-bold leading-none mb-1">{{ $stats['flagged'] ?? '0' }}</p>
+                <p class="text-xs opacity-70">Requires attention</p>
+            </div>
+            <div class="absolute right-4 top-4 opacity-10 text-6xl">
+                <i class="fas fa-flag"></i>
+            </div>
+        </div>
+
+    </div>
+
+    {{-- ===================== QUICK LINKS ===================== --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-2" x-data="{ showQr: false }">
+
+        <a href="{{ route('applicants') }}"
+            class="group block bg-white rounded-xl p-4 border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all">
+            <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style="background: #eff6ff;">
+                    <i class="fas fa-users text-sm" style="color: #1F4E79;"></i>
+                </div>
+                <div>
+                    <h6 class="text-sm font-bold mb-0.5 group-hover:text-blue-700 transition-colors"
+                        style="color: #1e293b;">Applicant Management</h6>
+                    <p class="text-xs" style="color: #64748b;">Search, filter, edit, and manage all registered
+                        applicants.</p>
+                </div>
+            </div>
+        </a>
+
+        <a href="{{ route('analytics') }}"
+            class="group block bg-white rounded-xl p-4 border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all">
+            <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style="background: #f0fdf4;">
+                    <i class="fas fa-chart-bar text-sm" style="color: #2e7d32;"></i>
+                </div>
+                <div>
+                    <h6 class="text-sm font-bold mb-0.5 group-hover:text-blue-700 transition-colors"
+                        style="color: #1e293b;">Workforce Analytics</h6>
+                    <p class="text-xs" style="color: #64748b;">Interactive charts for skills, education, barangay and
+                        trends.</p>
+                </div>
+            </div>
+        </a>
+        {{--
+        <a href="{{ route('reports') }}"
+            class="group block bg-white rounded-xl p-4 border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all">
+            <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style="background: #fff7ed;">
+                    <i class="fas fa-file-alt text-sm" style="color: #e65100;"></i>
+                </div>
+                <div>
+                    <h6 class="text-sm font-bold mb-0.5 group-hover:text-blue-700 transition-colors"
+                        style="color: #1e293b;">Report Generation</h6>
+                    <p class="text-xs" style="color: #64748b;">Export DOLE BLE-compliant CSV/Excel reports with filters.
+                    </p>
+                </div>
+            </div>
+        </a>
+        --}}
+        <a href="{{ route('duplicates') }}"
+            class="group block bg-white rounded-xl p-4 border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all">
+            <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style="background: #fefce8;">
+                    <i class="fas fa-exclamation-triangle text-sm" style="color: #ca8a04;"></i>
+                </div>
+                <div>
+                    <h6 class="text-sm font-bold mb-0.5 group-hover:text-blue-700 transition-colors"
+                        style="color: #1e293b;">Duplicate Review</h6>
+                    <p class="text-xs" style="color: #64748b;">Review and resolve flagged duplicate registrations.</p>
+                </div>
+            </div>
+        </a>
+
+        <a href="{{ route('skills-gap') }}"
+            class="group block bg-white rounded-xl p-4 border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all">
+            <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style="background: #f0fdfa;">
+                    <i class="fas fa-search text-sm" style="color: #00796b;"></i>
+                </div>
+                <div>
+                    <h6 class="text-sm font-bold mb-0.5 group-hover:text-blue-700 transition-colors"
+                        style="color: #1e293b;">Skills Gap Analysis</h6>
+                    <p class="text-xs" style="color: #64748b;">Identify underrepresented PQF skill clusters in
+                        Catanduanes.</p>
+                </div>
+            </div>
+        </a>
+
+        {{-- QR Code — Job Portal --}}
+        <button type="button" @click="showQr = true"
+            class="group text-left bg-white rounded-xl p-4 border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all">
+            <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style="background: #f5f3ff;">
+                    <i class="fas fa-qrcode text-sm" style="color: #6d28d9;"></i>
+                </div>
+                <div>
+                    <h6 class="text-sm font-bold mb-0.5 group-hover:text-blue-700 transition-colors"
+                        style="color: #1e293b;">Job Portal QR Code</h6>
+                    <p class="text-xs" style="color: #64748b;">Show or download the QR applicants scan to register.</p>
+                </div>
+            </div>
+        </button>
+
+        {{-- ===================== QR MODAL ===================== --}}
+        <div x-show="showQr" x-cloak
+            class="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style="background: rgba(0,0,0,0.5);"
+            @click.self="showQr = false">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
+
+                <div class="flex items-center justify-between px-6 py-4" style="background: #1a2035;">
+                    <h5 class="text-sm font-bold text-white">
+                        <i class="fas fa-qrcode mr-2 opacity-70"></i> Job Portal QR Code
+                    </h5>
+                    <button @click="showQr = false" class="text-white opacity-60 hover:opacity-100 transition-opacity">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="p-6 text-center">
+                    <img src="{{ route('qr.job-portal') }}" alt="Job Portal QR Code" class="mx-auto w-56 h-56 rounded-lg border" style="border-color:#e2e8f0;">
+                    <p class="text-xs mt-4" style="color:#64748b;">
+                        Scan to open the applicant registration form.
+                    </p>
+                    <a href="{{ route('qr.job-portal') }}" download="peso-job-portal-qr.png"
+                        class="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-lg text-white mt-4 transition-opacity hover:opacity-90"
+                        style="background: #1a2035;">
+                        <i class="fas fa-download"></i> Download QR
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    {{-- Footer Note --}}
+    <!-- <div class="mt-6 text-center">
+        <p class="text-xs italic" style="color: #94a3b8;">Design Pattern: Shneiderman's Information-Seeking Mantra</p>
+    </div> -->
+
+</div>
+=================== routes/web.php ===================
+<?php
+
+use App\Livewire\Applicant\Login as ApplicantLogin;
+use App\Livewire\Applicant\ApplicantDashboard;
+use App\Livewire\ApplicantManagement;
+use App\Livewire\AuditLog;
+use App\Livewire\Dashboard;
+use App\Livewire\DuplicateReview;
+use App\Livewire\RegistrationForm;
+use App\Livewire\ReportGenerator;
+use App\Livewire\SkillsGapAnalysis;
+use App\Livewire\UserManagement;
+use App\Livewire\WorkforceAnalyticsDashboard;
+use App\Models\ActivityLog;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+use App\Livewire\Applicant\ChangePassword;
+use App\Livewire\Applicant\EducationEmployment;
+use App\Livewire\Applicant\Profile;
+use App\Livewire\Applicant\Skills;
+use App\Livewire\Applicant\Credentials;
+use App\Livewire\GeographicalManagement;
+use App\Livewire\MunicipalityManagement;
+use App\Livewire\SkillCategoryManagement;
+use App\Livewire\SkillManagement;
+
+
+
+
+Route::middleware(['guest', 'log.jobportal'])->group(function () {
+    Route::get('/', RegistrationForm::class)->name('job-portal.register');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Public: job portal + QR
+|--------------------------------------------------------------------------
+*/
+// Add 'throttle:60,1' here later if the public form gets abused.
+Route::middleware(['log.jobportal'])->group(function () {
+    Route::get('/job-portal', RegistrationForm::class)->name('job-portal.register');
+});
+
+Route::get('/qr/job-portal', function () {
+    $renderer = new ImageRenderer(new RendererStyle(300, 1), new SvgImageBackEnd());
+    $svg = (new Writer($renderer))->writeString(url('/job-portal'));
+
+    return response($svg, 200)->header('Content-Type', 'image/svg+xml');
+})->name('qr.job-portal');
+
+/*
+|--------------------------------------------------------------------------
+| Applicant portal (separate 'applicant' guard, NOT the staff/admin login)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('applicant')->name('applicant.')->group(function () {
+
+    Route::get('/login', ApplicantLogin::class)
+        ->middleware('guest:applicant')
+        ->name('login');
+
+    // auth first, then role (role:<role>,<guard>)
+    Route::middleware(['auth:applicant', 'role:applicant'])->group(function () {
+
+        Route::get('/dashboard', ApplicantDashboard::class)->name('dashboard');
+        Route::get('/profile', Profile::class)->name('profile');
+        Route::get('/skills', Skills::class)->name('skills');
+        Route::get('/employment', EducationEmployment::class)->name('employment');
+        Route::get('/password', ChangePassword::class)->name('password');
+
+        Route::get('/credentials', Credentials::class)->name('credentials');
+    });
+
+    // keep logout outside the role check so any logged-in applicant can always sign out
+    Route::post('/logout', function (Request $request) {
+        Auth::guard('applicant')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('applicant.login');
+    })->middleware('auth:applicant')->name('logout');
+});
+
+
+Route::middleware(['auth', 'throttle:60,1'])->group(function () {
+
+    // ── Admin AND staff ──────────────────────────────────────────────
+    Route::middleware('role:admin|staff')->group(function () {
+        Route::get('/dashboard', Dashboard::class)->name('dashboard');
+        Route::get('/applicants', ApplicantManagement::class)->name('applicants');
+        Route::get('/duplicates', DuplicateReview::class)->name('duplicates');
+        Route::get('/analytics', WorkforceAnalyticsDashboard::class)->name('analytics');
+        Route::get('/reports', ReportGenerator::class)->name('reports');
+        Route::get('/skills-gap', SkillsGapAnalysis::class)->name('skills-gap');
+    });
+
+    // ── Admin ONLY ───────────────────────────────────────────────────
+    Route::middleware('role:admin')->prefix('admin')->group(function () {
+        Route::get('/users', UserManagement::class)->name('admin.users');
+        Route::get('/audit-logs', AuditLog::class)->name('admin.audit-logs');
+
+        Route::get('/geographical', GeographicalManagement::class)->name('admin.geographical');
+
+
+        Route::get('/municipalities', MunicipalityManagement::class)->name('admin.municipalities');
+
+
+
+        Route::get('/skill-categories', SkillCategoryManagement::class)->name('admin.skill-categories');
+
+        Route::get('/skills', SkillManagement::class)->name('admin.skills');
+
+        Route::get('/activity-stats', function () {
+            $jobPortalViews = ActivityLog::where('event', 'job_portal_view');
+
+            return view('activity-stats', [
+                'total_job_portal_views' => (clone $jobPortalViews)->count(),
+                'unique_visitors' => (clone $jobPortalViews)->distinct('ip_address')->count('ip_address'),
+                'views_today' => (clone $jobPortalViews)->whereDate('created_at', today())->count(),
+                'login_success' => ActivityLog::where('event', 'login_success')->count(),
+                'login_failed' => ActivityLog::where('event', 'login_failed')->count(),
+                'logs' => ActivityLog::with('user')->latest()->take(50)->get(),
+            ]);
+        })->name('admin.activity-stats');
+    });
+});
+
+require __DIR__ . '/auth.php';
