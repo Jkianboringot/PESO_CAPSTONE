@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Exports\ApplicantsExport;
+use App\Exports\PesoMonthlyExport;
 use App\Models\{Applicant, Barangay, SkillCategory};
 use App\Services\AuditLogService;
 use Carbon\Carbon;
@@ -25,7 +26,8 @@ class ReportGenerator extends Component
     public string $educLevel  = '';
     public string $sex        = '';
     public string $format     = 'xlsx';
-    public string $reportType = 'listing'; // listing | monthly (monthly is produced as PDF)
+    // listing | monthly (PDF) | monthly_xlsx (Excel form)
+    public string $reportType = 'listing';
 
     // Reset to page 1 whenever a filter changes (not when the format or report type changes)
     public function updated($property)
@@ -35,7 +37,7 @@ class ReportGenerator extends Component
         }
     }
 
-    // Same filters as the export, applied to the on-screen table and the PDF
+    // Same filters as the export, applied to the on-screen table and the listing PDF
     private function filteredApplicants()
     {
         return Applicant::query()
@@ -59,7 +61,7 @@ class ReportGenerator extends Component
             'dateFrom'   => 'nullable|date',
             'dateTo'     => 'nullable|date|after_or_equal:dateFrom',
             'format'     => 'required|in:xlsx,csv,pdf',
-            'reportType' => 'required|in:listing,monthly',
+            'reportType' => 'required|in:listing,monthly,monthly_xlsx',
         ]);
 
         $params = array_filter([
@@ -76,32 +78,43 @@ class ReportGenerator extends Component
 
         $stamp = now()->format('Ymd_His');
 
-        if ($this->format === 'pdf') {
-            return $this->downloadPdf($stamp);
-        }
-
-        // Monthly report is PDF only; Excel and CSV always export the applicant listing
-        $writerType = $this->format === 'csv' ? ExcelWriter::CSV : ExcelWriter::XLSX;
-
-        return Excel::download(
-            new ApplicantsExport($params),
-            'PESO_Catanduanes_Workforce_' . $stamp . '.' . $this->format,
-            $writerType
-        );
+        // Report Type decides the file. Export Format only applies to the applicant listing.
+        return match ($this->reportType) {
+            'monthly'      => $this->downloadMonthlyPdf($stamp),
+            'monthly_xlsx' => Excel::download(
+                                  new PesoMonthlyExport($this->buildMonthlyData()),
+                                  'PESO_Monthly_Form_' . $stamp . '.xlsx',
+                                  ExcelWriter::XLSX
+                              ),
+            default        => $this->format === 'pdf'
+                                  ? $this->downloadListingPdf($stamp)
+                                  : Excel::download(
+                                        new ApplicantsExport($params),
+                                        'PESO_Catanduanes_Workforce_' . $stamp . '.' . $this->format,
+                                        $this->format === 'csv' ? ExcelWriter::CSV : ExcelWriter::XLSX
+                                    ),
+        };
     }
 
-    private function downloadPdf(string $stamp)
-    {
-        if ($this->reportType === 'monthly') {
-            $html     = view('reports.peso-monthly-report', $this->buildMonthlyData())->render();
-            $fileName = 'PESO_Monthly_Report_' . $stamp . '.pdf';
-        } else {
-            $applicants = $this->filteredApplicants()->get();
-            $report     = $this->buildReport($applicants);
-            $html       = view('reports.workforce-report', ['r' => $report])->render();
-            $fileName   = 'PESO_Catanduanes_Workforce_' . $stamp . '.pdf';
-        }
+    // ───────── PDF output ─────────
 
+    private function downloadMonthlyPdf(string $stamp)
+    {
+        $html = view('reports.peso-monthly-report', $this->buildMonthlyData())->render();
+
+        return $this->renderPdf($html, 'PESO_Monthly_Report_' . $stamp . '.pdf');
+    }
+
+    private function downloadListingPdf(string $stamp)
+    {
+        $report = $this->buildReport($this->filteredApplicants()->get());
+        $html   = view('reports.workforce-report', ['r' => $report])->render();
+
+        return $this->renderPdf($html, 'PESO_Catanduanes_Workforce_' . $stamp . '.pdf');
+    }
+
+    private function renderPdf(string $html, string $fileName)
+    {
         $options = new Options();
         $options->set('defaultFont', 'DejaVu Sans');
         $options->set('isRemoteEnabled', false);
@@ -137,6 +150,8 @@ class ReportGenerator extends Component
         $canvas->page_text($w - 130, $h - 28,
             'Page {PAGE_NUM} of {PAGE_COUNT}', $font, 7, $grey);
     }
+
+    // ───────── Applicant listing report ─────────
 
     private function ageBracket(?int $age): string
     {
@@ -274,9 +289,10 @@ class ReportGenerator extends Component
         ];
     }
 
-    // ───────── PESO Monthly Report ─────────
+    // ───────── PESO Monthly Report (shared by the PDF and the Excel form) ─────────
 
-    private function buildMonthlyData(): array
+    // Reporting period: From to To. If empty, the month of the To date (or the current month).
+    private function monthlyWindow(): array
     {
         $end = $this->dateTo
             ? Carbon::parse($this->dateTo)->endOfDay()
@@ -286,109 +302,105 @@ class ReportGenerator extends Component
             ? Carbon::parse($this->dateFrom)->startOfDay()
             : $end->copy()->startOfMonth();
 
-        // Same non-date filters for both columns of the form
-        $base = fn () => Applicant::query()
+        return [$start, $end];
+    }
+
+    // Same non-date filters for both columns of the form
+    private function monthlyBase()
+    {
+        return Applicant::query()
             ->active()
             ->byBarangay($this->barangayId ?: null)
             ->byEducation($this->educLevel ?: null)
             ->bySkillCategory($this->categoryId ?: null)
-            ->when($this->sex, fn ($q) => $q->where('sex', $this->sex));
+            ->when($this->sex, fn ($q) => $q->where('sex', $this->sex))
+            ->with('skills:id,name');
+    }
 
-        $inPeriod = $base()->whereBetween('created_at', [$start, $end])->get(['sex']);
-        $asOf     = $base()->where('created_at', '<=', $end)->get(['sex']);
+    // [start, end, registered in period, registered as of period end]
+    private function monthlyCounts(): array
+    {
+        [$start, $end] = $this->monthlyWindow();
 
-        $tally = fn (Collection $c): array => [
-            'male'   => $c->where('sex', 'Male')->count(),
-            'female' => $c->where('sex', 'Female')->count(),
-            'total'  => $c->count(),
+        $inPeriod = $this->monthlyBase()->whereBetween('created_at', [$start, $end])->get();
+        $asOf     = $this->monthlyBase()->where('created_at', '<=', $end)->get();
+
+        return [$start, $end, $inPeriod, $asOf];
+    }
+
+    private function tallySexes(Collection $apps): array
+    {
+        return [
+            'male'   => $apps->where('sex', 'Male')->count(),
+            'female' => $apps->where('sex', 'Female')->count(),
+            'total'  => $apps->count(),
+        ];
+    }
+
+    // Each skill counted once per applicant, split by sex
+    private function skillTallies(Collection $apps): Collection
+    {
+        $out = [];
+
+        foreach ($apps as $a) {
+            foreach ($a->skills->pluck('name')->unique() as $name) {
+                $out[$name] ??= ['male' => 0, 'female' => 0, 'total' => 0];
+
+                if ($a->sex === 'Male') {
+                    $out[$name]['male']++;
+                } elseif ($a->sex === 'Female') {
+                    $out[$name]['female']++;
+                }
+
+                $out[$name]['total']++;
+            }
+        }
+
+        return collect($out)->sortKeys();
+    }
+
+    // Six figures in form order: period M, F, T, then as-of M, F, T
+    private function six(array $p, array $t): array
+    {
+        return [$p['male'], $p['female'], $p['total'], $t['male'], $t['female'], $t['total']];
+    }
+
+    // Only rows the registry holds. Used by both monthly outputs.
+    // 'values' => null means a heading row (blank figures).
+    private function buildMonthlyData(): array
+    {
+        [$start, $end, $inPeriod, $asOf] = $this->monthlyCounts();
+
+        $pSkills = $this->skillTallies($inPeriod);
+        $tSkills = $this->skillTallies($asOf);
+
+        $rows = [
+            ['label' => '2. Applicants Registered', 'level' => 0, 'values' => null],
+            ['label' => '2.1 Regular Program', 'level' => 1,
+             'values' => $this->six($this->tallySexes($inPeriod), $this->tallySexes($asOf))],
+
+            ['label' => 'B. Skills of Registered Applicants', 'level' => 0, 'values' => null],
         ];
 
-        $period = $tally($inPeriod);
-        $total  = $tally($asOf);
+        $names = $tSkills->keys()->merge($pSkills->keys())->unique()->sort()->values();
+
+        foreach ($names as $name) {
+            $p = $pSkills->get($name, ['male' => 0, 'female' => 0, 'total' => 0]);
+            $t = $tSkills->get($name, ['male' => 0, 'female' => 0, 'total' => 0]);
+
+            $rows[] = ['label' => $name, 'level' => 1, 'values' => $this->six($p, $t)];
+        }
+
+        if ($names->isEmpty()) {
+            $rows[] = ['label' => 'No skills recorded for these filters', 'level' => 1, 'values' => null];
+        }
 
         return [
             'monthYear'   => $end->format('F Y'),
             'periodLabel' => $start->format('M d, Y') . ' to ' . $end->format('M d, Y'),
             'generatedAt' => now()->format('F d, Y, h:i A'),
             'preparedBy'  => auth()->user()->name,
-            'rows'        => $this->monthlyRows($period, $total),
-        ];
-    }
-
-    // Row layout follows the PESO Monthly Report form.
-    // 'values' => null  : blank cells (section headings and subtotal rows)
-    // 'values' => NA    : not stored in the registry
-    // Only 2.1 Regular Program is filled from the registry.
-    private function monthlyRows(array $p, array $t): array
-    {
-        $reg = [$p['male'], $p['female'], $p['total'], $t['male'], $t['female'], $t['total']];
-        $na  = array_fill(0, 6, 'NA');
-
-        $heading = fn (string $label) => ['label' => $label, 'level' => 0, 'values' => null];
-        $parent  = fn (string $label, int $level) => ['label' => $label, 'level' => $level, 'values' => null];
-        $item    = function (string $label, int $level, ?array $values = null) use ($na) {
-            return ['label' => $label, 'level' => $level, 'values' => $values ?? $na];
-        };
-
-        return [
-            $heading('A. PUBLIC EMPLOYMENT SERVICE'),
-
-            $parent('1. Job Vacancies solicited/reported', 0),
-            $parent('1.1 Regular Program', 1),
-            $item('1.1.1 Local Employment', 2),
-            $item('1.1.2 Overseas Employment', 2),
-            $parent('1.2 SPES', 1),
-            $item('1.2.1 Public Sector', 2),
-            $item('1.2.2 Private Sector', 2),
-            $item('1.3 WAP', 1),
-            $parent('1.4 TUPAD 2020', 1),
-            $item('1.4.1 Wage Employment', 2),
-            $item('1.4.2 Self Employment', 2),
-
-            $parent('2. Applicants Registered', 0),
-            $item('2.1 Regular Program', 1, $reg),
-            $item('2.2 SPES', 1),
-            $item('2.3 WAP', 1),
-            $parent('2.4 TUPAD 2020', 1),
-            $item('2.4.1 Wage Employment', 2),
-            $item('2.4.2 Self Employment', 2),
-            $item('2.5 Retrenched/Displaced workers', 1),
-            $item('2.6 Returning OFWs', 1),
-            $item('2.7 Migratory Workers', 1),
-            $item('2.8 Rural workers', 1),
-
-            $parent('3. Applicants Referred', 0),
-            $parent('3.1 Regular Program', 1),
-            $item('3.1.1 Local Employment', 2),
-            $item('3.1.2 Overseas Employment', 2),
-            $item('3.1.3 Self-employment', 2),
-            $item('3.1.4 Training', 2),
-            $item('3.2 SPES', 1),
-            $item('3.3 WAP', 1),
-            $item('3.4 TUPAD 2020', 1),
-            $item('3.5 Retrenched/Displaced workers', 1),
-            $item('3.6 Returning OFWs', 1),
-            $item('3.7 Migratory Workers', 1),
-            $item('3.8 Rural workers', 1),
-
-            $parent('4. Applicants Placed/Assisted', 0),
-            $parent('4.1 Regular Program', 1),
-            $item('4.1.1 Local Employment', 2),
-            $item('4.1.2 Overseas Employment', 2),
-            $item('4.1.3 Self-Employment', 2),
-            $parent('4.1.4 Training', 2),
-            $item('a. Basic', 3),
-            $item('b. Upgrading', 3),
-            $parent('4.2 SPES', 1),
-            $item('4.2.1 Public Sector', 2),
-            $item('4.2.2 Private Sector', 2),
-            $item('4.3 WAP', 1),
-            $parent('4.4 TUPAD 2020', 1),
-            $item('4.4.1 Wage Employment', 2),
-            $item('4.4.2 Self-Employment', 2),
-            $item('4.5 Retrenched/Displaced workers', 1),
-            $item('4.6 Returning OFWs', 1),
-            $item('4.7 Migratory workers', 1),
+            'rows'        => $rows,
         ];
     }
 

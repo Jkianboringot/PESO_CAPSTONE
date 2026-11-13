@@ -6,7 +6,9 @@ use App\Exports\ApplicantsExport;
 use App\Livewire\ReportGenerator;
 use App\Models\Applicant;
 use App\Models\Barangay;
+use App\Models\Education;
 use App\Models\Municipality;
+use App\Models\Skill;
 use App\Models\SkillCategory;
 use App\Models\User;
 use App\Services\AuditLogService;
@@ -14,8 +16,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
-use App\Models\Education;
-use App\Models\Skill;
 use Maatwebsite\Excel\Excel as ExcelWriter;
 use Maatwebsite\Excel\Facades\Excel;
 use Mockery\MockInterface;
@@ -25,25 +25,19 @@ use Tests\TestCase;
 /**
  * Tests the Livewire ReportGenerator (filters + on-screen table + export).
  *
- * ASSUMPTIONS you may need to adjust to match your project:
- *  - Roles are Spatie roles named 'admin', 'staff', 'applicant'.
- *  - Applicant::active() excludes applicants whose status is 'Archived'
- *    (change ACTIVE_STATUS / INACTIVE_STATUS below if your scope differs).
- *  - Applicant columns match the ones used in makeApplicant().
- *  - Municipality::factory() and Barangay::factory() exist (your
- *    RegistrationFormTest already uses them).
+ * Inactive applicants are marked with is_active = false (the active() scope).
+ * The status column only accepts Pending, Verified, Flagged, Duplicated.
  */
 class ReportGeneratorTest extends TestCase
 {
     use RefreshDatabase, SetsUpAdminAndStaff;
 
-    private const ACTIVE_STATUS   = 'Pending';
-    private const INACTIVE_STATUS = 'Archived';
+    private const ACTIVE_STATUS = 'Pending';
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->setUpUsers();   // creates $this->admin and $this->staff (same trait as your other tests)
+        $this->setUpUsers();   // creates $this->admin and $this->staff
     }
 
     // ─────────────────────────────────────────────────────────────────
@@ -81,19 +75,20 @@ class ReportGeneratorTest extends TestCase
         $counter++;
 
         return Applicant::forceCreate(array_merge([
-            'reference_id'   => 'PESO-' . str_pad((string) $counter, 13, '0', STR_PAD_LEFT),
-            'last_name'      => 'Lastname' . $counter,
-            'first_name'     => 'First' . $counter,
-            'birthdate'      => '1995-06-15',
-            'sex'            => 'Male',
-            'civil_status'   => 'Single',
-            'contact_number' => '0917' . str_pad((string) $counter, 7, '0', STR_PAD_LEFT),
-            'barangay_id'    => $barangay->id,
-            'password'       => Hash::make('password123'),
-            'status'         => self::ACTIVE_STATUS,
-            'oath_given'     => true,
-            'oath_given_at'  => now(),
-            'consent_given'  => true,
+            'reference_id'     => 'PESO-' . str_pad((string) $counter, 13, '0', STR_PAD_LEFT),
+            'last_name'        => 'Lastname' . $counter,
+            'first_name'       => 'First' . $counter,
+            'birthdate'        => '1995-06-15',
+            'sex'              => 'Male',
+            'civil_status'     => 'Single',
+            'contact_number'   => '0917' . str_pad((string) $counter, 7, '0', STR_PAD_LEFT),
+            'barangay_id'      => $barangay->id,
+            'password'         => Hash::make('password123'),
+            'status'           => self::ACTIVE_STATUS,
+            'is_active'        => true,
+            'oath_given'       => true,
+            'oath_given_at'    => now(),
+            'consent_given'    => true,
             'consent_given_at' => now(),
         ], $overrides));
     }
@@ -137,7 +132,8 @@ class ReportGeneratorTest extends TestCase
 
         Livewire::test(ReportGenerator::class)
             ->call('generate')
-            ->assertForbidden();    }
+            ->assertForbidden();
+    }
 
     // ─────────────────────────────────────────────────────────────────
     // INITIAL RENDER
@@ -162,8 +158,8 @@ class ReportGeneratorTest extends TestCase
     {
         $this->actingAsRole('staff');
 
-        [, $zeta]  = $this->makeGeography('Zeta');
-        $alpha     = Barangay::factory()->create(['municipality_id' => $zeta->municipality_id, 'name' => 'Alpha']);
+        [, $zeta] = $this->makeGeography('Zeta');
+        Barangay::factory()->create(['municipality_id' => $zeta->municipality_id, 'name' => 'Alpha']);
         $this->makeCategory('Welding');
         $this->makeCategory('Agriculture');
 
@@ -200,7 +196,7 @@ class ReportGeneratorTest extends TestCase
         [, $barangay] = $this->makeGeography();
 
         $this->makeApplicant($barangay, ['last_name' => 'Visible']);
-        $this->makeApplicant($barangay, ['last_name' => 'Hidden', 'status' => self::INACTIVE_STATUS]);
+        $this->makeApplicant($barangay, ['last_name' => 'Hidden', 'is_active' => false]);
 
         Livewire::test(ReportGenerator::class)
             ->assertSee('Visible')
@@ -295,7 +291,8 @@ class ReportGeneratorTest extends TestCase
             ->set('dateFrom', '2026-06-30')
             ->set('dateTo', '2026-01-01')
             ->call('generate')
-            ->assertHasErrors(['dateTo']);    }
+            ->assertHasErrors(['dateTo']);
+    }
 
     public function test_generate_blocked_when_date_is_not_a_valid_date(): void
     {
@@ -305,7 +302,8 @@ class ReportGeneratorTest extends TestCase
         Livewire::test(ReportGenerator::class)
             ->set('dateFrom', 'not-a-date')
             ->call('generate')
-            ->assertHasErrors(['dateFrom']);    }
+            ->assertHasErrors(['dateFrom']);
+    }
 
     public function test_generate_blocked_when_format_is_not_allowed(): void
     {
@@ -315,7 +313,8 @@ class ReportGeneratorTest extends TestCase
         Livewire::test(ReportGenerator::class)
             ->set('format', 'docx')
             ->call('generate')
-            ->assertHasErrors(['format']);    }
+            ->assertHasErrors(['format']);
+    }
 
     public function test_audit_log_is_not_written_when_validation_fails(): void
     {
@@ -369,21 +368,18 @@ class ReportGeneratorTest extends TestCase
         );
     }
 
+    // The PDF is streamed by Dompdf, not written by Laravel Excel, so it is checked
+    // as a file download on the Livewire component.
     public function test_generate_downloads_pdf_when_pdf_selected(): void
     {
         $this->actingAsRole('admin');
         Carbon::setTestNow('2026-11-13 10:30:00');
-        Excel::fake();
 
         Livewire::test(ReportGenerator::class)
             ->set('format', 'pdf')
             ->call('generate')
-            ->assertHasNoErrors();
-
-        Excel::assertDownloaded(
-            'PESO_Catanduanes_Workforce_20261113_103000.pdf',
-            fn ($export) => $export instanceof ApplicantsExport
-        );
+            ->assertHasNoErrors()
+            ->assertFileDownloaded('PESO_Catanduanes_Workforce_20261113_103000.pdf');
     }
 
     public function test_generate_logs_only_the_filters_that_were_filled_in(): void
@@ -393,6 +389,7 @@ class ReportGeneratorTest extends TestCase
 
         [, $barangay] = $this->makeGeography();
 
+        // reportType is always logged, last, because it has a default value
         $this->mock(AuditLogService::class, function (MockInterface $mock) use ($barangay) {
             $mock->shouldReceive('logReportDownloaded')
                 ->once()
@@ -401,6 +398,7 @@ class ReportGeneratorTest extends TestCase
                     'dateTo'     => '2026-06-30',
                     'barangayId' => (string) $barangay->id,
                     'sex'        => 'Female',
+                    'reportType' => 'listing',
                 ]));
         });
 
@@ -413,7 +411,7 @@ class ReportGeneratorTest extends TestCase
             ->assertHasNoErrors();
     }
 
-    public function test_generate_logs_empty_params_when_no_filters_are_set(): void
+    public function test_generate_logs_only_report_type_when_no_filters_are_set(): void
     {
         $this->actingAsRole('staff');
         Excel::fake();
@@ -421,7 +419,7 @@ class ReportGeneratorTest extends TestCase
         $this->mock(AuditLogService::class, function (MockInterface $mock) {
             $mock->shouldReceive('logReportDownloaded')
                 ->once()
-                ->with(json_encode([]));
+                ->with(json_encode(['reportType' => 'listing']));
         });
 
         Livewire::test(ReportGenerator::class)
@@ -431,11 +429,7 @@ class ReportGeneratorTest extends TestCase
 
     // ─────────────────────────────────────────────────────────────────
     // EXPORT CONTENT (ApplicantsExport)
-    //
-    // These render the export to a CSV string with Excel::raw() and check
-    // what is inside, so they do not depend on whether the export uses
-    // FromQuery or FromCollection. They only assume the constructor takes
-    // the same $params array that generate() builds.
+    // Rendered to CSV with Excel::raw() so the checks read the actual file contents.
     // ─────────────────────────────────────────────────────────────────
 
     private function exportCsv(array $params = []): string
@@ -489,7 +483,7 @@ class ReportGeneratorTest extends TestCase
         [, $barangay] = $this->makeGeography();
 
         $this->makeApplicant($barangay, ['last_name' => 'Keepme']);
-        $this->makeApplicant($barangay, ['last_name' => 'Dropme', 'status' => self::INACTIVE_STATUS]);
+        $this->makeApplicant($barangay, ['last_name' => 'Dropme', 'is_active' => false]);
 
         $csv = $this->exportCsv();
 
@@ -567,7 +561,7 @@ class ReportGeneratorTest extends TestCase
         $weldCategory = $this->makeCategory('Welding');
 
         // ASSUMPTION: skills table has name + skill_category_id.
-        $itSkill   = Skill::forceCreate(['name' => 'PHP',     'skill_category_id' => $itCategory->id]);
+        $itSkill   = Skill::forceCreate(['name' => 'PHP',      'skill_category_id' => $itCategory->id]);
         $weldSkill = Skill::forceCreate(['name' => 'Arc Weld', 'skill_category_id' => $weldCategory->id]);
 
         $coder  = $this->makeApplicant($barangay, ['last_name' => 'Coderperson']);
@@ -604,9 +598,9 @@ class ReportGeneratorTest extends TestCase
         [$municipality, $barangayA] = $this->makeGeography('Barangay A');
         $barangayB = Barangay::factory()->create(['municipality_id' => $municipality->id, 'name' => 'Barangay B']);
 
-        $this->makeApplicant($barangayA, ['last_name' => 'Matchboth',   'sex' => 'Female']);
-        $this->makeApplicant($barangayA, ['last_name' => 'Wrongsex',    'sex' => 'Male']);
-        $this->makeApplicant($barangayB, ['last_name' => 'Wrongplace',  'sex' => 'Female']);
+        $this->makeApplicant($barangayA, ['last_name' => 'Matchboth',  'sex' => 'Female']);
+        $this->makeApplicant($barangayA, ['last_name' => 'Wrongsex',   'sex' => 'Male']);
+        $this->makeApplicant($barangayB, ['last_name' => 'Wrongplace', 'sex' => 'Female']);
 
         $csv = $this->exportCsv([
             'barangayId' => (string) $barangayA->id,

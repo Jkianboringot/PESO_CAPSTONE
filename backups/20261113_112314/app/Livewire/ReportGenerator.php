@@ -1,33 +1,3 @@
-#!/usr/bin/env bash
-# setup_monthly_report.sh : adds the PESO Monthly Report as a second report type.
-# Run from the Laravel project root (the folder containing "artisan").
-set -euo pipefail
-
-if [ ! -f artisan ]; then
-    echo "ERROR: run this from the Laravel project root (where artisan is)."
-    exit 1
-fi
-
-STAMP=$(date +%Y%m%d_%H%M%S)
-BACKUP_DIR="backups/$STAMP"
-
-# write_file <path>  -- reads new content from stdin.
-# If the file exists it is backed up first, then replaced. Otherwise it is created.
-write_file() {
-    local path="$1"
-    mkdir -p "$(dirname "$path")"
-    if [ -f "$path" ]; then
-        mkdir -p "$BACKUP_DIR/$(dirname "$path")"
-        cp "$path" "$BACKUP_DIR/$path"
-        echo "replaced: $path  (backup: $BACKUP_DIR/$path)"
-    else
-        echo "created:  $path"
-    fi
-    cat > "$path"
-}
-
-# 1. Livewire component (replaces the whole file)
-write_file app/Livewire/ReportGenerator.php <<'PHP'
 <?php
 
 namespace App\Livewire;
@@ -35,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Exports\ApplicantsExport;
+use App\Exports\PesoMonthlyExport;
 use App\Models\{Applicant, Barangay, SkillCategory};
 use App\Services\AuditLogService;
 use Carbon\Carbon;
@@ -55,7 +26,8 @@ class ReportGenerator extends Component
     public string $educLevel  = '';
     public string $sex        = '';
     public string $format     = 'xlsx';
-    public string $reportType = 'listing'; // listing | monthly (monthly is produced as PDF)
+    // listing | monthly (PDF) | monthly_xlsx (Excel form)
+    public string $reportType = 'listing';
 
     // Reset to page 1 whenever a filter changes (not when the format or report type changes)
     public function updated($property)
@@ -89,7 +61,7 @@ class ReportGenerator extends Component
             'dateFrom'   => 'nullable|date',
             'dateTo'     => 'nullable|date|after_or_equal:dateFrom',
             'format'     => 'required|in:xlsx,csv,pdf',
-            'reportType' => 'required|in:listing,monthly',
+            'reportType' => 'required|in:listing,monthly,monthly_xlsx',
         ]);
 
         $params = array_filter([
@@ -106,11 +78,20 @@ class ReportGenerator extends Component
 
         $stamp = now()->format('Ymd_His');
 
+        // PESO Monthly Form as an Excel workbook (always .xlsx)
+        if ($this->reportType === 'monthly_xlsx') {
+            return Excel::download(
+                new PesoMonthlyExport($this->buildMonthlyData()),
+                'PESO_Monthly_Form_' . $stamp . '.xlsx',
+                ExcelWriter::XLSX
+            );
+        }
+
         if ($this->format === 'pdf') {
             return $this->downloadPdf($stamp);
         }
 
-        // Monthly report is PDF only; Excel and CSV always export the applicant listing
+        // Monthly report as PDF is handled above; Excel and CSV export the applicant listing
         $writerType = $this->format === 'csv' ? ExcelWriter::CSV : ExcelWriter::XLSX;
 
         return Excel::download(
@@ -431,150 +412,3 @@ class ReportGenerator extends Component
         ])->layout('layouts.app');
     }
 }
-PHP
-
-# 2. Monthly report layout (new file)
-write_file resources/views/reports/peso-monthly-report.blade.php <<'BLADE'
-@php
-    $logoPath = public_path('pesoLogoLogin.png');
-    $logo = is_file($logoPath)
-        ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
-        : null;
-@endphp
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<style>
-    @page { margin: 26px 30px 48px 30px; }
-    body { font-family: DejaVu Sans, sans-serif; font-size: 8.5px; color: #000; line-height: 1.3; }
-    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    td, th { border: 1px solid #000; padding: 4px 5px; vertical-align: middle; word-wrap: break-word; }
-    th { font-size: 8px; font-weight: bold; text-align: center; }
-    td.num { text-align: center; font-size: 8px; }
-    td.lbl { font-size: 8.5px; }
-    .noborder td { border: none; padding: 0; }
-    .small { font-size: 7.5px; color: #333; }
-    .note { font-size: 7.5px; color: #333; margin-top: 8px; }
-    .sigline { border-bottom: 1px solid #000; height: 26px; }
-    .sign td { border: none; padding: 0 12px 0 0; }
-</style>
-</head>
-<body>
-
-{{-- ═════════════ HEADER BLOCK ═════════════ --}}
-<table>
-    <tr>
-        <td style="width:20%; text-align:center;">
-            @if($logo)<img src="{{ $logo }}" alt="PESO" style="height:44px;"><br>@endif
-            <b style="font-size:8px;">PESO MONTHLY REPORT</b>
-        </td>
-        <td style="width:58%; text-align:center;">
-            Republic of the Philippines<br>
-            Department of Labor and Employment<br>
-            <b style="font-size:10px;">PUBLIC EMPLOYMENT SERVICE OFFICE</b><br>
-            Province of Catanduanes &nbsp;&nbsp; LGU: ______________________
-        </td>
-        <td style="width:22%; text-align:center;">
-            <div class="small">Reference Month / Year</div>
-            <b style="font-size:10px;">{{ $monthYear }}</b>
-        </td>
-    </tr>
-    <tr>
-        <td colspan="3"><b>Name and Address of PESO:</b> PESO, Province of Catanduanes</td>
-    </tr>
-    <tr>
-        <td colspan="3" class="small">Period covered: {{ $periodLabel }} &nbsp;&nbsp;|&nbsp;&nbsp; Generated: {{ $generatedAt }}</td>
-    </tr>
-</table>
-
-{{-- ═════════════ MAIN GRID ═════════════ --}}
-<table style="margin-top:8px;">
-    <thead>
-        <tr>
-            <th rowspan="2" style="width:34%; text-align:left;">PROGRAM</th>
-            <th colspan="3">CURRENT REPORTING PERIOD</th>
-            <th colspan="3">TOTAL as of this Period</th>
-        </tr>
-        <tr>
-            <th style="width:11%;">MALE</th>
-            <th style="width:11%;">FEMALE</th>
-            <th style="width:11%;">TOTAL</th>
-            <th style="width:11%;">MALE</th>
-            <th style="width:11%;">FEMALE</th>
-            <th style="width:11%;">TOTAL</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach($rows as $row)
-            <tr>
-                <td class="lbl"
-                    style="padding-left: {{ 5 + $row['level'] * 12 }}px; font-weight: {{ $row['level'] === 0 ? 'bold' : 'normal' }};">
-                    {{ $row['label'] }}
-                </td>
-                @for($i = 0; $i < 6; $i++)
-                    <td class="num">
-                        @if(is_array($row['values']))
-                            {{ is_int($row['values'][$i]) ? number_format($row['values'][$i]) : $row['values'][$i] }}
-                        @else
-                            &nbsp;
-                        @endif
-                    </td>
-                @endfor
-            </tr>
-        @endforeach
-    </tbody>
-</table>
-
-<p class="note">
-    NA = not recorded in the PESO registry system. Blank cells are section headings or subtotal rows.
-    Counts come from the applicant registry for the filters chosen on the report screen.
-</p>
-
-{{-- ═════════════ SIGNATURES ═════════════ --}}
-<table class="sign" style="margin-top:26px;">
-    <tr>
-        <td style="width:33%;">
-            <div class="sigline"></div>
-            <div class="small">Prepared by: {{ $preparedBy }}</div>
-        </td>
-        <td style="width:33%;">
-            <div class="sigline"></div>
-            <div class="small">Reviewed by</div>
-        </td>
-        <td style="width:34%;">
-            <div class="sigline"></div>
-            <div class="small">Noted by (PESO Manager)</div>
-        </td>
-    </tr>
-</table>
-
-</body>
-</html>
-BLADE
-
-# Checks and reminders
-php artisan view:clear >/dev/null 2>&1 || true
-php artisan config:clear >/dev/null 2>&1 || true
-
-echo ""
-echo "Done. Backups of replaced files (if any): $BACKUP_DIR"
-echo ""
-echo "MANUAL STEP: add the Report Type dropdown to resources/views/livewire/report-generator.blade.php."
-echo "Paste this block directly after the opening <div class=\"p-5\"> of the 'Configure Report Parameters' panel,"
-echo "and before the <div class=\"grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4\"> line:"
-echo ""
-cat <<'SNIPPET'
-            <div class="mb-5 max-w-sm">
-                <label class="block text-xs font-bold mb-1.5 uppercase tracking-wide" style="color: #374151;">Report Type</label>
-                <select wire:model="reportType"
-                        class="w-full text-sm px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        style="border-color: #d1d5db;">
-                    <option value="listing">Applicant Listing (standard)</option>
-                    <option value="monthly">PESO Monthly Employment Report</option>
-                </select>
-                <p class="text-xs mt-1" style="color: #64748b;">The monthly report downloads as PDF. Choose PDF in Export Format.</p>
-            </div>
-SNIPPET
-echo ""
-echo "Then reload the report page and test: Report Type = PESO Monthly Report, Export Format = PDF, Download Report."

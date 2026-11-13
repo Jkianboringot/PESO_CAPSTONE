@@ -29,6 +29,22 @@
             <span class="text-sm font-bold" style="color: #1e293b;">Configure Report Parameters</span>
         </div>
         <div class="p-5">
+
+            {{-- Report Type --}}
+            <div class="mb-5 max-w-sm">
+                <label class="block text-xs font-bold mb-1.5 uppercase tracking-wide" style="color: #374151;">Report Type</label>
+                <select wire:model.live="reportType"
+                        class="w-full text-sm px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        style="border-color: #d1d5db;">
+                    <option value="listing">Applicant Listing (standard)</option>
+                    <option value="monthly">PESO Monthly Employment Report (PDF)</option>
+                    <option value="monthly_xlsx">PESO Monthly Form (Excel)</option>
+                </select>
+                <p class="text-xs mt-1" style="color: #64748b;">
+                    The monthly report uses the Date From and Date To filters. Export Format is ignored for the monthly options.
+                </p>
+            </div>
+
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
                 <div>
@@ -93,7 +109,8 @@
                 <div>
                     <label class="block text-xs font-bold mb-1.5 uppercase tracking-wide" style="color: #374151;">Export Format</label>
                     <select wire:model="format"
-                            class="w-full text-sm px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                            @disabled($reportType !== 'listing')
+                            class="w-full text-sm px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-slate-100 disabled:text-slate-400"
                             style="border-color: #d1d5db;">
                         <option value="xlsx">Excel (.xlsx)</option>
                         <option value="csv">CSV (.csv)</option>
@@ -122,5 +139,7 @@
             </div>
         </div>
     </div>
-        @include('livewire.partials.applicant-table')
+
+    {{-- Applicant table --}}
+    @include('livewire.partials.applicant-table')
 </div>

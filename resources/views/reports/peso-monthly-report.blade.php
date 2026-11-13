@@ -18,9 +18,10 @@
     td.lbl { font-size: 8.5px; }
     .noborder td { border: none; padding: 0; }
     .small { font-size: 7.5px; color: #333; }
-    .note { font-size: 7.5px; color: #333; margin-top: 8px; }
+    .note { font-size: 7.5px; color: #333; margin-top: 8px; line-height: 1.4; }
     .sigline { border-bottom: 1px solid #000; height: 26px; }
     .sign td { border: none; padding: 0 12px 0 0; }
+    .section-row td { background: #f1f5f9; }
 </style>
 </head>
 <body>
@@ -70,28 +71,26 @@
     </thead>
     <tbody>
         @foreach($rows as $row)
-            <tr>
+            <tr @if($row['values'] === null) class="section-row" @endif>
                 <td class="lbl"
-                    style="padding-left: {{ 5 + $row['level'] * 12 }}px; font-weight: {{ $row['level'] === 0 ? 'bold' : 'normal' }};">
+                    style="padding-left: {{ 5 + $row['level'] * 12 }}px; font-weight: {{ $row['values'] === null ? 'bold' : 'normal' }};">
                     {{ $row['label'] }}
                 </td>
-                @for($i = 0; $i < 6; $i++)
-                    <td class="num">
-                        @if(is_array($row['values']))
-                            {{ is_int($row['values'][$i]) ? number_format($row['values'][$i]) : $row['values'][$i] }}
-                        @else
-                            &nbsp;
-                        @endif
-                    </td>
-                @endfor
+                @if($row['values'] === null)
+                    <td colspan="6"></td>
+                @else
+                    @foreach($row['values'] as $v)
+                        <td class="num">{{ number_format($v) }}</td>
+                    @endforeach
+                @endif
             </tr>
         @endforeach
     </tbody>
 </table>
 
 <p class="note">
-    NA = not recorded in the PESO registry system. Blank cells are section headings or subtotal rows.
-    Counts come from the applicant registry for the filters chosen on the report screen.
+    Only items recorded in the PESO registry are shown. Counts cover active applicants that match the filters on
+    the report screen. Section B counts each applicant once per skill, split by sex.
 </p>
 
 {{-- ═════════════ SIGNATURES ═════════════ --}}
