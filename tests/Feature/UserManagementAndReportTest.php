@@ -300,7 +300,7 @@ class UserManagementTest extends TestCase
 // REPORT GENERATOR TESTS
 // ════════════════════════════════════════════════════════════════════════
 
-class ReportGeneratorTest extends TestCase
+class UserReportGeneratorTest extends TestCase
 {
     use RefreshDatabase;
 

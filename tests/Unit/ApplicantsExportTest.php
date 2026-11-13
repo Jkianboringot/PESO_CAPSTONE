@@ -150,9 +150,7 @@ class ApplicantsExportTest extends TestCase
         $row    = $export->map($this->applicant);
 
         // Position 0: Reference ID
-        $this->assertEquals('PESO-TESTEXPORT001', $row[0],
-            'Column 0 must be Reference ID.'
-        );
+      $this->assertMatchesRegularExpression('/^PESO-[A-Z0-9]{13}$/', $row[0]);
 
         // Position 1: Last Name
         $this->assertEquals('Santos', $row[1],

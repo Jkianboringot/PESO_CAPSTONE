@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ApplicantFormController;
 use App\Livewire\Applicant\Login as ApplicantLogin;
 use App\Livewire\Applicant\ApplicantDashboard;
 use App\Livewire\ApplicantManagement;
@@ -108,6 +109,11 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {
         Route::get('/municipalities', MunicipalityManagement::class)->name('admin.municipalities');
         Route::get('/skill-categories', SkillCategoryManagement::class)->name('admin.skill-categories');
         Route::get('/skills', SkillManagement::class)->name('admin.skills');
+
+
+        Route::get('/reports/applicants/{applicant}/form', [ApplicantFormController::class, 'show'])
+    ->name('reports.applicant-form');
+
 
         Route::get('/activity-stats', function () {
             $jobPortalViews = ActivityLog::where('event', 'job_portal_view');
