@@ -1,8 +1,15 @@
 @php
-    $logoPath = public_path('pesoLogoLogin.png');
-    $logo = is_file($logoPath)
-        ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
-        : null;
+     $logoPath = public_path('pesoLogoLogin.png');
+    $logo = null;
+    if (is_file($logoPath)) {
+        $raw  = file_get_contents($logoPath);
+        $info = @getimagesizefromstring($raw);
+        // Embed only real PNG or JPEG files. Anything else (such as WebP) is skipped
+        // so the PDF still generates without the logo.
+        if ($info && in_array($info[2], [IMAGETYPE_PNG, IMAGETYPE_JPEG], true)) {
+            $logo = 'data:' . $info['mime'] . ';base64,' . base64_encode($raw);
+        }
+    }
 @endphp
 <!DOCTYPE html>
 <html>
