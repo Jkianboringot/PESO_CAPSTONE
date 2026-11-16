@@ -25,7 +25,7 @@ return new class extends Migration {
             $table->foreignId('barangay_id')
                 ->constrained('barangays')
                 ->restrictOnDelete();
-            $table->enum('status', ['Pending', 'Verified', 'Flagged', 'Duplicated'])
+            $table->enum('status', ['Pending', 'Verified', 'Flagged', 'Duplicated','Inactive'])
                 ->default('Pending');
             $table->boolean('is_active')->default(true);
             $table->boolean('consent_given')->default(false);

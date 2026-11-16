@@ -165,8 +165,16 @@ class ApplicantManagement extends Component
 
     public function saveEdit(AuditLogService $audit)
     {
+        $applicant = Applicant::findOrFail($this->editingId);
+
         if (!$this->canManage()) {
             $this->notify('error', 'You do not have permission to edit applicants.');
+            return;
+        }
+
+        // A flagged applicant must go through review, not through the edit form
+        if ($applicant->status === 'Flagged' && ($this->editData['status'] ?? null) === 'Verified') {
+            $this->notify('error', 'Could not Verify the applicant that is Flagged. Please review it first.');
             return;
         }
 
@@ -175,7 +183,7 @@ class ApplicantManagement extends Component
                 'editData.last_name' => 'required|string|max:100',
                 'editData.first_name' => 'required|string|max:100',
                 'editData.contact_number' => 'required|string|max:20',
-                'editData.status' => 'required|in:Pending,Verified,Flagged,Inactive',
+                'editData.status' => 'required|in:Pending,Verified,Flagged,Inactive,Duplicated',
             ]);
         } catch (ValidationException $e) {
             $this->notify('error', 'Please fix the highlighted fields.');
@@ -252,15 +260,15 @@ class ApplicantManagement extends Component
 
     public function render()
     {
-        //no // AUTHORIZE check
+        $term = '%' . $this->escapeLike($this->search) . '%';
 
         $query = Applicant::with(['barangay.municipality', 'education', 'skills.category'])
             ->when($this->viewStatus === 'active', fn($q) => $q->active())
             ->when($this->viewStatus === 'inactive', fn($q) => $q->where('is_active', false))
-            ->when($this->search, fn($q) => $q->where(function ($q) { // REVIEW this always confuse me 
-                $q->where('last_name', 'like', "%{$this->search}%")
-                    ->orWhere('first_name', 'like', "%{$this->search}%")
-                    ->orWhere('reference_id', 'like', "%{$this->search}%");
+            ->when($this->search, fn($q) => $q->where(function ($q) use ($term) {
+                $q->whereRaw("last_name LIKE ? ESCAPE '!'", [$term])
+                    ->orWhereRaw("first_name LIKE ? ESCAPE '!'", [$term])
+                    ->orWhereRaw("reference_id LIKE ? ESCAPE '!'", [$term]);
             }))
             ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
             ->when($this->filterBarangay, fn($q) => $q->byBarangay($this->filterBarangay))
@@ -273,7 +281,6 @@ class ApplicantManagement extends Component
         $viewing = $this->showView && $this->viewingId
             ? Applicant::with(['barangay.municipality', 'education', 'skills.category'])->find($this->viewingId)
             : null;
-
 
         return view('livewire.applicant-management', [
             'applicants' => $query->paginate(20),
@@ -289,9 +296,17 @@ class ApplicantManagement extends Component
                 'College Graduate',
                 'Post-Graduate',
             ],
-            'statuses' => ['Pending', 'Verified', 'Flagged','Duplicated'],
+            'statuses' => ['Pending', 'Verified', 'Flagged', 'Duplicated'],
         ])->layout('layouts.app');
     }
 
+    /**
+     * Escape LIKE wildcards so the user's text is matched literally.
+     * The escape character is '!' itself, so it is escaped first.
+     */
+    private function escapeLike(string $value): string
+    {
+        return str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $value);
+    }
 
 }
