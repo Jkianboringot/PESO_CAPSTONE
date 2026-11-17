@@ -26,6 +26,8 @@ class EducationEmployment extends Component
 
     public function mount(): void
     {
+           abort_unless(Auth::guard('applicant')->check(), 403);
+
         $edu = DB::table('education')
             ->where('applicant_id', Auth::guard('applicant')->id())
             ->first();
@@ -50,6 +52,8 @@ class EducationEmployment extends Component
 
     public function save(): void
     {
+         $this->course_program = trim($this->course_program);
+    $this->school_name    = trim($this->school_name);
         $this->validate();
 
         $applicantId = Auth::guard('applicant')->id();

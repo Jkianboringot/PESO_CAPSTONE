@@ -24,7 +24,10 @@ class ChangePassword extends Component
             'password'         => ['required', 'string', 'min:8', 'confirmed', 'different:current_password'],
         ];
     }
-
+public function mount(): void
+{
+    abort_unless(Auth::guard('applicant')->check(), 403);
+}
     public function save(): void
     {
         $this->validate();

@@ -21,6 +21,11 @@ class Credentials extends Component
     public array $seminar  = ['title' => '', 'organizer' => '', 'year' => ''];
     public array $cert     = ['name' => '', 'issuing_body' => '', 'year_issued' => '', 'expiry_year' => ''];
 
+    public function mount(): void
+    {
+        abort_unless(Auth::guard('applicant')->check(), 403);
+    }
+
     private function applicant()
     {
         return Auth::guard('applicant')->user();
@@ -50,6 +55,16 @@ class Credentials extends Component
         return true;
     }
 
+    /** Delete one of the applicant's own rows; flash only if something was deleted. */
+    private function removeRow(string $relation, int $id, string $message): void
+    {
+        $deleted = $this->applicant()->{$relation}()->whereKey($id)->delete();
+
+        if ($deleted > 0) {
+            session()->flash('status', $message);
+        }
+    }
+
     /* ---------------- Work experience ---------------- */
 
     public function addWork(): void
@@ -76,8 +91,7 @@ class Credentials extends Component
 
     public function removeWork(int $id): void
     {
-        $this->applicant()->workExperiences()->whereKey($id)->delete();
-        session()->flash('status', 'Work experience removed.');
+        $this->removeRow('workExperiences', $id, 'Work experience removed.');
     }
 
     /* ---------------- Trainings ---------------- */
@@ -102,8 +116,7 @@ class Credentials extends Component
 
     public function removeTraining(int $id): void
     {
-        $this->applicant()->trainings()->whereKey($id)->delete();
-        session()->flash('status', 'Training removed.');
+        $this->removeRow('trainings', $id, 'Training removed.');
     }
 
     /* ---------------- Seminars ---------------- */
@@ -128,8 +141,7 @@ class Credentials extends Component
 
     public function removeSeminar(int $id): void
     {
-        $this->applicant()->seminars()->whereKey($id)->delete();
-        session()->flash('status', 'Seminar removed.');
+        $this->removeRow('seminars', $id, 'Seminar removed.');
     }
 
     /* ---------------- Certifications ---------------- */
@@ -163,8 +175,7 @@ class Credentials extends Component
 
     public function removeCert(int $id): void
     {
-        $this->applicant()->certifications()->whereKey($id)->delete();
-        session()->flash('status', 'Certification removed.');
+        $this->removeRow('certifications', $id, 'Certification removed.');
     }
 
     public function render()
@@ -172,10 +183,10 @@ class Credentials extends Component
         $a = $this->applicant();
 
         return view('livewire.applicant.applicant-credentials', [
-            'works'    => $a->workExperiences()->latest()->get(),
-            'trainings'=> $a->trainings()->orderByDesc('year')->get(),
-            'seminars' => $a->seminars()->orderByDesc('year')->get(),
-            'certs'    => $a->certifications()->orderByDesc('year_issued')->get(),
+            'works'     => $a->workExperiences()->latest()->get(),
+            'trainings' => $a->trainings()->orderByDesc('year')->get(),
+            'seminars'  => $a->seminars()->orderByDesc('year')->get(),
+            'certs'     => $a->certifications()->orderByDesc('year_issued')->get(),
         ]);
     }
 }

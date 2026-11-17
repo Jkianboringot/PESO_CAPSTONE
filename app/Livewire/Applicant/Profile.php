@@ -31,12 +31,13 @@ class Profile extends Component
 
     public function mount(): void
     {
+        abort_unless(Auth::guard('applicant')->check(), 403);
         $a = Auth::guard('applicant')->user();
 
         $this->contact_number = (string) $a->contact_number;
-        $this->email          = (string) $a->email;
-        $this->address        = (string) $a->address;
-        $this->disabilities   = $a->disabilities ?? [];
+        $this->email = (string) $a->email;
+        $this->address = (string) $a->address;
+        $this->disabilities = $a->disabilities ?? [];
     }
 
     protected function rules(): array
@@ -46,24 +47,28 @@ class Profile extends Component
         return [
             // unique so nobody can take another applicant's login identifier
             'contact_number' => ['required', 'string', 'regex:/^[0-9+\-\s()]{7,20}$/', Rule::unique('applicants', 'contact_number')->ignore($id)],
-            'email'          => ['nullable', 'email', 'max:255', Rule::unique('applicants', 'email')->ignore($id)],
-            'address'        => ['required', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255', Rule::unique('applicants', 'email')->ignore($id)],
+            'address' => ['required', 'string', 'max:255'],
         ];
     }
 
     public function save(): void
     {
-        $this->validateOnly('contact_number');
-        $this->validateOnly('email');
-        $this->validateOnly('address');
+        $this->contact_number = trim($this->contact_number);
+        $this->email = trim($this->email);
+        $this->address = trim($this->address);
+          $this->contact_number = preg_replace('/[\s\-()]+/', '', $this->contact_number);
+    
+
+        $this->validate();
 
         DB::table('applicants')
             ->where('id', Auth::guard('applicant')->id())
             ->update([
                 'contact_number' => $this->contact_number,
-                'email'          => $this->email !== '' ? $this->email : null,
-                'address'        => $this->address,
-                'updated_at'     => now(),
+                'email' => $this->email !== '' ? $this->email : null,
+                'address' => $this->address,
+                'updated_at' => now(),
             ]);
 
         session()->flash('status', 'Your contact details were updated.');
@@ -72,7 +77,7 @@ class Profile extends Component
     public function saveDisabilities(): void
     {
         $this->validate([
-            'disabilities'   => ['array'],
+            'disabilities' => ['array'],
             'disabilities.*' => [Rule::in(self::DISABILITIES)],
         ]);
 
@@ -95,8 +100,8 @@ class Profile extends Component
         $barangay = DB::table('barangays')->where('id', $a->barangay_id)->value('name');
 
         return view('livewire.applicant.applicant-profile', [
-            'applicant'         => $a,
-            'barangay'          => $barangay,
+            'applicant' => $a,
+            'barangay' => $barangay,
             'disabilityOptions' => self::DISABILITIES,
         ]);
     }

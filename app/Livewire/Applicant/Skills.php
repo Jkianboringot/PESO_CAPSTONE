@@ -25,10 +25,14 @@ class Skills extends Component
         $this->skill_id = '';
     }
 
+    public function mount(): void
+    {
+        abort_unless(Auth::guard('applicant')->check(), 403);
+    }
     public function addSkill(): void
     {
         $this->validate([
-            'skill_id'    => ['required', 'integer', 'exists:skills,id'],
+            'skill_id' => ['required', 'integer', 'exists:skills,id'],
             'proficiency' => ['required', Rule::in(self::LEVELS)],
         ], [
             'skill_id.required' => 'Please choose a skill.',
@@ -56,8 +60,8 @@ class Skills extends Component
         }
 
         DB::table('applicant_skill')->insert([
-            'applicant_id'      => $applicantId,
-            'skill_id'          => (int) $this->skill_id,
+            'applicant_id' => $applicantId,
+            'skill_id' => (int) $this->skill_id,
             'proficiency_level' => $this->proficiency,
         ]);
 
@@ -67,14 +71,15 @@ class Skills extends Component
 
     public function removeSkill(int $skillId): void
     {
-        DB::table('applicant_skill')
+        $deleted = DB::table('applicant_skill')
             ->where('applicant_id', Auth::guard('applicant')->id())
             ->where('skill_id', $skillId)
             ->delete();
 
-        session()->flash('status', 'Skill removed.');
+        if ($deleted > 0) {
+            session()->flash('status', 'Skill removed.');
+        }
     }
-
     public function render()
     {
         $applicantId = Auth::guard('applicant')->id();
@@ -103,10 +108,10 @@ class Skills extends Component
             : collect();
 
         return view('livewire.applicant.applicant-skill', [
-            'mine'       => $mine,
+            'mine' => $mine,
             'categories' => $categories,
-            'available'  => $available,
-            'levels'     => self::LEVELS,
+            'available' => $available,
+            'levels' => self::LEVELS,
         ]);
     }
 }
