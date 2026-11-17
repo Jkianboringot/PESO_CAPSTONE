@@ -19,13 +19,13 @@ class ReportGenerator extends Component
 {
     use WithPagination;
 
-    public string $dateFrom   = '';
-    public string $dateTo     = '';
+    public string $dateFrom = '';
+    public string $dateTo = '';
     public string $barangayId = '';
     public string $categoryId = '';
-    public string $educLevel  = '';
-    public string $sex        = '';
-    public string $format     = 'xlsx';
+    public string $educLevel = '';
+    public string $sex = '';
+    public string $format = 'xlsx';
     // listing | monthly (PDF) | monthly_xlsx (Excel form)
     public string $reportType = 'listing';
 
@@ -46,9 +46,15 @@ class ReportGenerator extends Component
             ->byBarangay($this->barangayId ?: null)
             ->byEducation($this->educLevel ?: null)
             ->bySkillCategory($this->categoryId ?: null)
-            ->when($this->sex, fn ($q) => $q->where('sex', $this->sex))
-            ->with(['barangay.municipality', 'education', 'skills',
-                    'workExperiences', 'trainings', 'certifications'])
+            ->when($this->sex, fn($q) => $q->where('sex', $this->sex))
+            ->with([
+                'barangay.municipality',
+                'education',
+                'skills',
+                'workExperiences',
+                'trainings',
+                'certifications'
+            ])
             ->orderBy('last_name')
             ->orderBy('first_name');
     }
@@ -58,19 +64,19 @@ class ReportGenerator extends Component
         abort_if(!auth()->user()->hasRole(['staff', 'admin']), 403);
 
         $this->validate([
-            'dateFrom'   => 'nullable|date',
-            'dateTo'     => 'nullable|date|after_or_equal:dateFrom',
-            'format'     => 'required|in:xlsx,csv,pdf',
+            'dateFrom' => 'nullable|date',
+            'dateTo' => 'nullable|date|after_or_equal:dateFrom',
+            'format' => 'required|in:xlsx,csv,pdf',
             'reportType' => 'required|in:listing,monthly,monthly_xlsx',
         ]);
 
         $params = array_filter([
-            'dateFrom'   => $this->dateFrom,
-            'dateTo'     => $this->dateTo,
+            'dateFrom' => $this->dateFrom,
+            'dateTo' => $this->dateTo,
             'barangayId' => $this->barangayId,
             'categoryId' => $this->categoryId,
-            'educLevel'  => $this->educLevel,
-            'sex'        => $this->sex,
+            'educLevel' => $this->educLevel,
+            'sex' => $this->sex,
             'reportType' => $this->reportType,
         ]);
 
@@ -80,19 +86,19 @@ class ReportGenerator extends Component
 
         // Report Type decides the file. Export Format only applies to the applicant listing.
         return match ($this->reportType) {
-            'monthly'      => $this->downloadMonthlyPdf($stamp),
+            'monthly' => $this->downloadMonthlyPdf($stamp),
             'monthly_xlsx' => Excel::download(
-                                  new PesoMonthlyExport($this->buildMonthlyData()),
-                                  'PESO_Monthly_Form_' . $stamp . '.xlsx',
-                                  ExcelWriter::XLSX
-                              ),
-            default        => $this->format === 'pdf'
-                                  ? $this->downloadListingPdf($stamp)
-                                  : Excel::download(
-                                        new ApplicantsExport($params),
-                                        'PESO_Catanduanes_Workforce_' . $stamp . '.' . $this->format,
-                                        $this->format === 'csv' ? ExcelWriter::CSV : ExcelWriter::XLSX
-                                    ),
+                new PesoMonthlyExport($this->buildMonthlyData()),
+                'PESO_Monthly_Form_' . $stamp . '.xlsx',
+                ExcelWriter::XLSX
+            ),
+            default => $this->format === 'pdf'
+                ? $this->downloadListingPdf($stamp)
+                : Excel::download(
+                    new ApplicantsExport($params),
+                    'PESO_Catanduanes_Workforce_' . $stamp . '.' . $this->format,
+                    $this->format === 'csv' ? ExcelWriter::CSV : ExcelWriter::XLSX
+                ),
         };
     }
 
@@ -108,7 +114,7 @@ class ReportGenerator extends Component
     private function downloadListingPdf(string $stamp)
     {
         $report = $this->buildReport($this->filteredApplicants()->get());
-        $html   = view('reports.workforce-report', ['r' => $report])->render();
+        $html = view('reports.workforce-report', ['r' => $report])->render();
 
         return $this->renderPdf($html, 'PESO_Catanduanes_Workforce_' . $stamp . '.pdf');
     }
@@ -138,17 +144,28 @@ class ReportGenerator extends Component
     private function stampFooters(Dompdf $dompdf): void
     {
         $canvas = $dompdf->getCanvas();
-        $font   = $dompdf->getFontMetrics()->getFont('DejaVu Sans', 'normal');
-        $w      = $canvas->get_width();
-        $h      = $canvas->get_height();
-        $grey   = [0.35, 0.35, 0.35];
+        $font = $dompdf->getFontMetrics()->getFont('DejaVu Sans', 'normal');
+        $w = $canvas->get_width();
+        $h = $canvas->get_height();
+        $grey = [0.35, 0.35, 0.35];
 
-        $canvas->page_text(40, $h - 28,
+        $canvas->page_text(
+            40,
+            $h - 28,
             'CONFIDENTIAL. Contains personal data protected under RA 10173 (Data Privacy Act of 2012).',
-            $font, 7, $grey);
+            $font,
+            7,
+            $grey
+        );
 
-        $canvas->page_text($w - 130, $h - 28,
-            'Page {PAGE_NUM} of {PAGE_COUNT}', $font, 7, $grey);
+        $canvas->page_text(
+            $w - 130,
+            $h - 28,
+            'Page {PAGE_NUM} of {PAGE_COUNT}',
+            $font,
+            7,
+            $grey
+        );
     }
 
     // ───────── Applicant listing report ─────────
@@ -157,13 +174,13 @@ class ReportGenerator extends Component
     {
         return match (true) {
             $age === null => 'Not specified',
-            $age < 18     => 'Under 18',
-            $age <= 24    => '18-24',
-            $age <= 34    => '25-34',
-            $age <= 44    => '35-44',
-            $age <= 54    => '45-54',
-            $age <= 64    => '55-64',
-            default       => '65 and over',
+            $age < 18 => 'Under 18',
+            $age <= 24 => '18-24',
+            $age <= 34 => '25-34',
+            $age <= 44 => '35-44',
+            $age <= 54 => '45-54',
+            $age <= 64 => '55-64',
+            default => '65 and over',
         };
     }
 
@@ -173,138 +190,157 @@ class ReportGenerator extends Component
 
         // Turns a label => count collection into rows with a share of all registrants
         $toRows = function (Collection $counts) use ($total): array {
-            return $counts->map(fn ($n, $label) => [
+            return $counts->map(fn($n, $label) => [
                 'label' => $label,
                 'count' => $n,
-                'pct'   => $total ? round($n / $total * 100, 1) : 0,
+                'pct' => $total ? round($n / $total * 100, 1) : 0,
             ])->values()->all();
         };
 
         // Puts the keys of a collection in a fixed order, unknown values last
         $inOrder = function (Collection $c, array $order): Collection {
-            $rank = fn ($v) => ($i = array_search($v, $order, true)) === false ? 999 : $i;
-            return $c->sortKeysUsing(fn ($a, $b) => $rank($a) <=> $rank($b));
+            $rank = fn($v) => ($i = array_search($v, $order, true)) === false ? 999 : $i;
+            return $c->sortKeysUsing(fn($a, $b) => $rank($a) <=> $rank($b));
         };
 
         $sex = $applicants
-            ->groupBy(fn ($a) => $a->sex ?: 'Not specified')
-            ->map(fn ($g) => $g->count());
+            ->groupBy(fn($a) => $a->sex ?: 'Not specified')
+            ->map(fn($g) => $g->count());
 
         $civil = $applicants
-            ->groupBy(fn ($a) => $a->civil_status ?: 'Not specified')
-            ->map(fn ($g) => $g->count());
+            ->groupBy(fn($a) => $a->civil_status ?: 'Not specified')
+            ->map(fn($g) => $g->count());
 
         $status = $applicants
-            ->groupBy(fn ($a) => $a->status ?: 'Not specified')
-            ->map(fn ($g) => $g->count());
+            ->groupBy(fn($a) => $a->status ?: 'Not specified')
+            ->map(fn($g) => $g->count());
 
         $edu = $applicants
-            ->groupBy(fn ($a) => $a->education?->highest_level ?: 'Not specified')
-            ->map(fn ($g) => $g->count());
+            ->groupBy(fn($a) => $a->education?->highest_level ?: 'Not specified')
+            ->map(fn($g) => $g->count());
 
         $age = $applicants
-            ->groupBy(fn ($a) => $this->ageBracket($a->birthdate?->age))
-            ->map(fn ($g) => $g->count());
+            ->groupBy(fn($a) => $this->ageBracket($a->birthdate?->age))
+            ->map(fn($g) => $g->count());
 
         $barangay = $applicants
-            ->groupBy(fn ($a) => $a->barangay?->name ?: 'Unassigned')
-            ->map(fn ($g) => $g->count())
+            ->groupBy(fn($a) => $a->barangay?->name ?: 'Unassigned')
+            ->map(fn($g) => $g->count())
             ->sortDesc();
 
         $disabilities = $applicants
-            ->flatMap(fn ($a) => $a->disabilities ?? [])
+            ->flatMap(fn($a) => $a->disabilities ?? [])
             ->countBy()
             ->sortDesc();
 
         $skills = $applicants
-            ->flatMap(fn ($a) => $a->skills->pluck('name')->unique()->values())
+            ->flatMap(fn($a) => $a->skills->pluck('name')->unique()->values())
             ->countBy()
             ->sortDesc()
             ->take(20);
 
         $trend = $applicants
-            ->groupBy(fn ($a) => $a->created_at->format('Y-m'))
-            ->map(fn ($g) => $g->count())
+            ->groupBy(fn($a) => $a->created_at->format('Y-m'))
+            ->map(fn($g) => $g->count())
             ->sortKeys();
 
-        $trendRows = $trend->map(fn ($n, $ym) => [
+        $trendRows = $trend->map(fn($n, $ym) => [
             'label' => Carbon::createFromFormat('Y-m', $ym)->format('F Y'),
             'count' => $n,
-            'pct'   => $total ? round($n / $total * 100, 1) : 0,
+            'pct' => $total ? round($n / $total * 100, 1) : 0,
         ])->values()->all();
 
-        $ages   = $applicants->map(fn ($a) => $a->birthdate?->age)->filter(fn ($x) => $x !== null);
+        $ages = $applicants->map(fn($a) => $a->birthdate?->age)->filter(fn($x) => $x !== null);
         $avgAge = $ages->count() ? (int) round($ages->avg()) : null;
 
         $coverage = $total
-            ? Carbon::createFromTimestamp($applicants->min(fn ($a) => $a->created_at->timestamp))->format('M d, Y')
-              . ' to '
-              . Carbon::createFromTimestamp($applicants->max(fn ($a) => $a->created_at->timestamp))->format('M d, Y')
+            ? Carbon::createFromTimestamp($applicants->min(fn($a) => $a->created_at->timestamp))->format('M d, Y')
+            . ' to '
+            . Carbon::createFromTimestamp($applicants->max(fn($a) => $a->created_at->timestamp))->format('M d, Y')
             : 'No registrations match the selected filters';
 
         $filters = collect([
             'Registered from' => $this->dateFrom ?: null,
-            'Registered to'   => $this->dateTo ?: null,
-            'Barangay'        => $this->barangayId ? Barangay::find($this->barangayId)?->name : null,
-            'Skill category'  => $this->categoryId ? SkillCategory::find($this->categoryId)?->name : null,
+            'Registered to' => $this->dateTo ?: null,
+            'Barangay' => $this->barangayId ? Barangay::find($this->barangayId)?->name : null,
+            'Skill category' => $this->categoryId ? SkillCategory::find($this->categoryId)?->name : null,
             'Education level' => $this->educLevel ?: null,
-            'Sex'             => $this->sex ?: null,
-        ])->filter()->map(fn ($v, $k) => "$k: $v")->values()->implode('; ');
+            'Sex' => $this->sex ?: null,
+        ])->filter()->map(fn($v, $k) => "$k: $v")->values()->implode('; ');
 
-        $list = $applicants->values()->map(fn ($a, $i) => [
-            'no'         => $i + 1,
-            'ref'        => $a->reference_id,
-            'name'       => $a->full_name,
-            'sex'        => $a->sex ?: 'NA',
-            'age'        => $a->birthdate?->age ?? 'NA',
-            'barangay'   => $a->barangay?->name ?: 'NA',
-            'education'  => $a->education?->highest_level ?: 'NA',
-            'status'     => $a->status ?: 'NA',
+        $list = $applicants->values()->map(fn($a, $i) => [
+            'no' => $i + 1,
+            'ref' => $a->reference_id,
+            'name' => $a->full_name,
+            'sex' => $a->sex ?: 'NA',
+            'age' => $a->birthdate?->age ?? 'NA',
+            'barangay' => $a->barangay?->name ?: 'NA',
+            'education' => $a->education?->highest_level ?: 'NA',
+            'status' => $a->status ?: 'NA',
             'registered' => $a->created_at->format('M d, Y'),
         ])->all();
 
         return [
             'generatedAt' => now()->format('F d, Y, h:i A'),
-            'preparedBy'  => auth()->user()->name,
-            'filters'     => $filters ?: 'None (all registrations)',
-            'coverage'    => $coverage,
-            'total'       => $total,
-            'male'        => $sex->get('Male', 0),
-            'female'      => $sex->get('Female', 0),
-            'avgAge'      => $avgAge,
+            'preparedBy' => auth()->user()->name,
+            'filters' => $filters ?: 'None (all registrations)',
+            'coverage' => $coverage,
+            'total' => $total,
+            'male' => $sex->get('Male', 0),
+            'female' => $sex->get('Female', 0),
+            'avgAge' => $avgAge,
 
-            'sex'          => $toRows($inOrder($sex, ['Male', 'Female', 'Not specified'])),
-            'civil'        => $toRows($inOrder($civil, ['Single', 'Married', 'Widowed', 'Separated', 'Not specified'])),
-            'education'    => $toRows($inOrder($edu, ['Elementary', 'High School', 'Senior High School',
-                                'Vocational/Technical', 'College Undergraduate', 'College Graduate',
-                                'Post-Graduate', 'Not specified'])),
-            'age'          => $toRows($inOrder($age, ['Under 18', '18-24', '25-34', '35-44', '45-54',
-                                '55-64', '65 and over', 'Not specified'])),
-            'status'       => $toRows($inOrder($status, ['Pending', 'Verified', 'Flagged', 'Duplicated', 'Not specified'])),
+            'sex' => $toRows($inOrder($sex, ['Male', 'Female', 'Not specified'])),
+            'civil' => $toRows($inOrder($civil, ['Single', 'Married', 'Widowed', 'Separated', 'Not specified'])),
+            'education' => $toRows($inOrder($edu, [
+                'Elementary',
+                'High School',
+                'Senior High School',
+                'Vocational/Technical',
+                'College Undergraduate',
+                'College Graduate',
+                'Post-Graduate',
+                'Not specified'
+            ])),
+            'age' => $toRows($inOrder($age, [
+                'Under 18',
+                '18-24',
+                '25-34',
+                '35-44',
+                '45-54',
+                '55-64',
+                '65 and over',
+                'Not specified'
+            ])),
+            'status' => $toRows($inOrder($status, ['Pending', 'Verified', 'Flagged', 'Duplicated', 'Not specified'])),
             'disabilities' => $toRows($disabilities),
-            'skills'       => $toRows($skills),
-            'barangays'    => $toRows($barangay),
-            'trend'        => $trendRows,
-            'list'         => $list,
+            'skills' => $toRows($skills),
+            'barangays' => $toRows($barangay),
+            'trend' => $trendRows,
+            'list' => $list,
         ];
     }
 
-    // ───────── PESO Monthly Report (shared by the PDF and the Excel form) ─────────
-
-    // Reporting period: From to To. If empty, the month of the To date (or the current month).
+    // Reporting period: From to To. If To is empty, use the end of From's month
+// when From is in the future, otherwise the end of today (or the current month).
     private function monthlyWindow(): array
     {
-        $end = $this->dateTo
-            ? Carbon::parse($this->dateTo)->endOfDay()
-            : now()->endOfDay();
-
         $start = $this->dateFrom
             ? Carbon::parse($this->dateFrom)->startOfDay()
-            : $end->copy()->startOfMonth();
+            : null;
+
+        if ($this->dateTo) {
+            $end = Carbon::parse($this->dateTo)->endOfDay();
+        } elseif ($start && $start->gt(now())) {
+            $end = $start->copy()->endOfMonth();
+        } else {
+            $end = now()->endOfDay();
+        }
+
+        $start ??= $end->copy()->startOfMonth();
 
         return [$start, $end];
     }
-
     // Same non-date filters for both columns of the form
     private function monthlyBase()
     {
@@ -313,7 +349,7 @@ class ReportGenerator extends Component
             ->byBarangay($this->barangayId ?: null)
             ->byEducation($this->educLevel ?: null)
             ->bySkillCategory($this->categoryId ?: null)
-            ->when($this->sex, fn ($q) => $q->where('sex', $this->sex))
+            ->when($this->sex, fn($q) => $q->where('sex', $this->sex))
             ->with('skills:id,name');
     }
 
@@ -323,7 +359,7 @@ class ReportGenerator extends Component
         [$start, $end] = $this->monthlyWindow();
 
         $inPeriod = $this->monthlyBase()->whereBetween('created_at', [$start, $end])->get();
-        $asOf     = $this->monthlyBase()->where('created_at', '<=', $end)->get();
+        $asOf = $this->monthlyBase()->where('created_at', '<=', $end)->get();
 
         return [$start, $end, $inPeriod, $asOf];
     }
@@ -331,9 +367,9 @@ class ReportGenerator extends Component
     private function tallySexes(Collection $apps): array
     {
         return [
-            'male'   => $apps->where('sex', 'Male')->count(),
+            'male' => $apps->where('sex', 'Male')->count(),
             'female' => $apps->where('sex', 'Female')->count(),
-            'total'  => $apps->count(),
+            'total' => $apps->count(),
         ];
     }
 
@@ -376,8 +412,11 @@ class ReportGenerator extends Component
 
         $rows = [
             ['label' => '2. Applicants Registered', 'level' => 0, 'values' => null],
-            ['label' => '2.1 Regular Program', 'level' => 1,
-             'values' => $this->six($this->tallySexes($inPeriod), $this->tallySexes($asOf))],
+            [
+                'label' => '2.1 Regular Program',
+                'level' => 1,
+                'values' => $this->six($this->tallySexes($inPeriod), $this->tallySexes($asOf))
+            ],
 
             ['label' => 'B. Skills of Registered Applicants', 'level' => 0, 'values' => null],
         ];
@@ -396,18 +435,20 @@ class ReportGenerator extends Component
         }
 
         return [
-            'monthYear'   => $end->format('F Y'),
+            'monthYear' => $end->format('F Y'),
             'periodLabel' => $start->format('M d, Y') . ' to ' . $end->format('M d, Y'),
             'generatedAt' => now()->format('F d, Y, h:i A'),
-            'preparedBy'  => auth()->user()->name,
-            'rows'        => $rows,
+            'preparedBy' => auth()->user()->name,
+            'rows' => $rows,
         ];
     }
 
     public function render()
     {
+        abort_if(!auth()->user()->hasRole(['staff', 'admin']), 403);
+
         return view('livewire.report-generator', [
-            'barangays'  => Barangay::orderBy('name')->pluck('name', 'id'),
+            'barangays' => Barangay::orderBy('name')->pluck('name', 'id'),
             'categories' => SkillCategory::orderBy('name')->pluck('name', 'id'),
             'applicants' => $this->filteredApplicants()->paginate(15),
         ])->layout('layouts.app');

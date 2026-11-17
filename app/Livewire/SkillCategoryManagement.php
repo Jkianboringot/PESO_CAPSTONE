@@ -40,6 +40,7 @@ class SkillCategoryManagement extends Component
 
     public function openCreate()
     {
+            abort_if(!auth()->user()->hasRole('admin'), 403);
         $this->reset(['name', 'pqf_level', 'description', 'editingId']);
         $this->resetValidation();
         $this->showModal = true;
@@ -47,6 +48,7 @@ class SkillCategoryManagement extends Component
 
     public function openEdit(int $id)
     {
+            abort_if(!auth()->user()->hasRole('admin'), 403);
         $category = SkillCategory::findOrFail($id);
 
         $this->editingId = $category->id;
@@ -66,6 +68,10 @@ class SkillCategoryManagement extends Component
     public function save(AuditLogService $audit)
     {
         abort_if(!auth()->user()->hasRole('admin'), 403);
+
+        $this->name = trim($this->name);
+        $this->pqf_level = trim($this->pqf_level);
+        $this->description = trim($this->description);
 
         $rules = [
             'name' => ['required', 'string', 'max:255', Rule::unique('skill_categories', 'name')->ignore($this->editingId)],
@@ -135,21 +141,27 @@ class SkillCategoryManagement extends Component
         $this->notify('success', 'Category deleted.');
     }
 
-    public function render()
+   public function render()
     {
         abort_if(!auth()->user()->hasRole('admin'), 403);
 
         $term = trim($this->search);
+        $like = '%' . $this->escapeLike($term) . '%';
 
         $categories = SkillCategory::withCount('skills')
             ->when($term !== '', fn ($q) => $q->where(fn ($q) => $q
-                ->where('name', 'like', "%{$term}%")
-                ->orWhere('pqf_level', 'like', "%{$term}%")))
+                ->whereRaw("name LIKE ? ESCAPE '!'", [$like])
+                ->orWhereRaw("pqf_level LIKE ? ESCAPE '!'", [$like])))
             ->orderBy('name')
             ->paginate(20);
 
         return view('livewire.skill-category-management', [
             'categories' => $categories,
         ])->layout('layouts.app');
+    }
+
+    private function escapeLike(string $value): string
+    {
+        return str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $value);
     }
 }

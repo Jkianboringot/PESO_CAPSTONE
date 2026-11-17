@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Livewire;
 
 use App\Models\{Applicant, SkillCategory, Barangay};
@@ -18,6 +19,11 @@ class WorkforceAnalyticsDashboard extends Component {
     // No updated() hook on purpose: filters are only applied when the
     // Filter button is clicked (see applyFilters below).
 
+    // Only admin and staff may view or act on the dashboard (ANA-1).
+    private function canView(): void {
+        abort_if(!auth()->user()?->hasRole(['admin', 'staff']), 403);
+    }
+
     private function baseQuery() {
         [$from, $to] = $this->dateRange();
 
@@ -29,16 +35,25 @@ class WorkforceAnalyticsDashboard extends Component {
             ->when($this->filterSex, fn($q) => $q->where('sex', $this->filterSex));
     }
 
-    // Returns [from, to], swapping them if the user entered them backwards
+    // Returns [from, to]. Malformed dates are ignored (ANA-3). Reversed dates are swapped.
     private function dateRange(): array {
-        $from = $this->filterFrom ?: null;
-        $to   = $this->filterTo ?: null;
+        $from = $this->validDate($this->filterFrom);
+        $to   = $this->validDate($this->filterTo);
 
         if ($from && $to && $from > $to) {
             [$from, $to] = [$to, $from];
         }
 
         return [$from, $to];
+    }
+
+    // Accepts only a real Y-m-d date. Anything else is treated as "no date".
+    private function validDate(?string $value): ?string {
+        if (!$value) {
+            return null;
+        }
+
+        return Carbon::canBeCreatedFromFormat($value, 'Y-m-d') ? $value : null;
     }
 
     // ── Demographics helpers ─────────────────────────────────────────────
@@ -72,11 +87,11 @@ class WorkforceAnalyticsDashboard extends Component {
         foreach ($groups as $label => [$min, $max]) {
             // age >= min  ->  birthdate on or before (today - min years)
             $q = $this->baseQuery()
-                ->where('birthdate', '<=', now()->subYears($min)->toDateString());
+                ->whereDate('birthdate', '<=', now()->subYears($min)->toDateString());
 
             // age <= max  ->  birthdate after (today - (max + 1) years)
             if ($max !== null) {
-                $q->where('birthdate', '>', now()->subYears($max + 1)->toDateString());
+                $q->whereDate('birthdate', '>', now()->subYears($max + 1)->toDateString());
             }
 
             $labels[] = $label;
@@ -159,9 +174,9 @@ class WorkforceAnalyticsDashboard extends Component {
             ->get();
 
         return [
-            'skills'      => ['labels' => $skillsData->pluck('name'),         'data' => $skillsData->pluck('total')],
-            'education'   => ['labels' => $eduData->pluck('highest_level'),   'data' => $eduData->pluck('total')],
-            'barangay'    => ['labels' => $barangayData->pluck('name'),        'data' => $barangayData->pluck('total')],
+            'skills'      => ['labels' => $skillsData->pluck('name'),       'data' => $skillsData->pluck('total')],
+            'education'   => ['labels' => $eduData->pluck('highest_level'), 'data' => $eduData->pluck('total')],
+            'barangay'    => ['labels' => $barangayData->pluck('name'),      'data' => $barangayData->pluck('total')],
 
             // Demographics
             'sex'         => $this->countBy('sex'),
@@ -173,13 +188,16 @@ class WorkforceAnalyticsDashboard extends Component {
 
             'totals'      => [
                 'total'     => $this->baseQuery()->count(),
-                'thisMonth' => $this->baseQuery()->whereMonth('created_at', now()->month)->count(),
+                // Full date range of the current month, so last year's November is excluded (ANA-2)
+                'thisMonth' => $this->baseQuery()
+                    ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
+                    ->count(),
             ],
         ];
     }
 
     public function render() {
-        //CACHE - cache this as it is use available alot, but think about this am not an expert in cache
+        $this->canView();
 
         return view('livewire.workforce-analytics-dashboard', [
             'chartData'      => $this->chartData,
@@ -197,11 +215,13 @@ class WorkforceAnalyticsDashboard extends Component {
     // already synced the form values, so we just redraw the charts.
     public function applyFilters()
     {
+        $this->canView();
         $this->dispatch('refresh-charts', charts: $this->chartData);
     }
 
     public function clearFilters()
     {
+        $this->canView();
         $this->reset(['filterCategory', 'filterBarangay', 'filterEdLevel', 'filterSex', 'filterFrom', 'filterTo']);
         $this->dispatch('refresh-charts', charts: $this->chartData);
     }

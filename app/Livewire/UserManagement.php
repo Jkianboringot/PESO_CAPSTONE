@@ -1,7 +1,7 @@
 <?php
- /**
-     * kian.
-     */
+/**
+ * kian.
+ */
 
 namespace App\Livewire;
 
@@ -11,9 +11,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class UserManagement extends Component
 {
+    use WithPagination;
+
     public bool $showForm = false;
     public ?int $editingId = null;
     public string $name = '';
@@ -41,7 +44,10 @@ class UserManagement extends Component
 
     public function openCreate()
     {
-
+        abort_if(
+            !auth()->user()->hasRole('admin'),
+            403
+        );
 
         $this->reset(['name', 'email', 'password', 'role_id', 'editingId']);
         $this->showForm = true;
@@ -49,7 +55,10 @@ class UserManagement extends Component
 
     public function openEdit(int $id)
     {
-
+        abort_if(
+            !auth()->user()->hasRole('admin'),
+            403
+        );
 
         //OPTIMIZE mount user if edit is click this way its faster becuase its the first
         //thing that loads
@@ -78,6 +87,7 @@ class UserManagement extends Component
             403
         );
 
+        $this->name = trim($this->name);
 
         $rules = [
             'name' => 'required|string|max:100',
@@ -85,7 +95,7 @@ class UserManagement extends Component
             'role_id' => 'required|exists:roles,id',
         ];
         if (!$this->editingId) { // optional on create; falls back to email if blank
-            $rules['password'] = 'nullable|min:8';
+            $rules['password'] = 'nullable|min:8|regex:/\S/';
         }
 
         try {
@@ -143,6 +153,11 @@ class UserManagement extends Component
 
     public function deactivate(int $id, AuditLogService $audit)
     {
+        abort_if(
+            !auth()->user()->hasRole('admin'),
+            403
+        );
+
         // Prevent self-deactivation   - no // AUTHORIZE its good enough
         if ($id === auth()->id()) {
             $this->notify('error', 'You cannot deactivate your own account.');
@@ -165,6 +180,11 @@ class UserManagement extends Component
 
     public function activated(int $id, AuditLogService $audit)
     {
+        abort_if(
+            !auth()->user()->hasRole('admin'),
+            403
+        );
+
         // Prevent self-activation   - no // AUTHORIZE its good enough
         if ($id === auth()->id()) {
             $this->notify('error', 'You cannot activate your own account.');
@@ -192,7 +212,10 @@ class UserManagement extends Component
             403
         );
         return view('livewire.user-management', [
-            'users' => User::with('roles')->orderBy('name')->paginate(20),
+            'users' => User::with('roles')
+                ->whereHas('roles', fn($q) => $q->whereIn('name', ['admin', 'staff']))
+                ->orderBy('name')
+                ->paginate(20),
             'roles' => Role::all(),
         ])->layout('layouts.app');
     }

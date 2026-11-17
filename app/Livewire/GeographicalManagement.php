@@ -38,8 +38,10 @@ class GeographicalManagement extends Component
         $this->resetPage();
     }
 
-    public function openCreate()
+       public function openCreate()
     {
+        abort_if(!auth()->user()->hasRole('admin'), 403);
+
         $this->reset(['barangayName', 'municipalityID', 'editingId']);
         $this->resetValidation();
         $this->showModal = true;
@@ -47,6 +49,8 @@ class GeographicalManagement extends Component
 
     public function openEdit(int $id)
     {
+        abort_if(!auth()->user()->hasRole('admin'), 403);
+
         $barangay = Barangay::findOrFail($id);
 
         $this->editingId = $barangay->id;
@@ -140,20 +144,21 @@ class GeographicalManagement extends Component
         $this->notify('success', 'Barangay deleted.');
     }
 
-    public function render()
+       public function render()
     {
         abort_if(!auth()->user()->hasRole('admin'), 403);
 
         $term = trim($this->search);
+        $like = '%' . $this->escapeLike($term) . '%';
 
         $viewBarangays = Barangay::with('municipality')
             ->withCount('applicants')
-            ->when($term !== '', function ($q) use ($term) {
-                $q->where(function ($q) use ($term) {
-                    $q->where('name', 'like', "%{$term}%")
+            ->when($term !== '', function ($q) use ($like) {
+                $q->where(function ($q) use ($like) {
+                    $q->whereRaw("name LIKE ? ESCAPE '!'", [$like])
                         ->orWhereHas('municipality', fn ($m) => $m
-                            ->where('name', 'like', "%{$term}%")
-                            ->orWhere('province', 'like', "%{$term}%"));
+                            ->whereRaw("name LIKE ? ESCAPE '!'", [$like])
+                            ->orWhereRaw("province LIKE ? ESCAPE '!'", [$like]));
                 });
             })
             ->orderBy('name')
@@ -163,5 +168,14 @@ class GeographicalManagement extends Component
             'viewBarangays' => $viewBarangays,
             'selectMunicipality' => Municipality::orderBy('name')->get(),
         ])->layout('layouts.app');
+    }
+
+    /**
+     * Escape LIKE wildcards so the user's text is matched literally.
+     * '!' is the escape character, so it is escaped first.
+     */
+    private function escapeLike(string $value): string
+    {
+        return str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $value);
     }
 }

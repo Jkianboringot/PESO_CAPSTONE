@@ -39,6 +39,7 @@ class MunicipalityManagement extends Component
 
     public function openCreate()
     {
+        abort_if(!auth()->user()->hasRole('admin'), 403);
         $this->reset(['municipalityName', 'editingId']);
         $this->province = 'Catanduanes';
         $this->resetValidation();
@@ -47,6 +48,7 @@ class MunicipalityManagement extends Component
 
     public function openEdit(int $id)
     {
+        abort_if(!auth()->user()->hasRole('admin'), 403);
         $municipality = Municipality::findOrFail($id);
 
         $this->editingId = $municipality->id;
@@ -66,13 +68,15 @@ class MunicipalityManagement extends Component
     {
         abort_if(!auth()->user()->hasRole('admin'), 403);
 
+       $this->municipalityName = trim($this->municipalityName);
+        $this->province = trim($this->province);
+
         $rules = [
             'province' => 'required|string|max:100',
             'municipalityName' => [
                 'required',
                 'string',
                 'max:100',
-                // municipality name must be unique inside the province
                 Rule::unique('municipalities', 'name')
                     ->where('province', $this->province)
                     ->ignore($this->editingId),
@@ -140,21 +144,32 @@ class MunicipalityManagement extends Component
         $this->notify('success', 'Municipality deleted.');
     }
 
-    public function render()
+       public function render()
     {
         abort_if(!auth()->user()->hasRole('admin'), 403);
 
         $term = trim($this->search);
+        $like = '%' . $this->escapeLike($term) . '%';
 
         $viewMunicipalities = Municipality::withCount('barangays')
-            ->when($term !== '', fn ($q) => $q
-                ->where('name', 'like', "%{$term}%")
-                ->orWhere('province', 'like', "%{$term}%"))
+            ->when($term !== '', fn ($q) => $q->where(function ($q) use ($like) {
+                $q->whereRaw("name LIKE ? ESCAPE '!'", [$like])
+                  ->orWhereRaw("province LIKE ? ESCAPE '!'", [$like]);
+            }))
             ->orderBy('name')
             ->paginate(20);
 
         return view('livewire.municipality-management', [
             'viewMunicipalities' => $viewMunicipalities,
         ])->layout('layouts.app');
+    }
+
+    /**
+     * Escape LIKE wildcards so the user's text is matched literally.
+     * '!' is the escape character, so it is escaped first.
+     */
+    private function escapeLike(string $value): string
+    {
+        return str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $value);
     }
 }

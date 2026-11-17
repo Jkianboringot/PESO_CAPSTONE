@@ -46,6 +46,7 @@ class SkillManagement extends Component
 
     public function openCreate()
     {
+         abort_if(!auth()->user()->hasRole('admin'), 403);
         $this->reset(['name', 'skill_category_id', 'editingId']);
         $this->resetValidation();
         $this->showModal = true;
@@ -53,6 +54,7 @@ class SkillManagement extends Component
 
     public function openEdit(int $id)
     {
+         abort_if(!auth()->user()->hasRole('admin'), 403);
         $skill = Skill::findOrFail($id);
 
         $this->editingId = $skill->id;
@@ -72,6 +74,7 @@ class SkillManagement extends Component
     {
         abort_if(!auth()->user()->hasRole('admin'), 403);
 
+         $this->name = trim($this->name);
         $rules = [
             'skill_category_id' => 'required|exists:skill_categories,id',
             'name' => [
@@ -146,22 +149,26 @@ class SkillManagement extends Component
         $this->notify('success', 'Skill deleted.');
     }
 
-    public function render()
-    {
-        abort_if(!auth()->user()->hasRole('admin'), 403);
+   public function render()
+{
+    abort_if(!auth()->user()->hasRole('admin'), 403);
 
-        $term = trim($this->search);
+    $term = trim($this->search);
 
-        $skills = Skill::with('category')
-            ->withCount('applicants')
-            ->when($term !== '', fn ($q) => $q->where('name', 'like', "%{$term}%"))
-            ->when($this->categoryFilter !== '', fn ($q) => $q->where('skill_category_id', $this->categoryFilter))
-            ->orderBy('name')
-            ->paginate(20);
+    // Escape LIKE wildcards so "%" and "_" are searched as literal text.
+    // "|" is the escape character, so it is escaped first.
+    $like = '%' . str_replace(['|', '%', '_'], ['||', '|%', '|_'], $term) . '%';
 
-        return view('livewire.skill-management', [
-            'skills' => $skills,
-            'categories' => SkillCategory::orderBy('name')->get(),
-        ])->layout('layouts.app');
-    }
+    $skills = Skill::with('category')
+        ->withCount('applicants')
+        ->when($term !== '', fn ($q) => $q->whereRaw("skills.name LIKE ? ESCAPE '|'", [$like]))
+        ->when($this->categoryFilter !== '', fn ($q) => $q->where('skill_category_id', $this->categoryFilter))
+        ->orderBy('name')
+        ->paginate(20);
+
+    return view('livewire.skill-management', [
+        'skills' => $skills,
+        'categories' => SkillCategory::orderBy('name')->get(),
+    ])->layout('layouts.app');
+}
 }
