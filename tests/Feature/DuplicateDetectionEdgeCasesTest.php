@@ -55,19 +55,19 @@ class DuplicateDetectionEdgeCasesTest extends TestCase
      * Defaults are unique, so a background applicant never matches by accident.
      */
     private function makeApplicant(array $overrides = []): Applicant
-    {
-        return Applicant::factory()->create(array_merge([
-            'barangay_id'    => $this->barangay->id,
-            'first_name'     => 'Juan',
-            'last_name'      => fake()->unique()->lastName(),
-            'birthdate'      => fake()->unique()->date('Y-m-d', '2000-01-01'),
-            'contact_number' => '0917' . str_pad((string) random_int(1, 9999999), 7, '0', STR_PAD_LEFT),
-            'sex'            => 'Male',
-            'civil_status'   => 'Single',
-            'is_active'      => true,
-            'status'         => 'Pending',
-        ], $overrides));
-    }
+{
+    return Applicant::factory()->create(array_merge([
+        'barangay_id'    => $this->barangay->id,
+        'first_name'     => 'Juan',
+        'last_name'      => $overrides['last_name'] ?? fake()->unique()->lastName(),
+        'birthdate'      => $overrides['birthdate'] ?? fake()->unique()->date('Y-m-d', '2000-01-01'),
+        'contact_number' => '0917' . str_pad((string) random_int(1, 9999999), 7, '0', STR_PAD_LEFT),
+        'sex'            => 'Male',
+        'civil_status'   => 'Single',
+        'is_active'      => true,
+        'status'         => 'Pending',
+    ], $overrides));
+}
 
     // ─────────────────────────────────────────────────────────────────
     // NAME NORMALIZATION
@@ -348,9 +348,265 @@ class DuplicateDetectionEdgeCasesTest extends TestCase
         $this->assertSame(['scanned' => 0, 'flagged' => 0], $result);
         $this->assertDatabaseCount('duplicate_flags', 0);
     }
+        // ─────────────────────────────────────────────────────────────────
+    // MORE NAME EDGE CASES
+    // ─────────────────────────────────────────────────────────────────
+
+    /** A five-letter name allows one letter of typo, so Reyes and Reyas match. */
+    public function test_one_letter_typo_in_a_five_letter_name_is_a_match(): void
+    {
+        $this->makeApplicant(['last_name' => 'Reyes', 'birthdate' => '1990-05-14', 'contact_number' => '09170000001']);
+        $this->makeApplicant(['last_name' => 'Reyas', 'birthdate' => '1990-05-14', 'contact_number' => '09170000002']);
+
+        $this->assertSame(1, $this->service()->scanPending()['flagged']);
+        $this->assertDatabaseHas('duplicate_flags', ['matched_phonetic' => true, 'match_score' => 2]);
+    }
+
+    /** Spaces are kept during normalization, but a two-space gap in a long name is within typo tolerance. */
+    public function test_multi_word_surname_with_different_spacing_is_a_match(): void
+    {
+        $this->makeApplicant(['last_name' => 'De la Cruz', 'birthdate' => '1990-05-14', 'contact_number' => '09170000001']);
+        $this->makeApplicant(['last_name' => 'Delacruz',   'birthdate' => '1990-05-14', 'contact_number' => '09170000002']);
+
+        $this->assertSame(1, $this->service()->scanPending()['flagged']);
+        $this->assertDatabaseHas('duplicate_flags', ['matched_phonetic' => true]);
+    }
+
+    /** Apostrophes are removed, so O'Brien and Obrien normalize to the same value. */
+    public function test_apostrophe_is_ignored_in_last_name(): void
+    {
+        $this->makeApplicant(['last_name' => "O'Brien", 'birthdate' => '1990-05-14', 'contact_number' => '09170000001']);
+        $this->makeApplicant(['last_name' => 'Obrien',  'birthdate' => '1990-05-14', 'contact_number' => '09170000002']);
+
+        $this->assertSame(1, $this->service()->scanPending()['flagged']);
+        $this->assertDatabaseHas('duplicate_flags', ['matched_phonetic' => true]);
+    }
+
+    /** Digits typed into a name are removed, so "Cruz2" matches "Cruz". */
+    public function test_digits_in_last_name_are_ignored(): void
+    {
+        $this->makeApplicant(['last_name' => 'Cruz2', 'birthdate' => '1990-05-14', 'contact_number' => '09170000001']);
+        $this->makeApplicant(['last_name' => 'Cruz',  'birthdate' => '1990-05-14', 'contact_number' => '09170000002']);
+
+        $this->assertSame(1, $this->service()->scanPending()['flagged']);
+        $this->assertDatabaseHas('duplicate_flags', ['matched_phonetic' => true]);
+    }
+
+    /** Roman-numeral suffixes are dropped the same way as Jr. and Sr. */
+    public function test_roman_numeral_suffix_iii_is_ignored(): void
+    {
+        $this->makeApplicant(['last_name' => 'Cruz III', 'birthdate' => '1990-05-14', 'contact_number' => '09170000001']);
+        $this->makeApplicant(['last_name' => 'Cruz',     'birthdate' => '1990-05-14', 'contact_number' => '09170000002']);
+
+        $this->assertSame(1, $this->service()->scanPending()['flagged']);
+        $this->assertDatabaseHas('duplicate_flags', ['matched_phonetic' => true]);
+    }
+
+    /**
+     * A last name that is only a suffix ("Jr.") normalizes to nothing, so it
+     * never matches on name. Birthdate and contact can still flag the pair.
+     */
+    public function test_suffix_only_last_name_never_matches_on_name(): void
+    {
+        $this->makeApplicant(['last_name' => 'Jr.', 'birthdate' => '1990-05-14', 'contact_number' => '09171234567']);
+        $this->makeApplicant(['last_name' => 'Jr.', 'birthdate' => '1990-05-14', 'contact_number' => '09171234567']);
+
+        $this->assertSame(1, $this->service()->scanPending()['flagged']);
+        $this->assertDatabaseHas('duplicate_flags', [
+            'matched_phonetic'  => false,
+            'matched_birthdate' => true,
+            'matched_contact'   => true,
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // MORE CONTACT EDGE CASES
+    // ─────────────────────────────────────────────────────────────────
+
+    /** Brackets, dashes and spaces are stripped, so "(0917) 123-4567" matches "09171234567". */
+    public function test_contact_with_brackets_and_dashes_matches_plain_number(): void
+    {
+        $this->makeApplicant(['last_name' => 'Garcia',     'birthdate' => '1990-05-14', 'contact_number' => '(0917) 123-4567']);
+        $this->makeApplicant(['last_name' => 'Villanueva', 'birthdate' => '1990-05-14', 'contact_number' => '09171234567']);
+
+        $this->assertSame(1, $this->service()->scanPending()['flagged']);
+        $this->assertDatabaseHas('duplicate_flags', ['matched_contact' => true, 'matched_birthdate' => true]);
+    }
+
+    /**
+     * KNOWN GAP (DUP-2): a contact with only a few digits is compared as-is.
+     * "123" and "0123" both normalize to "123", so two unrelated records
+     * with the same birthdate are flagged. Registration rejects short numbers,
+     * so this comes from older or imported data.
+     *
+     * HOW TO REPRODUCE: two records, different names, same birthdate, contacts
+     * "123" and "0123". BUG: one flag is created. Expected: no flag.
+     *
+     * FIX: in nationalNumber(), return '' when fewer than 10 digits remain.
+     */
+    public function test_short_contact_numbers_are_not_treated_as_a_match(): void
+    {
+        $this->makeApplicant(['last_name' => 'Garcia',     'birthdate' => '1990-05-14', 'contact_number' => '123']);
+        $this->makeApplicant(['last_name' => 'Villanueva', 'birthdate' => '1990-05-14', 'contact_number' => '0123']);
+
+        $this->assertSame(0, $this->service()->scanPending()['flagged']);
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // MORE BIRTHDATE AND SCORING EDGE CASES
+    // ─────────────────────────────────────────────────────────────────
+
+    /** A matching birthdate alone (one point) never creates a flag. */
+    public function test_birthdate_match_alone_never_creates_a_flag(): void
+    {
+        $this->makeApplicant(['last_name' => 'Garcia',     'birthdate' => '1990-05-14', 'contact_number' => '09170000001']);
+        $this->makeApplicant(['last_name' => 'Villanueva', 'birthdate' => '1990-05-14', 'contact_number' => '09170000002']);
+
+        $this->assertSame(0, $this->service()->scanPending()['flagged']);
+        $this->assertDatabaseCount('duplicate_flags', 0);
+    }
+
+    /** Name and contact match, birthdates differ by one day: two points, so a flag. Birthdate is recorded as not matched. */
+    public function test_name_and_contact_match_flags_even_when_birthdate_is_one_day_off(): void
+    {
+        $this->makeApplicant(['last_name' => 'Cruz', 'birthdate' => '1990-05-14', 'contact_number' => '09171234567']);
+        $this->makeApplicant(['last_name' => 'Cruz', 'birthdate' => '1990-05-15', 'contact_number' => '09171234567']);
+
+        $this->assertSame(1, $this->service()->scanPending()['flagged']);
+        $this->assertDatabaseHas('duplicate_flags', [
+            'match_score'       => 2,
+            'matched_phonetic'  => true,
+            'matched_birthdate' => false,
+            'matched_contact'   => true,
+        ]);
+    }
+
+    /** Name and contact match with different birthdates: two points, so a flag, with birthdate not matched. */
+    public function test_name_and_contact_match_without_birthdate_match_is_flagged(): void
+    {
+        $this->makeApplicant(['last_name' => 'Garcia', 'birthdate' => '1990-01-01', 'contact_number' => '09171234567']);
+        $this->makeApplicant(['last_name' => 'Garcia', 'birthdate' => '1992-02-02', 'contact_number' => '09171234567']);
+
+        $this->assertSame(1, $this->service()->scanPending()['flagged']);
+        $this->assertDatabaseHas('duplicate_flags', [
+            'matched_phonetic'  => true,
+            'matched_birthdate' => false,
+            'matched_contact'   => true,
+        ]);
+    }
+
+    /**
+     * A and B match on all three. C shares only the name with them (one point).
+     * Only the A-B pair is flagged. C does not get a flag from a single point.
+     */
+    public function test_a_single_point_match_does_not_block_or_create_a_flag_for_another_record(): void
+    {
+        $this->makeApplicant(['last_name' => 'Cruz', 'birthdate' => '1990-05-14', 'contact_number' => '09171234567']);
+        $this->makeApplicant(['last_name' => 'Cruz', 'birthdate' => '1990-05-14', 'contact_number' => '09171234567']);
+        $this->makeApplicant(['last_name' => 'Cruz', 'birthdate' => '1991-01-01', 'contact_number' => '09179999999']);
+
+        $this->assertSame(1, $this->service()->scanPending()['flagged']);
+        $this->assertDatabaseCount('duplicate_flags', 1);
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // MORE PRIOR-DECISION AND STATUS EDGE CASES
+    // ─────────────────────────────────────────────────────────────────
+
+    /** A flag still in Pending (not resolved) also blocks the pair from being flagged again. */
+    public function test_existing_pending_flag_blocks_the_pair(): void
+    {
+        $a = $this->makeApplicant(['last_name' => 'Cruz', 'birthdate' => '1990-05-14', 'contact_number' => '09171234567']);
+        $b = $this->makeApplicant(['last_name' => 'Cruz', 'birthdate' => '1990-05-14', 'contact_number' => '09171234567']);
+
+        DuplicateFlag::factory()->create([
+            'applicant_id_new'      => $b->id,
+            'applicant_id_existing' => $a->id,
+            'resolution_status'     => 'Pending',
+        ]);
+
+        $this->assertSame(0, $this->service()->scanPending()['flagged']);
+        $this->assertDatabaseCount('duplicate_flags', 1);
+    }
+
+    /**
+     * After a flag exists, deactivating one side means that applicant is no
+     * longer scanned. The next scan adds nothing, and the old flag stays.
+     */
+    public function test_deactivating_one_side_stops_new_flags_but_keeps_the_old_one(): void
+    {
+        $a = $this->makeApplicant(['last_name' => 'Cruz', 'birthdate' => '1990-05-14', 'contact_number' => '09171234567']);
+        $this->makeApplicant(['last_name' => 'Cruz', 'birthdate' => '1990-05-14', 'contact_number' => '09171234567']);
+
+        $this->assertSame(1, $this->service()->scanPending()['flagged']);
+
+        $a->update(['is_active' => false]);
+
+        $this->assertSame(0, $this->service()->scanPending()['flagged']);
+        $this->assertDatabaseCount('duplicate_flags', 1);
+    }
+
+    /** An older Verified record is never changed by a scan, even when it is the existing side of a flag. */
+    public function test_verified_older_record_keeps_its_status(): void
+    {
+        $older = $this->makeApplicant([
+            'last_name' => 'Cruz', 'birthdate' => '1990-05-14', 'contact_number' => '09171234567', 'status' => 'Verified',
+        ]);
+        $newer = $this->makeApplicant([
+            'last_name' => 'Cruz', 'birthdate' => '1990-05-14', 'contact_number' => '09171234567', 'status' => 'Pending',
+        ]);
+
+        $this->assertSame(1, $this->service()->scanPending()['flagged']);
+        $this->assertDatabaseHas('applicants', ['id' => $older->id, 'status' => 'Verified']);
+        $this->assertDatabaseHas('applicants', ['id' => $newer->id, 'status' => 'Flagged']);
+    }
+
+    /** A newer record that is already Flagged gets a flag, and its status stays Flagged. */
+    public function test_newer_record_already_flagged_keeps_flagged_status(): void
+    {
+        $this->makeApplicant(['last_name' => 'Cruz', 'birthdate' => '1990-05-14', 'contact_number' => '09171234567']);
+        $newer = $this->makeApplicant([
+            'last_name' => 'Cruz', 'birthdate' => '1990-05-14', 'contact_number' => '09171234567', 'status' => 'Flagged',
+        ]);
+
+        $this->assertSame(1, $this->service()->scanPending()['flagged']);
+        $this->assertDatabaseHas('applicants', ['id' => $newer->id, 'status' => 'Flagged']);
+    }
+
+    /** When every applicant is inactive, nothing is scanned and nothing is flagged. */
+    public function test_scan_with_only_inactive_applicants_scans_nothing(): void
+    {
+        $this->makeApplicant(['last_name' => 'Cruz', 'birthdate' => '1990-05-14', 'contact_number' => '09171234567', 'is_active' => false]);
+        $this->makeApplicant(['last_name' => 'Cruz', 'birthdate' => '1990-05-14', 'contact_number' => '09171234567', 'is_active' => false]);
+
+        $this->assertSame(['scanned' => 0, 'flagged' => 0], $this->service()->scanPending());
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // LARGE DATA
+    // ─────────────────────────────────────────────────────────────────
+
+    /**
+     * The scan reads applicants in batches of 500. Going past one batch
+     * must still count every applicant. Records here do not match, so no flags.
+     */
+  public function test_scan_counts_every_applicant_across_the_batch_boundary(): void
+{
+    for ($i = 1; $i <= 501; $i++) {
+        $this->makeApplicant([
+            'last_name'      => 'Garcia',
+            'birthdate'      => now()->subYears(20)->subDays($i)->toDateString(),
+            'contact_number' => '09' . str_pad((string) $i, 9, '0', STR_PAD_LEFT),
+        ]);
+    }
+
+    $result = $this->service()->scanPending();
+
+    $this->assertSame(501, $result['scanned']);
+    $this->assertSame(0, $result['flagged']);
 }
 
-
+}
 
 // Manual test plan: edge cases
 // Before each case
@@ -541,3 +797,4 @@ class DuplicateDetectionEdgeCasesTest extends TestCase
 // Verified newer record	test_verified_newer_record_is_flagged_but_keeps_its_status	EC-13
 // Resolved statuses	test_resolved_flag_blocks_pair_for_any_outcome	EC-12
 // Empty database	test_scan_on_empty_database_returns_zero_counts	Covered by DD-19
+

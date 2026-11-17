@@ -126,7 +126,11 @@ class RegistrationForm extends Component {
             2 => [
                 'address'         => 'required|string|max:255',
                 'municipality_id' => 'required|exists:municipalities,id',
-                'barangay_id'     => 'required|exists:barangays,id',
+               'barangay_id'     => [
+                    'required',
+                    Rule::exists('barangays', 'id')
+                        ->where('municipality_id', $this->municipality_id),
+                ],
             ],
             3 => [
                 'highest_level'  => 'required|string',

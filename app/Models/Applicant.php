@@ -36,6 +36,7 @@ class Applicant extends Authenticatable
         'oath_given_at',
         'password',
         'disabilities',
+        'status'
 
     ];
     protected $hidden = [

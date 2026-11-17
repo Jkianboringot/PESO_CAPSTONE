@@ -109,6 +109,33 @@ class DuplicateReview extends Component
         }
     }
 
+//     private function applyRetainBoth(DuplicateFlag $flag, AuditLogService $audit): void
+// {
+//     // Incoming: always set to active + Verified, and audit the change
+//     $incoming = $flag->newApplicant;
+//     $incomingBefore = $incoming->only(['is_active', 'status']);
+
+//     $incoming->update(['is_active' => true, 'status' => 'Verified']);
+
+//     $audit->logApplicantUpdated($incoming, [
+//         'before' => $incomingBefore,
+//         'after'  => ['is_active' => true, 'status' => 'Verified'],
+//     ]);
+
+//     // Existing: only touch it if it is not already Verified
+//     $existing = $flag->existingApplicant;
+
+//     if ($existing && $existing->status !== 'Verified') {
+//         $before = $existing->only(['status']);
+//         $existing->update(['status' => 'Verified']);
+
+//         $audit->logApplicantUpdated($existing, [
+//             'before' => $before,
+//             'after' => ['status' => 'Verified'],
+//         ]);
+//     }
+// }
+
     public function resolve(string $action, AuditLogService $audit): void
     {
         if (!$this->canReview()) {
