@@ -17,28 +17,36 @@
         <form wire:submit="save" class="bg-white rounded-xl border border-slate-100 p-6">
             <div class="space-y-4">
                 <div>
-                    <label for="current_password" class="block text-sm font-medium text-gray-700">Current password</label>
-                    <input id="current_password" type="password" wire:model="current_password" autocomplete="current-password" class="mt-1 block w-full rounded-xl border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
-                    @error('current_password') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                    <label for="current_password" class="block text-sm font-medium text-gray-700">Current
+                        password</label>
+                    <input id="current_password" type="password" wire:model="current_password"
+                        autocomplete="current-password"
+                        class="mt-1 block w-full rounded-xl border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    @error('current_password')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700">New password</label>
-                    <input id="password" type="password" wire:model="password" autocomplete="new-password" class="mt-1 block w-full rounded-xl border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
-                    @error('password') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                    <input id="password" type="password" wire:model="password" autocomplete="new-password"
+                        class="mt-1 block w-full rounded-xl border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    @error('password')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
-                    <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Confirm new password</label>
-                    <input id="password_confirmation" type="password" wire:model="password_confirmation" autocomplete="new-password" class="mt-1 block w-full rounded-xl border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Confirm new
+                        password</label>
+                    <input id="password_confirmation" type="password" wire:model="password_confirmation"
+                        autocomplete="new-password"
+                        class="mt-1 block w-full rounded-xl border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
                 </div>
             </div>
-
             <button type="submit" wire:loading.attr="disabled"
-                    class="mt-6 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60"
-                    style="background:linear-gradient(90deg,#059669,#0d9488);">
+                class="mt-6 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60"
+                style="background:linear-gradient(90deg,#059669,#0d9488);">
                 <span wire:loading.remove wire:target="save">Update password</span>
-                <span wire:loading wire:target="save">Saving...</span>
+                <span wire:loading wire:target="save" style="display:none">Saving...</span>
             </button>
         </form>
 

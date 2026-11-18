@@ -38,7 +38,10 @@
             <div class="space-y-4">
                 <div>
                     <label for="contact_number" class="block text-sm font-medium text-gray-700">Contact number</label>
-                    <input id="contact_number" type="text" wire:model="contact_number" class="mt-1 block w-full rounded-xl border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    <input id="contact_number" type="text" 
+                    minlength="11"
+                    maxlength="11"
+                    wire:model="contact_number" class="mt-1 block w-full rounded-xl border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
                     @error('contact_number') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 

@@ -46,7 +46,7 @@ class Profile extends Component
 
         return [
             // unique so nobody can take another applicant's login identifier
-            'contact_number' => ['required', 'string', 'regex:/^[0-9+\-\s()]{7,20}$/', Rule::unique('applicants', 'contact_number')->ignore($id)],
+            'contact_number' => ['required', 'string', 'regex:/^[0-9+\-\s()]{7,20}$/','min:11','max:11', Rule::unique('applicants', 'contact_number')->ignore($id)],
             'email' => ['nullable', 'email', 'max:255', Rule::unique('applicants', 'email')->ignore($id)],
             'address' => ['required', 'string', 'max:255'],
         ];
